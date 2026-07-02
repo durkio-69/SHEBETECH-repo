@@ -1,0 +1,1183 @@
+import React, { useState, useEffect } from 'react';
+import { 
+  getDokanVendors, 
+  saveDokanVendors, 
+  getDokanWithdrawals, 
+  saveDokanWithdrawals, 
+  getDokanOrders, 
+  saveDokanOrders, 
+  getDokanCategories, 
+  DokanVendor, 
+  WithdrawalRequest,
+  DokanOrder
+} from '../lib/dokanStore';
+import { 
+  Building2, 
+  User, 
+  Mail, 
+  Phone, 
+  MapPin, 
+  Plus, 
+  CheckCircle, 
+  Clock, 
+  XCircle, 
+  TrendingUp, 
+  DollarSign, 
+  ShoppingBag, 
+  PlusCircle, 
+  History, 
+  Send, 
+  Check, 
+  X, 
+  ListOrdered,
+  PackageCheck,
+  Tag,
+  Store,
+  ArrowUpRight
+} from 'lucide-react';
+import { Product } from '../types';
+
+interface VendorAppProps {
+  products: Product[];
+  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
+  formatPrice: (priceInUgx: number) => string;
+}
+
+export default function VendorApp({ products, setProducts, formatPrice }: VendorAppProps) {
+  // Current session vendor (we simulate vendor logs)
+  const [currentVendor, setCurrentVendor] = useState<DokanVendor | null>(null);
+  const [allVendors, setAllVendors] = useState<DokanVendor[]>([]);
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [orders, setOrders] = useState<DokanOrder[]>([]);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet'>('dashboard');
+
+  // Registration states
+  const [ownerName, setOwnerName] = useState('');
+  const [storeName, setStoreName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [location, setLocation] = useState('Kampala Central');
+  const [businessCategory, setBusinessCategory] = useState('phones');
+  const [paymentDetails, setPaymentDetails] = useState('');
+
+  // Add product states
+  const [prodTitle, setProdTitle] = useState('');
+  const [prodPrice, setProdPrice] = useState('');
+  const [prodCategory, setProdCategory] = useState('');
+  const [prodBrand, setProdBrand] = useState('Tecno');
+  const [prodImage, setProdImage] = useState('');
+  const [prodTags, setProdTags] = useState('Dokan Pro, Verified');
+
+  // Withdrawal form states
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawMethod, setWithdrawMethod] = useState<'paypal' | 'stripe' | 'mastercard' | 'bank' | 'momo'>('momo');
+  const [withdrawDetails, setWithdrawDetails] = useState('');
+
+  // Update product price state
+  const [editingProdId, setEditingProdId] = useState<string | null>(null);
+  const [editingPrice, setEditingPrice] = useState('');
+
+  // Hydrate Dokan States
+  useEffect(() => {
+    const vList = getDokanVendors();
+    setAllVendors(vList);
+    setWithdrawals(getDokanWithdrawals());
+    setOrders(getDokanOrders());
+
+    // Try auto logging-in as the first approved vendor "Tecno Official Outlet Kampala"
+    const autoLog = vList.find(v => v.id === 'v2');
+    if (autoLog) {
+      setCurrentVendor(autoLog);
+    }
+  }, []);
+
+  // Listen to cross-storage modifications
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const vList = getDokanVendors();
+      setAllVendors(vList);
+      setWithdrawals(getDokanWithdrawals());
+      setOrders(getDokanOrders());
+      
+      if (currentVendor) {
+        const refreshed = vList.find(v => v.id === currentVendor.id);
+        if (refreshed) {
+          setCurrentVendor(refreshed);
+        }
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [currentVendor]);
+
+  const handleRegister = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!storeName || !ownerName || !email || !phone) return;
+
+    const newVendor: DokanVendor = {
+      id: `v-${Date.now()}`,
+      name: storeName,
+      ownerName,
+      email,
+      phone,
+      location,
+      category: businessCategory,
+      status: 'pending', // Temporary dashboard gating
+      balance: 0,
+      totalSales: 0,
+      paymentDetails
+    };
+
+    const updated = [...allVendors, newVendor];
+    saveDokanVendors(updated);
+    setAllVendors(updated);
+    setCurrentVendor(newVendor);
+  };
+
+  const handleLogSwitch = (vendorId: string) => {
+    const target = allVendors.find(v => v.id === vendorId);
+    if (target) {
+      setCurrentVendor(target);
+      setActiveTab('dashboard');
+    }
+  };
+
+  // Add new product directly to the platform
+  const handleAddProduct = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!prodTitle || !prodPrice || !currentVendor) return;
+
+    const priceNum = parseInt(prodPrice);
+    if (isNaN(priceNum)) return;
+
+    const newProd: Product = {
+      id: `p-vendor-${Date.now()}`,
+      title: prodTitle,
+      price: priceNum,
+      originalPrice: Math.round(priceNum * 1.25),
+      category: prodCategory || currentVendor.category,
+      image: prodImage || 'https://picsum.photos/seed/dokan-prod/400/400',
+      rating: 5.0,
+      reviewsCount: 0,
+      brand: prodBrand,
+      isFlashSale: false,
+      isOfficial: true,
+      freeDelivery: true,
+      payOnDelivery: true,
+      inStock: true,
+      tags: prodTags.split(',').map(t => t.trim()),
+      vendors: [
+        {
+          id: currentVendor.id,
+          name: currentVendor.name,
+          price: priceNum,
+          rating: 5.0,
+          reviewsCount: 1,
+          deliveryTime: 'Same Day Delivery',
+          shippingFee: 0,
+          isOfficial: true,
+          location: currentVendor.location
+        }
+      ],
+      reviews: []
+    };
+
+    const updatedProducts = [newProd, ...products];
+    setProducts(updatedProducts);
+    
+    // reset form fields
+    setProdTitle('');
+    setProdPrice('');
+    setProdImage('');
+    alert(`Success: "${prodTitle}" added to main catalog. Awaiting customers orders.`);
+  };
+
+  // Submit withdrawal request
+  const handleWithdrawRequest = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentVendor || !withdrawAmount) return;
+
+    const amountNum = parseInt(withdrawAmount);
+    if (isNaN(amountNum) || amountNum <= 0) {
+      alert('Error: Please enter a valid amount.');
+      return;
+    }
+
+    if (amountNum > currentVendor.balance) {
+      alert(`Insufficient funds! Your max withdrawable balance is Shs ${currentVendor.balance.toLocaleString()}.`);
+      return;
+    }
+
+    const newRequest: WithdrawalRequest = {
+      id: `wreq-${Date.now()}`,
+      vendorId: currentVendor.id,
+      vendorName: currentVendor.name,
+      amount: amountNum,
+      method: withdrawMethod,
+      details: withdrawDetails || currentVendor.paymentDetails,
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+
+    const currentRequests = getDokanWithdrawals();
+    const updatedRequests = [newRequest, ...currentRequests];
+    saveDokanWithdrawals(updatedRequests);
+    setWithdrawals(updatedRequests);
+
+    // deduct vendor's balance until approved/rejected to prevent double withdrawal attacks
+    const updatedVendors = allVendors.map(v => {
+      if (v.id === currentVendor.id) {
+        return {
+          ...v,
+          balance: v.balance - amountNum
+        };
+      }
+      return v;
+    });
+    saveDokanVendors(updatedVendors);
+    setAllVendors(updatedVendors);
+    
+    setWithdrawAmount('');
+    setWithdrawDetails('');
+    alert('Withdrawal Request successfully submitted for Admin audit! Balance deducted.');
+  };
+
+  // Vendor order dispatcher status change (accept/cancel)
+  const handleUpdateOrderStatus = (orderId: string, newStatus: 'dispatched' | 'placed') => {
+    const updated = orders.map(o => {
+      if (o.id === orderId) {
+        return { ...o, status: newStatus };
+      }
+      return o;
+    });
+    saveDokanOrders(updated);
+    setOrders(updated);
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Quick edit product price
+  const handleUpdateProductPrice = (prodId: string) => {
+    const parsedPrice = parseInt(editingPrice);
+    if (isNaN(parsedPrice)) return;
+
+    const updated = products.map(p => {
+      if (p.id === prodId) {
+        return {
+          ...p,
+          price: parsedPrice,
+          vendors: p.vendors ? p.vendors.map(v => {
+            if (v.id === currentVendor?.id) {
+              return { ...v, price: parsedPrice };
+            }
+            return v;
+          }) : []
+        };
+      }
+      return p;
+    });
+
+    setProducts(updated);
+    setEditingProdId(null);
+    setEditingPrice('');
+  };
+
+  const dynamicCategories = getDokanCategories();
+
+  // If no vendor is logged in, show onboarding registration screen
+  if (!currentVendor) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8" id="vendor-onboarding-panel">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-8 items-start">
+          
+          {/* Quick Info */}
+          <div className="md:col-span-5 space-y-6">
+            <div className="space-y-2">
+              <span className="bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                WordPress WooCommerce Integration
+              </span>
+              <h2 className="font-sans text-xl font-black text-slate-900 tracking-tight">
+                Dokan Pro Multi-Vendor Portal
+              </h2>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Launch your digital store on Uganda's fastest Boda Boda commerce network. Keep <strong>85%</strong> of every sale, with zero listing fees.
+              </p>
+            </div>
+
+            <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
+              <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Dokan Core Guarantees</h4>
+              <ul className="space-y-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  Flat 15% marketplace commission.
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  Centralized escrow payout system.
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
+                  Next-day bank/mobile money withdrawal.
+                </li>
+              </ul>
+            </div>
+
+            {/* Quick Login Switcher */}
+            <div className="space-y-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
+              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Or Switch Active Vendor Profiles:</p>
+              <div className="grid grid-cols-1 gap-1.5">
+                {allVendors.map(v => (
+                  <button
+                    key={v.id}
+                    onClick={() => handleLogSwitch(v.id)}
+                    className="w-full text-left bg-white dark:bg-slate-900 hover:border-orange-400 border border-slate-200 dark:border-slate-800 p-2.5 rounded-xl flex items-center justify-between text-xs font-bold cursor-pointer"
+                  >
+                    <div>
+                      <p className="text-slate-800 dark:text-slate-100">{v.name}</p>
+                      <p className="text-[9px] text-slate-400">Status: {v.status.toUpperCase()}</p>
+                    </div>
+                    <ArrowUpRight size={14} className="text-slate-400" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
+          </div>
+
+          {/* Form */}
+          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
+            <h3 className="font-sans text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <Store size={18} className="text-orange-600" /> Register New Dokan Seller Profile
+            </h3>
+            
+            <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-slate-500">Store / Business Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={storeName}
+                    onChange={(e) => setStoreName(e.target.value)}
+                    placeholder="e.g. Ssebaggala Mobiles Ltd"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">Owner Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={ownerName}
+                    onChange={(e) => setOwnerName(e.target.value)}
+                    placeholder="e.g. Moses Ssebaggala"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-slate-500">E-mail Address</label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="partner@ssebaggala.com"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">Contact Telephone Number</label>
+                  <input
+                    type="tel"
+                    required
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder="e.g. 0772 555666"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-slate-500">Store Primary Location</label>
+                  <select
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  >
+                    <option value="Kampala Central">Kampala Central (Wandegeya / Plaza)</option>
+                    <option value="Mukono Town">Mukono Town (Ssezibwa Corridor)</option>
+                    <option value="Wakiso Center">Wakiso Center</option>
+                    <option value="Jinja District">Jinja District (Nile Basin)</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">Store Primary Category</label>
+                  <select
+                    value={businessCategory}
+                    onChange={(e) => setBusinessCategory(e.target.value)}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  >
+                    {dynamicCategories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Payout Credentials (Momo line or Bank Account)</label>
+                <input
+                  type="text"
+                  required
+                  value={paymentDetails}
+                  onChange={(e) => setPaymentDetails(e.target.value)}
+                  placeholder="e.g. MTN Mobile Money - 0772 555666"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
+              >
+                Register & Submit Dokan Profile
+              </button>
+            </form>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // --- TEMPORARY DASHBOARD GATING SCREEN ---
+  // Triggered when currentVendor.status is 'pending'
+  if (currentVendor.status === 'pending' || currentVendor.status === 'rejected') {
+    return (
+      <div className="max-w-4xl mx-auto px-4 py-8 space-y-6" id="vendor-pending-sandbox">
+        
+        {/* Banner */}
+        <div className="bg-amber-50 dark:bg-slate-900 border-2 border-amber-200/60 dark:border-slate-800 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row items-center gap-6 justify-between text-left">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+              </span>
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
+                DOKAN REGISTRATION ID: #{currentVendor.id}
+              </p>
+            </div>
+            <h2 className="font-sans text-lg font-black text-slate-900 dark:text-slate-100">
+              Welcome to Dokan, <span className="text-orange-600">{currentVendor.name}</span>!
+            </h2>
+            <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
+              Your store onboarding information has been saved into our local WooCommerce cache. The Olimart Super Admin is currently evaluating your credentials, landmark, and tax compliance.
+            </p>
+          </div>
+
+          <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center space-y-1.5 shadow-sm w-full md:w-auto">
+            <p className="text-[10px] font-black uppercase text-slate-400">Evaluate Sandbox Approval</p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const updated = allVendors.map(v => {
+                    if (v.id === currentVendor.id) {
+                      return { ...v, status: 'approved' as const };
+                    }
+                    return v;
+                  });
+                  saveDokanVendors(updated);
+                  setAllVendors(updated);
+                  setCurrentVendor({ ...currentVendor, status: 'approved' });
+                  alert("Sandbox Mode: Approved instantly! Welcome to the seller command center!");
+                }}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
+              >
+                Instant Self-Approve
+              </button>
+              <button
+                onClick={() => {
+                  setCurrentVendor(null);
+                }}
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+              >
+                Change Store
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Temporary Waiting Timeline Stepper */}
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-6 flex items-center gap-1.5">
+            <Clock size={16} className="text-orange-600" /> Store Evaluation Timeline
+          </h3>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+            <div className="absolute top-[16px] left-[15px] right-[15px] h-[2px] bg-slate-100 dark:bg-slate-800 hidden md:block" />
+
+            {/* Step 1 */}
+            <div className="flex items-center md:flex-col text-left md:text-center gap-4 md:gap-2">
+              <div className="w-9 h-9 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs relative z-10 shadow-sm">
+                <Check size={16} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-slate-800 dark:text-slate-100">Profile Saved</p>
+                <p className="text-[10px] text-slate-400">Onboarding successful</p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex items-center md:flex-col text-left md:text-center gap-4 md:gap-2">
+              <div className="w-9 h-9 rounded-full bg-orange-500 text-white flex items-center justify-center font-bold text-xs relative z-10 shadow-md animate-pulse">
+                <Clock size={16} />
+              </div>
+              <div>
+                <p className="text-xs font-black text-orange-600">Pending Review</p>
+                <p className="text-[10px] text-slate-400">Verification in progress</p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-center md:flex-col text-left md:text-center gap-4 md:gap-2">
+              <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-xs relative z-10">
+                3
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500">Super Admin Handshake</p>
+                <p className="text-[10px] text-slate-400">Tax & landmark validation</p>
+              </div>
+            </div>
+
+            {/* Step 4 */}
+            <div className="flex items-center md:flex-col text-left md:text-center gap-4 md:gap-2">
+              <div className="w-9 h-9 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400 flex items-center justify-center font-bold text-xs relative z-10">
+                4
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-500">Store Live</p>
+                <p className="text-[10px] text-slate-400">Sell on Olimart Uganda</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Locked Sales Preview Section to meet: "while waiting to go to the main app, view the sales analysis" */}
+        <div className="relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 overflow-hidden">
+          
+          {/* Overlay Lock */}
+          <div className="absolute inset-0 bg-slate-100/70 dark:bg-slate-950/80 backdrop-blur-xs flex flex-col items-center justify-center text-center p-6 z-20">
+            <div className="w-12 h-12 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center mb-3 shadow-md">
+              <Clock size={20} className="animate-spin" />
+            </div>
+            <h4 className="text-sm font-black uppercase text-slate-800 dark:text-slate-100 tracking-wider">Awaiting Evaluation Handshake</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm mt-1 leading-relaxed">
+              Once approved, you will have access to full live sales analysis, wallet payout history, and dynamic catalog uploads.
+            </p>
+          </div>
+
+          {/* Background blurred statistics preview */}
+          <div className="opacity-45 space-y-6 select-none pointer-events-none">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Store Analytics</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
+                <p className="text-[10px] font-bold text-slate-400">TOTAL SALES</p>
+                <p className="text-lg font-black text-slate-800">Shs 4,250,000</p>
+              </div>
+              <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
+                <p className="text-[10px] font-bold text-slate-400">NET EARNINGS (85%)</p>
+                <p className="text-lg font-black text-slate-800">Shs 3,612,500</p>
+              </div>
+              <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
+                <p className="text-[10px] font-bold text-slate-400">COMMISSION CHARGED (15%)</p>
+                <p className="text-lg font-black text-slate-800">Shs 637,500</p>
+              </div>
+            </div>
+            <div className="h-24 bg-slate-50 border border-slate-150 rounded-2xl flex items-end justify-between p-3">
+              <div className="w-12 h-10 bg-orange-400 rounded-lg" />
+              <div className="w-12 h-16 bg-orange-400 rounded-lg" />
+              <div className="w-12 h-8 bg-orange-400 rounded-lg" />
+              <div className="w-12 h-20 bg-orange-400 rounded-lg" />
+            </div>
+          </div>
+        </div>
+
+      </div>
+    );
+  }
+
+  // --- APPROVED MAIN VENDOR APP ---
+  const myOrders = orders.filter(o => 
+    o.items.some(item => item.selectedVendor === currentVendor.name)
+  );
+
+  const myProducts = products.filter(p => 
+    p.vendors && p.vendors.some(v => v.id === currentVendor.id)
+  );
+
+  // commission metrics
+  const totalMySales = currentVendor.totalSales;
+  const netEarnings = Math.round(totalMySales * 0.85);
+  const totalCommissionPaid = Math.round(totalMySales * 0.15);
+
+  return (
+    <div className="max-w-7xl mx-auto px-4 py-6 space-y-6" id="vendor-dashboard-approved">
+      
+      {/* Header Panel */}
+      <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+              <CheckCircle size={10} /> Dokan Pro Partner
+            </span>
+            <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
+          </div>
+          <h2 className="text-xl font-black">{currentVendor.name}</h2>
+          <p className="text-xs text-orange-100 flex items-center gap-1.5">
+            📍 Base: {currentVendor.location} &bull; owner: {currentVendor.ownerName}
+          </p>
+        </div>
+
+        {/* Change account switcher on the fly */}
+        <div className="flex flex-wrap items-center gap-2 text-slate-800">
+          <select
+            value={currentVendor.id}
+            onChange={(e) => handleLogSwitch(e.target.value)}
+            className="bg-white px-3 py-2 rounded-xl text-xs font-black border border-slate-200 focus:outline-none"
+          >
+            {allVendors.map(v => (
+              <option key={v.id} value={v.id}>{v.name} ({v.status})</option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => {
+              setCurrentVendor(null);
+            }}
+            className="bg-slate-900 text-white hover:bg-slate-850 px-3 py-2 rounded-xl text-xs font-black cursor-pointer"
+          >
+            Register New Store
+          </button>
+        </div>
+      </div>
+
+      {/* Navigation sub-tabs */}
+      <div className="flex items-center overflow-x-auto gap-2 border-b border-slate-200 pb-1">
+        <button
+          onClick={() => setActiveTab('dashboard')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors ${
+            activeTab === 'dashboard' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Overview & Charts
+        </button>
+        <button
+          onClick={() => setActiveTab('products')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors ${
+            activeTab === 'products' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          My Products ({myProducts.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('orders')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors ${
+            activeTab === 'orders' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Store Orders ({myOrders.length})
+        </button>
+        <button
+          onClick={() => setActiveTab('wallet')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors ${
+            activeTab === 'wallet' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          Dokan Wallet & Withdrawals
+        </button>
+      </div>
+
+      {/* TAB 1: OVERVIEW */}
+      {activeTab === 'dashboard' && (
+        <div className="space-y-6">
+          {/* Bento grids metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Sales (Gross)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-black text-slate-900 dark:text-slate-100">
+                  {formatPrice(totalMySales)}
+                </p>
+                <div className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                  <TrendingUp size={16} />
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400">100% of orders booked online</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Earnings (85%)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-black text-emerald-600">
+                  {formatPrice(netEarnings)}
+                </p>
+                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                  <DollarSign size={16} />
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400">After Dokan platform fees</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Commission Charged (15%)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-black text-rose-600">
+                  {formatPrice(totalCommissionPaid)}
+                </p>
+                <div className="w-8 h-8 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <Tag size={16} />
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400">Flat commission tier applied</p>
+            </div>
+
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Withdrawable Balance</p>
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-black text-orange-600">
+                  {formatPrice(currentVendor.balance)}
+                </p>
+                <div className="w-8 h-8 rounded-full bg-orange-50 text-orange-600 flex items-center justify-center">
+                  <Store size={16} />
+                </div>
+              </div>
+              <p className="text-[9px] text-slate-400">Withdrawn: {formatPrice(netEarnings - currentVendor.balance)}</p>
+            </div>
+
+          </div>
+
+          {/* Sales Analysis Chart simulation */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 text-left">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 mb-4">
+              Weekly Dokan Pro Sales Performance Analysis
+            </h3>
+            
+            {/* Visual Bar representation */}
+            <div className="space-y-4 font-bold text-xs">
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span>Monday (MoMo Sales Launch)</span>
+                  <span>75% Sales Vol</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-full rounded-full" style={{ width: '75%' }} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span>Wednesday (Kampala Mid-Week Deals)</span>
+                  <span>95% Sales Vol</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-full rounded-full" style={{ width: '95%' }} />
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <div className="flex justify-between">
+                  <span>Weekend (Farmers Market & Grocery Bulk Cargo)</span>
+                  <span>45% Sales Vol</span>
+                </div>
+                <div className="w-full bg-slate-100 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 h-full rounded-full" style={{ width: '45%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 2: MY PRODUCTS */}
+      {activeTab === 'products' && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
+          
+          {/* Add product form */}
+          <div className="md:col-span-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <PlusCircle size={16} className="text-orange-600" /> Post Product Direct
+            </h3>
+
+            <form onSubmit={handleAddProduct} className="space-y-3.5 text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="text-slate-500">Product Title</label>
+                <input
+                  type="text"
+                  required
+                  value={prodTitle}
+                  onChange={(e) => setProdTitle(e.target.value)}
+                  placeholder="e.g. Tecno Spark 30 Neo"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-slate-500">Price (Shs)</label>
+                  <input
+                    type="number"
+                    required
+                    value={prodPrice}
+                    onChange={(e) => setProdPrice(e.target.value)}
+                    placeholder="e.g. 500000"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">Brand</label>
+                  <input
+                    type="text"
+                    required
+                    value={prodBrand}
+                    onChange={(e) => setProdBrand(e.target.value)}
+                    placeholder="e.g. Tecno"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Product Category</label>
+                <select
+                  value={prodCategory}
+                  onChange={(e) => setProdCategory(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                >
+                  <option value="">Use My Default Category ({currentVendor.category})</option>
+                  {dynamicCategories.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Product Image URL</label>
+                <input
+                  type="text"
+                  value={prodImage}
+                  onChange={(e) => setProdImage(e.target.value)}
+                  placeholder="Paste https:// unsplash.com/ image..."
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Tags (comma separated)</label>
+                <input
+                  type="text"
+                  value={prodTags}
+                  onChange={(e) => setProdTags(e.target.value)}
+                  placeholder="e.g. Hot Deal, 5G"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black uppercase py-2.5 rounded-lg cursor-pointer"
+              >
+                Upload to Olimart Catalog
+              </button>
+            </form>
+          </div>
+
+          {/* List of my products */}
+          <div className="md:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <ShoppingBag size={16} className="text-orange-600" /> Currently Posted Catalog ({myProducts.length})
+            </h3>
+
+            {myProducts.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs">
+                No products posted by your store yet. Use the form to upload.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {myProducts.map(p => (
+                  <div key={p.id} className="border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex gap-3">
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="w-14 h-14 object-contain bg-slate-50 rounded"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
+                      <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
+                      <div className="flex items-center gap-2">
+                        {editingProdId === p.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={editingPrice}
+                              onChange={(e) => setEditingPrice(e.target.value)}
+                              placeholder={p.price.toString()}
+                              className="w-20 border border-orange-500 rounded px-1 text-[11px] focus:outline-none bg-slate-50 dark:bg-slate-800 dark:text-white"
+                            />
+                            <button
+                              onClick={() => handleUpdateProductPrice(p.id)}
+                              className="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-500"
+                            >
+                              <Check size={10} />
+                            </button>
+                            <button
+                              onClick={() => setEditingProdId(null)}
+                              className="bg-slate-200 text-slate-700 p-1 rounded hover:bg-slate-300"
+                            >
+                              <X size={10} />
+                            </button>
+                          </div>
+                        ) : (
+                          <>
+                            <span className="text-xs font-black text-slate-900 dark:text-slate-200">
+                              {formatPrice(p.price)}
+                            </span>
+                            <button
+                              onClick={() => {
+                                setEditingProdId(p.id);
+                                setEditingPrice(p.price.toString());
+                              }}
+                              className="text-[9px] text-orange-600 hover:underline cursor-pointer"
+                            >
+                              Edit Price
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+      {/* TAB 3: STORE ORDERS */}
+      {activeTab === 'orders' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 text-left">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+            <ListOrdered size={16} className="text-orange-600" /> Dokan Multi-Vendor Order Queue ({myOrders.length})
+          </h3>
+
+          {myOrders.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              No orders placed for your products yet. They will appear here in real-time.
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {myOrders.map(o => (
+                <div key={o.id} className="py-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                  <div className="space-y-1.5 flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-black text-slate-900 dark:text-slate-100">{o.id}</span>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                        o.status === 'placed' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : o.status === 'dispatched' 
+                          ? 'bg-amber-100 text-amber-800 animate-pulse'
+                          : o.status === 'transit'
+                          ? 'bg-purple-100 text-purple-800'
+                          : 'bg-emerald-100 text-emerald-800'
+                      }`}>
+                        Status: {o.status.toUpperCase()}
+                      </span>
+                    </div>
+
+                    <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1">
+                      <p>📍 Deliver to: <span className="text-slate-850 dark:text-slate-200">{o.customerName} - {o.customerAddress} ({o.customerLocation})</span></p>
+                      <p>📞 Phone: <span className="font-mono text-slate-850 dark:text-slate-200">{o.customerPhone}</span></p>
+                    </div>
+
+                    {/* Items from this seller */}
+                    <div className="pl-3 border-l-2 border-orange-500 space-y-1 mt-2">
+                      {o.items.map((it, idx) => (
+                        <div key={idx} className="text-[11px] text-slate-700 dark:text-slate-300 font-bold flex gap-2">
+                          <span className="text-orange-600">[{it.quantity}x]</span>
+                          <span>{it.product.title}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2 shrink-0">
+                    <p className="text-xs text-slate-400">My Net Earnings (85%):</p>
+                    <p className="text-sm font-black text-emerald-600">{formatPrice(o.vendorEarnings)}</p>
+
+                    <div className="flex gap-2 mt-1">
+                      {o.status === 'placed' && (
+                        <>
+                          <button
+                            onClick={() => handleUpdateOrderStatus(o.id, 'dispatched')}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                          >
+                            <PackageCheck size={12} /> Accept Dispatch
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (confirm("Cancel this order?")) {
+                                handleUpdateOrderStatus(o.id, 'placed');
+                              }
+                            }}
+                            className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                        </>
+                      )}
+                      
+                      {o.status === 'dispatched' && (
+                        <span className="text-[10px] text-amber-600 font-extrabold flex items-center gap-1 animate-pulse">
+                          ⌛ Handed over to Courier dispatch
+                        </span>
+                      )}
+
+                      {o.status === 'transit' && (
+                        <span className="text-[10px] text-purple-600 font-extrabold flex items-center gap-1">
+                          🏍️ Rider In Transit
+                        </span>
+                      )}
+
+                      {o.status === 'delivered' && (
+                        <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                          ✅ Delivered and Cleared
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* TAB 4: WALLET & WITHDRAWALS */}
+      {activeTab === 'wallet' && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
+          
+          {/* Submit withdrawal form */}
+          <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <Send size={16} className="text-orange-600" /> Request Withdrawal
+            </h3>
+
+            <div className="bg-orange-50 dark:bg-slate-900/60 p-3 rounded-xl border border-orange-200/50 text-[11px] font-bold text-orange-800 dark:text-orange-400">
+              ⚡ Available withrawable funds are automatically held securely in Olimart central platforms accounts escrow. Once approved, funds are wired immediately.
+            </div>
+
+            <form onSubmit={handleWithdrawRequest} className="space-y-4 text-xs font-semibold">
+              <div className="space-y-1">
+                <label className="text-slate-500">Withdrawable Balance</label>
+                <p className="text-2xl font-black text-slate-900 dark:text-slate-100">
+                  {formatPrice(currentVendor.balance)}
+                </p>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Withdrawal Amount (UGX)</label>
+                <input
+                  type="number"
+                  required
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  placeholder="e.g. 500000"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Withdrawal Method</label>
+                <select
+                  value={withdrawMethod}
+                  onChange={(e) => setWithdrawMethod(e.target.value as any)}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                >
+                  <option value="momo">MTN Mobile Money</option>
+                  <option value="stripe">Visa Card (via Stripe)</option>
+                  <option value="paypal">PayPal Express</option>
+                  <option value="bank">Direct Bank Account Transfer</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-slate-500">Beneficiary Details (e.g. PayPal email / Account holder name)</label>
+                <input
+                  type="text"
+                  value={withdrawDetails}
+                  onChange={(e) => setWithdrawDetails(e.target.value)}
+                  placeholder={currentVendor.paymentDetails}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black uppercase py-3 rounded-lg cursor-pointer"
+              >
+                Submit Request
+              </button>
+            </form>
+          </div>
+
+          {/* Withdraw history */}
+          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <History size={16} className="text-orange-600" /> Withdrawal Request Ledger ({withdrawals.filter(w => w.vendorId === currentVendor.id).length})
+            </h3>
+
+            {withdrawals.filter(w => w.vendorId === currentVendor.id).length === 0 ? (
+              <div className="py-12 text-center text-slate-400 text-xs">
+                No withdrawals requested yet.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {withdrawals.filter(w => w.vendorId === currentVendor.id).map(w => (
+                  <div key={w.id} className="py-3.5 flex justify-between items-center gap-3">
+                    <div className="space-y-1 text-left">
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        {formatPrice(w.amount)}
+                      </p>
+                      <p className="text-[10px] text-slate-400 font-mono">
+                        via {w.method.toUpperCase()} &bull; {w.details}
+                      </p>
+                      <p className="text-[9px] text-slate-400">Requested: {new Date(w.createdAt).toLocaleDateString()}</p>
+                    </div>
+
+                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${
+                      w.status === 'approved' 
+                        ? 'bg-emerald-100 text-emerald-800' 
+                        : w.status === 'pending'
+                        ? 'bg-amber-100 text-amber-800'
+                        : 'bg-rose-100 text-rose-800'
+                    }`}>
+                      {w.status}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+        </div>
+      )}
+
+    </div>
+  );
+}
