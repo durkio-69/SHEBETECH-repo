@@ -117,7 +117,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
     if (foundProduct) {
       onAddToCart(foundProduct, 1);
-      onShowToast(`Re-ordered "${foundProduct.title.split(' - ')[0]}"! Added to cart.`);
+      onShowToast(`Re-ordered "${(foundProduct.title || '').split(' - ')[0]}"! Added to cart.`);
     } else {
       const fallbackProduct: Product = {
         id: `reorder-${Date.now()}`,

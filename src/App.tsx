@@ -249,7 +249,7 @@ export default function App() {
     });
 
     // Display temporary success toast
-    showToast(`"${product.title.split(' - ')[0]}" added to your basket!`);
+    showToast(`"${(product?.title || '').split(' - ')[0]}" added to your basket!`);
   };
 
   const handleUpdateQuantity = (

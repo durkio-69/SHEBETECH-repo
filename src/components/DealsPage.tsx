@@ -130,6 +130,7 @@ export default function DealsPage({
 
   // Mock static claim percentages to simulate live high-velocity buying (Requirement 1 & Jumia style)
   const getClaimedPercentage = (productId: string) => {
+    if (!productId) return 55;
     const sum = productId.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     return 40 + (sum % 48); // range 40% to 88%
   };

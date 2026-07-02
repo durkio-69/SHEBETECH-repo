@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Product } from '../types';
 import { PRODUCTS, UGANDA_DISTRICTS } from '../data';
+import { emitEventDrivenNotifications } from '../lib/notificationStore';
 
 interface ProductPageProps {
   product: Product;
@@ -171,6 +172,14 @@ export default function ProductPage({
       likes: 0
     };
 
+    // Trigger event driven notification for review
+    emitEventDrivenNotifications('customer_comment', {
+      customerName: userName,
+      productTitle: product.title,
+      rating: userRating,
+      comment: userComment
+    });
+
     setReviewsList([newReview, ...reviewsList]);
     setUserComment('');
     setUserName('');
@@ -202,7 +211,7 @@ export default function ProductPage({
 
     if (isPhone) {
       return [
-        { key: 'Model Series', value: p.title.split(' - ')[0] },
+        { key: 'Model Series', value: (p?.title || '').split(' - ')[0] },
         { key: 'Processor', value: 'Octa-core MediaTek Dimensity / Qualcomm Snapdragon' },
         { key: 'RAM Size', value: p.title.includes('8GB') ? '8 GB LPDDR4X' : '4 GB LPDDR4X' },
         { key: 'Storage (ROM)', value: p.title.includes('256') ? '256 GB High-speed UFS' : '128 GB High-speed UFS' },

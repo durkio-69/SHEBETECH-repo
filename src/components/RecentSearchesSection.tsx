@@ -206,7 +206,7 @@ export default function RecentSearchesSection({
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200 truncate group-hover:text-[#f68b1e] transition-colors">
-                    {p.title.split(' - ')[0]}
+                    {(p?.title || '').split(' - ')[0]}
                   </p>
                   <p className="text-[10px] font-black text-slate-500 mt-0.5">
                     {formatPrice(p.price)}

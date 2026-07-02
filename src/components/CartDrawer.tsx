@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Trash2, 
@@ -14,10 +14,14 @@ import {
   ArrowRight,
   ShieldCheck,
   Globe,
-  Wallet
+  Wallet,
+  Store,
+  MapPin,
+  MessageSquare
 } from 'lucide-react';
 import { CartItem } from '../types';
 import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, DokanOrder, isProductBulky } from '../lib/dokanStore';
+import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import Stepper, { OrderStatus } from './Stepper';
 
 interface CartDrawerProps {
@@ -60,6 +64,113 @@ export default function CartDrawer({
 
   // Simulated live state tracker for stepper on success page
   const [currentOrderTrackStatus, setCurrentOrderTrackStatus] = useState<OrderStatus>('placed');
+
+  // Live Tracking and Communication states (Requirement 4)
+  const [activeRecipient, setActiveRecipient] = useState<'vendor' | 'rider'>('vendor');
+  const [vendorMessages, setVendorMessages] = useState<Array<{ sender: 'user' | 'vendor', text: string, timestamp: string }>>([
+    { sender: 'vendor', text: "Hello! We have received your order on the Dokan Pro ledger and are currently preparing it.", timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+  ]);
+  const [riderMessages, setRiderMessages] = useState<Array<{ sender: 'user' | 'rider', text: string, timestamp: string }>>([
+    { sender: 'rider', text: "Awaiting dispatch assignment. I will message you as soon as the package is ready for transit!", timestamp: new Date(Date.now() - 30000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+  ]);
+  const [chatText, setChatText] = useState('');
+  const [riderMapProgress, setRiderMapProgress] = useState(0); // 0 to 100 representing distance covered
+
+  // Animate map progress of rider in transit
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (step === 'success') {
+      if (currentOrderTrackStatus === 'transit') {
+        timer = setInterval(() => {
+          setRiderMapProgress(prev => {
+            if (prev >= 100) {
+              clearInterval(timer);
+              return 100;
+            }
+            return prev + 5;
+          });
+        }, 800);
+      } else if (currentOrderTrackStatus === 'placed' || currentOrderTrackStatus === 'dispatched') {
+        setRiderMapProgress(0);
+      } else if (currentOrderTrackStatus === 'delivered') {
+        setRiderMapProgress(100);
+      }
+    }
+    return () => clearInterval(timer);
+  }, [currentOrderTrackStatus, step]);
+
+  // Handle automatic messages from rider & vendor based on tracking stage
+  useEffect(() => {
+    if (step === 'success') {
+      if (currentOrderTrackStatus === 'dispatched') {
+        setVendorMessages(prev => [
+          ...prev,
+          { sender: 'vendor', text: "Update: Your package has been securely packed and handed over to the courier dispatch station.", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+        setRiderMessages(prev => [
+          ...prev,
+          { sender: 'rider', text: "Courier update: I am heading to pick up your package from the vendor store right now.", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      } else if (currentOrderTrackStatus === 'transit') {
+        setRiderMessages(prev => [
+          ...prev,
+          { sender: 'rider', text: "Hello! I am Ronald Express, your assigned Dokan Rider. I've collected your order and am now driving towards you. You can track my live location on the map above!", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      } else if (currentOrderTrackStatus === 'delivered') {
+        setRiderMessages(prev => [
+          ...prev,
+          { sender: 'rider', text: "I have reached your landmark and completed the delivery. Please confirm receipt and leave a review. Thanks for choosing Olimart!", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      }
+    }
+  }, [currentOrderTrackStatus, step]);
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!chatText.trim()) return;
+
+    const userMsg = {
+      sender: 'user' as const,
+      text: chatText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    if (activeRecipient === 'vendor') {
+      setVendorMessages(prev => [...prev, userMsg]);
+      const currentInput = chatText;
+      setChatText('');
+      setTimeout(() => {
+        let replyText = "We are on standby! Let us know if you need any adjustments to your order.";
+        if (currentOrderTrackStatus === 'placed') {
+          replyText = "We're currently preparing your items. Everything is in stock and we are boxing it up now!";
+        } else if (currentOrderTrackStatus === 'dispatched' || currentOrderTrackStatus === 'transit') {
+          replyText = "Your package is already with the dispatch rider. You can track their live location on the radar map above.";
+        }
+        setVendorMessages(prev => [
+          ...prev,
+          { sender: 'vendor', text: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      }, 1500);
+    } else {
+      setRiderMessages(prev => [...prev, userMsg]);
+      const currentInput = chatText;
+      setChatText('');
+      setTimeout(() => {
+        let replyText = "Hi! I am focused on the road right now but I will check your message when I stop. Be there shortly.";
+        if (currentOrderTrackStatus === 'dispatched') {
+          replyText = "Hi! I am preparing my route map. I'll pick up the items from the vendor in a moment.";
+        } else if (currentOrderTrackStatus === 'transit') {
+          replyText = `I am currently riding near Kampala Road. Speed is around 30 km/h. Distance remaining is ${(deliveryInfo.distanceKm * (1 - riderMapProgress / 100)).toFixed(1)} km!`;
+        } else if (currentOrderTrackStatus === 'delivered') {
+          replyText = "The order is already marked as delivered! Hope you love your new purchase.";
+        }
+        setRiderMessages(prev => [
+          ...prev,
+          { sender: 'rider', text: replyText, timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+        ]);
+      }, 1500);
+    }
+  };
 
   if (!isOpen) return null;
 
@@ -167,6 +278,19 @@ export default function CartDrawer({
         
         // Notify other widgets
         window.dispatchEvent(new Event('storage'));
+
+        // Trigger event driven notifications for order placed
+        emitEventDrivenNotifications('order_placed', {
+          orderId: generatedId,
+          customerName,
+          customerPhone: phoneNumber || '0772 123456',
+          items: cartItems,
+          total,
+          subtotal,
+          commission,
+          vendorEarnings,
+          customerLocation: selectedLocation
+        });
       } catch (err) {
         console.error('Dokan Order Storage error:', err);
       }
@@ -203,6 +327,16 @@ export default function CartDrawer({
         target.status = stat;
         saveDokanOrders(ords);
         window.dispatchEvent(new Event('storage'));
+
+        // Trigger event driven notification for delivery
+        if (stat === 'delivered') {
+          emitEventDrivenNotifications('order_delivered', {
+            orderId: ordId,
+            customerName: target.customerName,
+            items: target.items,
+            vendorEarnings: target.vendorEarnings
+          });
+        }
       }
     } catch (e) {
       console.error(e);
@@ -740,20 +874,177 @@ export default function CartDrawer({
               </div>
 
               {/* Dynamic Progress Stepper Tracker */}
-              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4">
-                <div className="flex justify-between items-center mb-3">
-                  <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
-                  <span className="text-[9px] bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
-                    Status: {currentOrderTrackStatus === 'placed' ? 'Order Placed' : currentOrderTrackStatus === 'dispatched' ? 'Ready for Dispatch' : currentOrderTrackStatus === 'transit' ? 'In Transit' : 'Delivered'}
-                  </span>
+              <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
+                <div>
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
+                    <span className="text-[9px] bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+                      Status: {currentOrderTrackStatus === 'placed' ? 'Order Placed' : currentOrderTrackStatus === 'dispatched' ? 'Ready for Dispatch' : currentOrderTrackStatus === 'transit' ? 'In Transit' : 'Delivered'}
+                    </span>
+                  </div>
+                  <Stepper currentStatus={currentOrderTrackStatus} />
+                  <p className="text-[9px] text-slate-400 mt-2 font-medium text-left">
+                    {currentOrderTrackStatus === 'placed' && '🕒 Seller is picking the items and preparing the package.'}
+                    {currentOrderTrackStatus === 'dispatched' && '📦 Packaged securely. Boda dispatch is allocating a rider.'}
+                    {currentOrderTrackStatus === 'transit' && '🏍️ Rider accepted! In transit with real-time location streaming.'}
+                    {currentOrderTrackStatus === 'delivered' && '🎉 Delivered safely! Thank you for supporting Kampala vendors.'}
+                  </p>
                 </div>
-                <Stepper currentStatus={currentOrderTrackStatus} />
-                <p className="text-[9px] text-slate-400 mt-2 font-medium">
-                  {currentOrderTrackStatus === 'placed' && '🕒 Seller is picking the items and preparing the package.'}
-                  {currentOrderTrackStatus === 'dispatched' && '📦 Packaged securely. Boda dispatch is allocating a rider.'}
-                  {currentOrderTrackStatus === 'transit' && '🏍️ Rider accepted! In transit with real-time location streaming.'}
-                  {currentOrderTrackStatus === 'delivered' && '🎉 Delivered safely! Thank you for supporting Kampala vendors.'}
-                </p>
+
+                {/* Simulated Google Maps Platform Radar (Requirement 4) */}
+                <div className="bg-slate-100 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800 space-y-2 text-left">
+                  <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">
+                    <span className="flex items-center gap-1">📍 Live GPS Radar (Google Maps Grounding)</span>
+                    <span className="font-mono text-orange-600">Active Node</span>
+                  </div>
+                  
+                  {/* Map Graphic Canvas Container */}
+                  <div className="relative h-28 bg-emerald-50 dark:bg-slate-900 border border-emerald-100 dark:border-slate-800 rounded-lg overflow-hidden">
+                    {/* SVG Map Lines (Roads) */}
+                    <svg className="absolute inset-0 w-full h-full stroke-slate-300 dark:stroke-slate-700 stroke-2 fill-none">
+                      <pattern id="mapGrid" width="20" height="20" patternUnits="userSpaceOnUse">
+                        <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(0,0,0,0.03)" strokeWidth="1" />
+                      </pattern>
+                      <rect width="100%" height="100%" fill="url(#mapGrid)" />
+                      
+                      {/* Dotted route path from (30, 85) Vendor -> (270, 30) Customer */}
+                      <path 
+                        id="routePath"
+                        d="M 30 85 C 100 20, 200 110, 270 30" 
+                        strokeDasharray="4 4" 
+                        stroke="#94a3b8" 
+                        strokeWidth="3"
+                      />
+                    </svg>
+
+                    {/* Vendor Icon Pin at (30, 85) */}
+                    <div className="absolute left-[30px] top-[85px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                      <div className="bg-orange-600 text-white p-1 rounded-full shadow-lg border border-white">
+                        <Store size={10} />
+                      </div>
+                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">Dokan Vendor</span>
+                    </div>
+
+                    {/* Customer Icon Pin at (270, 30) */}
+                    <div className="absolute left-[270px] top-[30px] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
+                      <div className="bg-blue-600 text-white p-1 rounded-full shadow-lg border border-white">
+                        <MapPin size={10} />
+                      </div>
+                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">You</span>
+                    </div>
+
+                    {/* Animated Motorcycle Courier Pin */}
+                    {(() => {
+                      const p = riderMapProgress / 100;
+                      // Cubic Bezier coordinates interpolation
+                      const x = (1-p)**3 * 30 + 3 * (1-p)**2 * p * 100 + 3 * (1-p) * p**2 * 200 + p**3 * 270;
+                      const y = (1-p)**3 * 85 + 3 * (1-p)**2 * p * 20 + 3 * (1-p) * p**2 * 110 + p**3 * 30;
+
+                      return (
+                        <div 
+                          className="absolute -translate-x-1/2 -translate-y-1/2 flex flex-col items-center transition-all duration-300 ease-out z-10"
+                          style={{ left: `${x}px`, top: `${y}px` }}
+                        >
+                          <div className="bg-emerald-600 text-white p-1.5 rounded-full shadow-xl border-2 border-white animate-bounce">
+                            <Truck size={12} className="text-white" />
+                          </div>
+                          <span className="text-[7px] font-black bg-emerald-100 text-emerald-800 px-1 rounded border border-emerald-300">
+                            Rider ({riderMapProgress}%)
+                          </span>
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Rider HUD Statistics */}
+                  <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2 rounded-lg text-[8px] font-extrabold text-slate-500 uppercase">
+                    <div>
+                      <p className="text-[7px] text-slate-400">Velocity</p>
+                      <p className="text-[10px] text-slate-800 dark:text-slate-200 font-mono font-bold">
+                        {currentOrderTrackStatus === 'transit' ? '32 km/h' : currentOrderTrackStatus === 'delivered' ? '0 km/h (Arrived)' : '0 km/h (Idle)'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[7px] text-slate-400">Distance Remaining</p>
+                      <p className="text-[10px] text-orange-600 font-mono font-bold">
+                        {(deliveryInfo.distanceKm * (1 - riderMapProgress / 100)).toFixed(2)} km
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[7px] text-slate-400">ETA Estimate</p>
+                      <p className="text-[10px] text-emerald-600 font-mono font-bold">
+                        {currentOrderTrackStatus === 'placed' && 'Prep...'}
+                        {currentOrderTrackStatus === 'dispatched' && 'Allocating...'}
+                        {currentOrderTrackStatus === 'transit' && `${Math.max(1, Math.round(5 * (1 - riderMapProgress / 100)))} mins`}
+                        {currentOrderTrackStatus === 'delivered' && 'Arrived'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Live Chat Communication Hub (Requirement 4) */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-3.5 text-left">
+                  <div className="flex justify-between items-center">
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                      <MessageSquare size={13} className="text-orange-600" /> Dokan Chat Center
+                    </h5>
+                    {/* Tab Switcher for recipient */}
+                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[8px] font-extrabold">
+                      <button
+                        type="button"
+                        onClick={() => setActiveRecipient('vendor')}
+                        className={`px-2 py-1 rounded cursor-pointer ${activeRecipient === 'vendor' ? 'bg-orange-600 text-white font-black' : 'text-slate-500'}`}
+                      >
+                        🏬 Vendor
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setActiveRecipient('rider')}
+                        className={`px-2 py-1 rounded cursor-pointer ${activeRecipient === 'rider' ? 'bg-orange-600 text-white font-black' : 'text-slate-500'}`}
+                      >
+                        🏍️ Rider
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Message History Scroller */}
+                  <div className="h-32 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg space-y-2 text-[10px] border border-slate-150 dark:border-slate-900">
+                    {(activeRecipient === 'vendor' ? vendorMessages : riderMessages).map((m, idx) => (
+                      <div 
+                        key={idx} 
+                        className={`flex flex-col max-w-[80%] ${m.sender === 'user' ? 'ml-auto items-end' : 'mr-auto items-start'}`}
+                      >
+                        <div 
+                          className={`px-3 py-2 rounded-2xl font-medium ${
+                            m.sender === 'user' 
+                              ? 'bg-orange-600 text-white rounded-tr-none' 
+                              : 'bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-100 rounded-tl-none'
+                          }`}
+                        >
+                          <p>{m.text}</p>
+                        </div>
+                        <span className="text-[7px] text-slate-400 mt-0.5 px-1">{m.timestamp}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Chat Input Field */}
+                  <form onSubmit={handleSendMessage} className="flex gap-1.5">
+                    <input
+                      type="text"
+                      value={chatText}
+                      onChange={(e) => setChatText(e.target.value)}
+                      placeholder={`Send text to ${activeRecipient === 'vendor' ? 'Dokan Vendor Store' : 'Delivery Rider'}...`}
+                      className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none font-bold"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-[9px] uppercase tracking-wider cursor-pointer"
+                    >
+                      Send
+                    </button>
+                  </form>
+                </div>
               </div>
 
               {/* Summary container */}
@@ -823,7 +1114,7 @@ export default function CartDrawer({
                   </span>
                 </div>
                 <div className="flex justify-between text-[9px] text-slate-500">
-                  <span>Distance to {selectedLocation.split(',')[0]}</span>
+                  <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
                   <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
                 </div>
                 <div className="text-[9px] text-slate-400 font-medium">

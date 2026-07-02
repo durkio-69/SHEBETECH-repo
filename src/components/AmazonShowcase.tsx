@@ -73,7 +73,7 @@ export default function AmazonShowcase({
                     <p className="text-[9px] font-black text-red-600 bg-red-50 dark:bg-red-950/40 px-1 py-0.5 rounded text-center inline-block">
                       {p.discountBadge || 'SAVE'}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{p.title.split(' - ')[0]}</p>
+                    <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{(p?.title || '').split(' - ')[0]}</p>
                   </div>
                 </div>
               ))}
@@ -159,7 +159,7 @@ export default function AmazonShowcase({
                     <p className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1 py-0.5 rounded text-center inline-block">
                       {p.discountBadge || 'Save'}
                     </p>
-                    <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{p.title.split(' - ')[0]}</p>
+                    <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 truncate">{(p?.title || '').split(' - ')[0]}</p>
                   </div>
                 </div>
               ))}
@@ -201,7 +201,7 @@ export default function AmazonShowcase({
                   </div>
                   <div className="mt-1">
                     <p className="text-[10px] font-black text-slate-950 dark:text-slate-50">{formatPrice(p.price)}</p>
-                    <p className="text-[9px] text-slate-400 truncate font-semibold">{p.title.split(' - ')[0]}</p>
+                    <p className="text-[9px] text-slate-400 truncate font-semibold">{(p?.title || '').split(' - ')[0]}</p>
                   </div>
                 </div>
               ))}

@@ -7,10 +7,13 @@ import {
   getDokanOrders, 
   saveDokanOrders, 
   getDokanCategories, 
+  getDokanRiders,
+  saveDokanRiders,
   DokanVendor, 
   WithdrawalRequest,
   DokanOrder
 } from '../lib/dokanStore';
+import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import { 
   Building2, 
   User, 
@@ -59,6 +62,25 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [location, setLocation] = useState('Kampala Central');
   const [businessCategory, setBusinessCategory] = useState('phones');
   const [paymentDetails, setPaymentDetails] = useState('');
+
+  // Multi-option registration role selection states (Requirement 2)
+  const [regRole, setRegRole] = useState<'vendor' | 'delivery' | 'customer'>('vendor');
+  
+  // Rider/Courier registration states
+  const [riderName, setRiderName] = useState('');
+  const [riderPhone, setRiderPhone] = useState('');
+  const [riderLocation, setRiderLocation] = useState('Kampala Central');
+  const [transportMeans, setTransportMeans] = useState<'boda' | 'bicycle' | 'van' | 'truck'>('boda');
+  const [vehiclePlate, setVehiclePlate] = useState('');
+  const [helmetOrHub, setHelmetOrHub] = useState('');
+  const [cargoVolume, setCargoVolume] = useState('');
+  const [licenseTonnage, setLicenseTonnage] = useState('');
+
+  // Customer registration states
+  const [custName, setCustName] = useState('');
+  const [custPhone, setCustPhone] = useState('');
+  const [custEmail, setCustEmail] = useState('');
+  const [custDistrict, setCustDistrict] = useState('Kampala Central');
 
   // Add product states
   const [prodTitle, setProdTitle] = useState('');
@@ -112,26 +134,82 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!storeName || !ownerName || !email || !phone) return;
+    
+    if (regRole === 'vendor') {
+      if (!storeName || !ownerName || !email || !phone) return;
+      // System automatically attaches a unique store ID like Dokan Pro (Requirement 2)
+      const uniqueSystemId = `DKN-VND-${Math.floor(1000 + Math.random() * 9000)}`;
+      const storeNameWithId = `${storeName} [${uniqueSystemId}]`;
 
-    const newVendor: DokanVendor = {
-      id: `v-${Date.now()}`,
-      name: storeName,
-      ownerName,
-      email,
-      phone,
-      location,
-      category: businessCategory,
-      status: 'pending', // Temporary dashboard gating
-      balance: 0,
-      totalSales: 0,
-      paymentDetails
-    };
+      const newVendor: DokanVendor = {
+        id: `v-${Date.now()}`,
+        name: storeNameWithId,
+        ownerName,
+        email,
+        phone,
+        location,
+        category: businessCategory,
+        status: 'pending', // Temporary dashboard gating
+        balance: 0,
+        totalSales: 0,
+        paymentDetails
+      };
 
-    const updated = [...allVendors, newVendor];
-    saveDokanVendors(updated);
-    setAllVendors(updated);
-    setCurrentVendor(newVendor);
+      const updated = [...allVendors, newVendor];
+      saveDokanVendors(updated);
+      setAllVendors(updated);
+      setCurrentVendor(newVendor);
+      alert(`🎉 Dokan Pro Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
+    } 
+    else if (regRole === 'delivery') {
+      if (!riderName || !riderPhone) return;
+      const uniqueRdrId = `DKN-RDR-${Math.floor(100 + Math.random() * 900)}`;
+      const fullRiderName = `${riderName} [${uniqueRdrId}]`;
+      
+      const newRider = {
+        id: `r-${Date.now()}`,
+        name: fullRiderName,
+        phone: riderPhone,
+        motorcyclePlate: vehiclePlate || 'BICYCLE-NA',
+        location: riderLocation,
+        completedDeliveries: 0,
+        earnings: 0,
+        transportMeans,
+        helmetOrHub: helmetOrHub || undefined,
+        cargoVolume: cargoVolume || undefined,
+        licenseTonnage: licenseTonnage || undefined
+      };
+
+      const currentRiders = getDokanRiders();
+      const updated = [...currentRiders, newRider];
+      saveDokanRiders(updated);
+      
+      alert(`🏍️ Dokan Delivery Partner Registered!\nName: ${fullRiderName}\nMeans of Transport: ${transportMeans.toUpperCase()}\nRelated category information was saved to the platform securely.\nYou can now login with this profile in the Courier Portal!`);
+      // Reset rider registration form
+      setRiderName('');
+      setRiderPhone('');
+      setVehiclePlate('');
+      setHelmetOrHub('');
+      setCargoVolume('');
+      setLicenseTonnage('');
+    }
+    else if (regRole === 'customer') {
+      if (!custName || !custPhone) return;
+      const uniqueCustId = `DKN-CST-${Math.floor(1000 + Math.random() * 9000)}`;
+      const customerProfile = {
+        id: `c-${Date.now()}`,
+        name: `${custName} [${uniqueCustId}]`,
+        phone: custPhone,
+        email: custEmail,
+        district: custDistrict,
+        balance: 100000 // Free credit for testing
+      };
+      localStorage.setItem('olimart_current_customer', JSON.stringify(customerProfile));
+      alert(`👤 Shopper Account Created!\nName: ${custName} [${uniqueCustId}]\nDistrict: ${custDistrict}\nShs 100,000 promo credit added to your local wallet!\nUse this account to purchase items and track live deliveries!`);
+      setCustName('');
+      setCustPhone('');
+      setCustEmail('');
+    }
   };
 
   const handleLogSwitch = (vendorId: string) => {
@@ -165,7 +243,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       freeDelivery: true,
       payOnDelivery: true,
       inStock: true,
-      tags: prodTags.split(',').map(t => t.trim()),
+      tags: (prodTags || '').split(',').map(t => t.trim()),
       vendors: [
         {
           id: currentVendor.id,
@@ -236,6 +314,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     });
     saveDokanVendors(updatedVendors);
     setAllVendors(updatedVendors);
+
+    // Trigger event driven notification for withdrawal
+    emitEventDrivenNotifications('withdrawal_request', {
+      vendorName: currentVendor.name,
+      amount: amountNum,
+      method: withdrawMethod,
+      details: withdrawDetails || currentVendor.paymentDetails
+    });
     
     setWithdrawAmount('');
     setWithdrawDetails('');
@@ -344,109 +430,401 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           </div>
 
           {/* Form */}
-          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm">
-            <h3 className="font-sans text-sm font-black text-slate-800 dark:text-slate-100 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <Store size={18} className="text-orange-600" /> Register New Dokan Seller Profile
-            </h3>
+          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-3xl shadow-sm space-y-4">
             
-            <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-slate-500">Store / Business Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={storeName}
-                    onChange={(e) => setStoreName(e.target.value)}
-                    placeholder="e.g. Ssebaggala Mobiles Ltd"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-500">Owner Name</label>
-                  <input
-                    type="text"
-                    required
-                    value={ownerName}
-                    onChange={(e) => setOwnerName(e.target.value)}
-                    placeholder="e.g. Moses Ssebaggala"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-slate-500">E-mail Address</label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="partner@ssebaggala.com"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-500">Contact Telephone Number</label>
-                  <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="e.g. 0772 555666"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-slate-500">Store Primary Location</label>
-                  <select
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  >
-                    <option value="Kampala Central">Kampala Central (Wandegeya / Plaza)</option>
-                    <option value="Mukono Town">Mukono Town (Ssezibwa Corridor)</option>
-                    <option value="Wakiso Center">Wakiso Center</option>
-                    <option value="Jinja District">Jinja District (Nile Basin)</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-500">Store Primary Category</label>
-                  <select
-                    value={businessCategory}
-                    onChange={(e) => setBusinessCategory(e.target.value)}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                  >
-                    {dynamicCategories.map(cat => (
-                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-500">Payout Credentials (Momo line or Bank Account)</label>
-                <input
-                  type="text"
-                  required
-                  value={paymentDetails}
-                  onChange={(e) => setPaymentDetails(e.target.value)}
-                  placeholder="e.g. MTN Mobile Money - 0772 555666"
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                />
-              </div>
-
+            {/* 3 Options Tabs Selector */}
+            <div className="flex border-b border-slate-100 dark:border-slate-800 gap-1.5 pb-2">
               <button
-                type="submit"
-                className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
+                type="button"
+                onClick={() => setRegRole('vendor')}
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                  regRole === 'vendor'
+                    ? 'bg-orange-600 text-white shadow-sm font-black'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                }`}
               >
-                Register & Submit Dokan Profile
+                🏬 Vendor Partner
               </button>
-            </form>
+              <button
+                type="button"
+                onClick={() => setRegRole('delivery')}
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                  regRole === 'delivery'
+                    ? 'bg-orange-600 text-white shadow-sm font-black'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                🏍️ Delivery Rider
+              </button>
+              <button
+                type="button"
+                onClick={() => setRegRole('customer')}
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                  regRole === 'customer'
+                    ? 'bg-orange-600 text-white shadow-sm font-black'
+                    : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
+                }`}
+              >
+                👤 Customer Buyer
+              </button>
+            </div>
+
+            {/* Render Vendor registration form */}
+            {regRole === 'vendor' && (
+              <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
+                <div className="space-y-1">
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
+                    WooCommerce Dokan Seller Account
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Store / Business Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={storeName}
+                      onChange={(e) => setStoreName(e.target.value)}
+                      placeholder="e.g. Ssebaggala Mobiles Ltd"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Owner Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={ownerName}
+                      onChange={(e) => setOwnerName(e.target.value)}
+                      placeholder="e.g. Moses Ssebaggala"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">E-mail Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="partner@ssebaggala.com"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Contact Telephone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="e.g. 0772 555666"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Store Primary Location</label>
+                    <select
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-sans font-bold"
+                    >
+                      <option value="Kampala Central">Kampala Central (Wandegeya / Plaza)</option>
+                      <option value="Mukono Town">Mukono Town (Ssezibwa Corridor)</option>
+                      <option value="Wakiso Center">Wakiso Center</option>
+                      <option value="Jinja District">Jinja District (Nile Basin)</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Store Primary Category</label>
+                    <select
+                      value={businessCategory}
+                      onChange={(e) => setBusinessCategory(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-sans font-bold"
+                    >
+                      {dynamicCategories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-slate-500">Payout Credentials (Momo line or Bank Account)</label>
+                  <input
+                    type="text"
+                    required
+                    value={paymentDetails}
+                    onChange={(e) => setPaymentDetails(e.target.value)}
+                    placeholder="e.g. MTN Mobile Money - 0772 555666"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
+                >
+                  Register Store & Generate Dokan Unique ID
+                </button>
+              </form>
+            )}
+
+            {/* Render Delivery Rider registration form */}
+            {regRole === 'delivery' && (
+              <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
+                <div className="space-y-1">
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                    Dokan Express Courier Registration
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Driver / Rider Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={riderName}
+                      onChange={(e) => setRiderName(e.target.value)}
+                      placeholder="e.g. Robert Musoke"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Contact Telephone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      value={riderPhone}
+                      onChange={(e) => setRiderPhone(e.target.value)}
+                      placeholder="e.g. 0772 123456"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Means of Transport</label>
+                    <select
+                      value={transportMeans}
+                      onChange={(e) => setTransportMeans(e.target.value as any)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-sans font-bold"
+                    >
+                      <option value="boda">🏍️ Boda Boda Motorcycle</option>
+                      <option value="bicycle">🚲 Bicycle Courier</option>
+                      <option value="van">🚐 Mini-Van Delivery</option>
+                      <option value="truck">🚚 Heavy Cargo Truck</option>
+                    </select>
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Rider Hub / Primary Location</label>
+                    <select
+                      value={riderLocation}
+                      onChange={(e) => setRiderLocation(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-sans font-bold"
+                    >
+                      <option value="Kampala Central">Kampala Central (Downtown Hub)</option>
+                      <option value="Mukono Town">Mukono Town (Ssezibwa Corridor)</option>
+                      <option value="Wakiso Center">Wakiso Center Hub</option>
+                      <option value="Jinja District">Jinja District (Nile Corridor)</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Conditional Fields depending on Transport Means (Requirement 2) */}
+                {transportMeans === 'boda' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Motorcycle Plate Number</label>
+                      <input
+                        type="text"
+                        required
+                        value={vehiclePlate}
+                        onChange={(e) => setVehiclePlate(e.target.value)}
+                        placeholder="e.g. UFA 450Y"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-500">KCCA Helmet ID Number</label>
+                      <input
+                        type="text"
+                        required
+                        value={helmetOrHub}
+                        onChange={(e) => setHelmetOrHub(e.target.value)}
+                        placeholder="e.g. HELMET-904"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {transportMeans === 'bicycle' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Safety Helmet Code</label>
+                      <input
+                        type="text"
+                        required
+                        value={helmetOrHub}
+                        onChange={(e) => setHelmetOrHub(e.target.value)}
+                        placeholder="e.g. BIKE-SAFE-221"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Assigned Dispatcher Hub</label>
+                      <input
+                        type="text"
+                        required
+                        value={vehiclePlate}
+                        onChange={(e) => setVehiclePlate(e.target.value)}
+                        placeholder="e.g. Wandegeya Express Hub"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {transportMeans === 'van' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Commercial Loading Volume</label>
+                      <input
+                        type="text"
+                        required
+                        value={cargoVolume}
+                        onChange={(e) => setCargoVolume(e.target.value)}
+                        placeholder="e.g. 15 Cubic Meters"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Commercial Driver License ID</label>
+                      <input
+                        type="text"
+                        required
+                        value={vehiclePlate}
+                        onChange={(e) => setVehiclePlate(e.target.value)}
+                        placeholder="e.g. CDL-5510-KMP"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {transportMeans === 'truck' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800 p-3.5 rounded-xl border border-slate-200 dark:border-slate-700 animate-fade-in">
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Max Payload Tonnage (Tons)</label>
+                      <input
+                        type="text"
+                        required
+                        value={licenseTonnage}
+                        onChange={(e) => setLicenseTonnage(e.target.value)}
+                        placeholder="e.g. 12 Tons"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-slate-500">Transit Cargo Route Permit</label>
+                      <input
+                        type="text"
+                        required
+                        value={vehiclePlate}
+                        onChange={(e) => setVehiclePlate(e.target.value)}
+                        placeholder="e.g. PRMT-9941-EAS"
+                        className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
+                >
+                  Register Rider & Associate Transport Category
+                </button>
+              </form>
+            )}
+
+            {/* Render Customer registration form */}
+            {regRole === 'customer' && (
+              <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
+                <div className="space-y-1">
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                    Customer Account Creation
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Full Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={custName}
+                      onChange={(e) => setCustName(e.target.value)}
+                      placeholder="e.g. Joan Nakato"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Mobile Phone Number</label>
+                    <input
+                      type="tel"
+                      required
+                      value={custPhone}
+                      onChange={(e) => setCustPhone(e.target.value)}
+                      placeholder="e.g. 0772 999111"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">E-mail Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={custEmail}
+                      onChange={(e) => setCustEmail(e.target.value)}
+                      placeholder="joan@gmail.com"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Default Shipping District</label>
+                    <select
+                      value={custDistrict}
+                      onChange={(e) => setCustDistrict(e.target.value)}
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-sans font-bold"
+                    >
+                      <option value="Kampala (Central)">Kampala Central (Wandegeya / Nakasero)</option>
+                      <option value="Mukono Town">Mukono Town</option>
+                      <option value="Wakiso Center">Wakiso Center</option>
+                      <option value="Jinja District">Jinja District</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
+                >
+                  Create Shopper Account & Credit 100k Ugx Wallet
+                </button>
+              </form>
+            )}
+
           </div>
 
         </div>

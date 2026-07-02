@@ -403,3 +403,35 @@ export function getDokanTags(): string[] {
 export function saveDokanTags(tags: string[]) {
   localStorage.setItem('dokan_tags', JSON.stringify(tags));
 }
+
+export interface DokanRider {
+  id: string;
+  name: string;
+  phone: string;
+  motorcyclePlate: string;
+  location: string;
+  completedDeliveries: number;
+  earnings: number;
+  transportMeans: 'boda' | 'bicycle' | 'van' | 'truck';
+  helmetOrHub?: string;
+  cargoVolume?: string;
+  licenseTonnage?: string;
+}
+
+const INITIAL_RIDERS: DokanRider[] = [
+  { id: 'r1', name: 'Sula Boda Boda Mukono [DKN-RDR-719]', phone: '0772 123456', motorcyclePlate: 'UFA 450Y', location: 'Mukono Town', completedDeliveries: 12, earnings: 84000, transportMeans: 'boda', helmetOrHub: 'HELMET-771' },
+  { id: 'r2', name: 'Ronald Express Kampala [DKN-RDR-114]', phone: '0701 987654', motorcyclePlate: 'UEG 112Z', location: 'Kampala Central', completedDeliveries: 45, earnings: 320000, transportMeans: 'boda', helmetOrHub: 'HELMET-102' },
+  { id: 'r3', name: 'Patrick Wakiso Courier [DKN-RDR-889]', phone: '0755 456789', motorcyclePlate: 'UEX 889A', location: 'Wakiso Center', completedDeliveries: 8, earnings: 45500, transportMeans: 'van', cargoVolume: '15 Cubic Meters' }
+];
+
+export function getDokanRiders(): DokanRider[] {
+  const saved = localStorage.getItem('dokan_riders');
+  if (saved) return JSON.parse(saved);
+  localStorage.setItem('dokan_riders', JSON.stringify(INITIAL_RIDERS));
+  return INITIAL_RIDERS;
+}
+
+export function saveDokanRiders(riders: DokanRider[]) {
+  localStorage.setItem('dokan_riders', JSON.stringify(riders));
+}
+
