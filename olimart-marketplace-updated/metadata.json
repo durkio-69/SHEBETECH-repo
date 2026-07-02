@@ -1,0 +1,6 @@
+{
+  "name": "Olimart",
+  "description": "A modern, responsive e-commerce landing page and interactive marketplace, featuring flash sales, product search, filters, dynamic cart, mobile money mock checkout, and vendor highlights.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
