@@ -32,7 +32,20 @@ export default function App() {
   const [activeApp, setActiveApp] = useState<'customer' | 'vendor' | 'delivery' | 'admin'>('customer');
 
   // Dynamic Products List state (Dokan Pro synchronized)
-  const [products, setProducts] = useState<Product[]>(PRODUCTS);
+  const [products, setProducts] = useState<Product[]>(() => {
+    try {
+      const saved = localStorage.getItem('olimart_dynamic_products');
+      return saved ? JSON.parse(saved) : PRODUCTS;
+    } catch {
+      return PRODUCTS;
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('olimart_dynamic_products', JSON.stringify(products));
+    } catch {}
+  }, [products]);
 
   // Shopping Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);

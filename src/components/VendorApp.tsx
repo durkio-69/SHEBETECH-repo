@@ -95,9 +95,16 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [withdrawMethod, setWithdrawMethod] = useState<'paypal' | 'stripe' | 'mastercard' | 'bank' | 'momo'>('momo');
   const [withdrawDetails, setWithdrawDetails] = useState('');
 
-  // Update product price state
+  // Update product price and stock state
   const [editingProdId, setEditingProdId] = useState<string | null>(null);
   const [editingPrice, setEditingPrice] = useState('');
+  const [editingStock, setEditingStock] = useState('');
+  const [editingDemand, setEditingDemand] = useState<boolean>(true);
+  const [stockFilter, setStockFilter] = useState<'all' | 'low'>('all');
+
+  // New product stock states
+  const [prodStockCount, setProdStockCount] = useState('15');
+  const [prodIsTrending, setProdIsTrending] = useState<boolean>(true);
 
   // Hydrate Dokan States
   useEffect(() => {
@@ -243,6 +250,8 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       freeDelivery: true,
       payOnDelivery: true,
       inStock: true,
+      stockCount: parseInt(prodStockCount) || 15,
+      isTrendingHigh: prodIsTrending,
       tags: (prodTags || '').split(',').map(t => t.trim()),
       vendors: [
         {
@@ -267,7 +276,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setProdTitle('');
     setProdPrice('');
     setProdImage('');
-    alert(`Success: "${prodTitle}" added to main catalog. Awaiting customers orders.`);
+    setProdStockCount('15');
+    setProdIsTrending(true);
+    alert(`Success: "${prodTitle}" added to main catalog with ${newProd.stockCount} units in stock.`);
   };
 
   // Submit withdrawal request
@@ -341,9 +352,10 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     window.dispatchEvent(new Event('storage'));
   };
 
-  // Quick edit product price
+  // Quick edit product price and stock details
   const handleUpdateProductPrice = (prodId: string) => {
     const parsedPrice = parseInt(editingPrice);
+    const parsedStock = parseInt(editingStock);
     if (isNaN(parsedPrice)) return;
 
     const updated = products.map(p => {
@@ -351,6 +363,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
         return {
           ...p,
           price: parsedPrice,
+          stockCount: isNaN(parsedStock) ? p.stockCount : parsedStock,
+          inStock: isNaN(parsedStock) ? p.inStock : parsedStock > 0,
+          isTrendingHigh: editingDemand,
           vendors: p.vendors ? p.vendors.map(v => {
             if (v.id === currentVendor?.id) {
               return { ...v, price: parsedPrice };
@@ -365,6 +380,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setProducts(updated);
     setEditingProdId(null);
     setEditingPrice('');
+    setEditingStock('');
   };
 
   const dynamicCategories = getDokanCategories();
@@ -998,6 +1014,15 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     p.vendors && p.vendors.some(v => v.id === currentVendor.id)
   );
 
+  const filteredProducts = myProducts.filter(p => {
+    if (stockFilter === 'low') {
+      const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
+      const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
+      return isTrending && stock <= 12;
+    }
+    return true;
+  });
+
   // commission metrics
   const totalMySales = currentVendor.totalSales;
   const netEarnings = Math.round(totalMySales * 0.85);
@@ -1230,6 +1255,31 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 </div>
               </div>
 
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <label className="text-slate-500">Initial Stock</label>
+                  <input
+                    type="number"
+                    required
+                    value={prodStockCount}
+                    onChange={(e) => setProdStockCount(e.target.value)}
+                    placeholder="e.g. 15"
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-slate-500">Demand level</label>
+                  <select
+                    value={prodIsTrending ? 'trending' : 'standard'}
+                    onChange={(e) => setProdIsTrending(e.target.value === 'trending')}
+                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold text-orange-600"
+                  >
+                    <option value="trending">🔥 Trending High</option>
+                    <option value="standard">📊 Standard</option>
+                  </select>
+                </div>
+              </div>
+
               <div className="space-y-1">
                 <label className="text-slate-500">Product Category</label>
                 <select
@@ -1277,48 +1327,159 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
 
           {/* List of my products */}
           <div className="md:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-              <ShoppingBag size={16} className="text-orange-600" /> Currently Posted Catalog ({myProducts.length})
-            </h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <ShoppingBag size={16} className="text-orange-600" /> Currently Posted Catalog ({myProducts.length})
+              </h3>
+              
+              {/* Stock Filter Sub-Tabs */}
+              <div className="flex gap-2 text-xs">
+                <button
+                  type="button"
+                  onClick={() => setStockFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                    stockFilter === 'all'
+                      ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900'
+                      : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
+                  }`}
+                >
+                  All Items ({myProducts.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStockFilter('low')}
+                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border flex items-center gap-1 cursor-pointer ${
+                    stockFilter === 'low'
+                      ? 'bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:text-slate-950'
+                      : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400'
+                  }`}
+                >
+                  <span>⚠️ Low Stock Alerts</span>
+                  <span className="bg-amber-700 dark:bg-amber-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
+                    {myProducts.filter(p => {
+                      const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
+                      const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
+                      return isTrending && stock <= 12;
+                    }).length}
+                  </span>
+                </button>
+              </div>
+            </div>
 
-            {myProducts.length === 0 ? (
+            {filteredProducts.length === 0 ? (
               <div className="py-12 text-center text-slate-400 text-xs">
-                No products posted by your store yet. Use the form to upload.
+                {stockFilter === 'low' 
+                  ? 'Awesome! No high-demand products are currently running low in stock!' 
+                  : 'No products posted by your store yet. Use the form to upload.'}
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {myProducts.map(p => (
-                  <div key={p.id} className="border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex gap-3">
-                    <img
-                      src={p.image}
-                      alt={p.title}
-                      className="w-14 h-14 object-contain bg-slate-50 rounded"
-                    />
-                    <div className="flex-1 space-y-1">
-                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
-                      <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
-                      <div className="flex items-center gap-2">
+                {filteredProducts.map(p => {
+                  const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
+                  const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
+                  const isLowStock = stock <= 12;
+                  const isCriticalStock = stock <= 5;
+                  const isOut = stock === 0;
+
+                  return (
+                    <div key={p.id} className="border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex flex-col justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
+                      <div className="flex gap-3">
+                        <img
+                          src={p.image}
+                          alt={p.title}
+                          className="w-14 h-14 object-contain bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-100 dark:border-slate-800"
+                        />
+                        <div className="flex-1 space-y-1">
+                          <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
+                          <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
+                          
+                          {/* Low stock badge with yellow/red color coding depending on intensity */}
+                          {isTrending && isLowStock && (
+                            <div>
+                              {isOut ? (
+                                <span className="inline-flex bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  ❌ TRENDING & OUT OF STOCK
+                                </span>
+                              ) : isCriticalStock ? (
+                                <span className="inline-flex bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                                  🔥 CRITICAL STOCK: {stock} left! (High Demand)
+                                </span>
+                              ) : (
+                                <span className="inline-flex bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                                  📈 LOW STOCK: {stock} left (High Demand)
+                                </span>
+                              )}
+                            </div>
+                          )}
+                          {!isTrending && (
+                            <div className="text-[9px] font-bold text-slate-500 flex items-center gap-1">
+                              <span>Stock: {stock} units</span>
+                              <span className="text-slate-400 font-normal">(Standard Demand)</span>
+                            </div>
+                          )}
+                          {isTrending && !isLowStock && (
+                            <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <span>🔥 Trending High</span>
+                              <span className="text-slate-300 dark:text-slate-700 font-normal">|</span>
+                              <span>Stock: {stock} (Healthy)</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Editing and detail controls */}
+                      <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between gap-2">
                         {editingProdId === p.id ? (
-                          <div className="flex items-center gap-1">
-                            <input
-                              type="number"
-                              value={editingPrice}
-                              onChange={(e) => setEditingPrice(e.target.value)}
-                              placeholder={p.price.toString()}
-                              className="w-20 border border-orange-500 rounded px-1 text-[11px] focus:outline-none bg-slate-50 dark:bg-slate-800 dark:text-white"
-                            />
-                            <button
-                              onClick={() => handleUpdateProductPrice(p.id)}
-                              className="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-500"
-                            >
-                              <Check size={10} />
-                            </button>
-                            <button
-                              onClick={() => setEditingProdId(null)}
-                              className="bg-slate-200 text-slate-700 p-1 rounded hover:bg-slate-300"
-                            >
-                              <X size={10} />
-                            </button>
+                          <div className="space-y-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg w-full text-[10px]">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div className="space-y-0.5">
+                                <label className="text-slate-500 block">Price (Shs)</label>
+                                <input
+                                  type="number"
+                                  value={editingPrice}
+                                  onChange={(e) => setEditingPrice(e.target.value)}
+                                  placeholder={p.price.toString()}
+                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
+                                />
+                              </div>
+                              <div className="space-y-0.5">
+                                <label className="text-slate-500 block">Stock Units</label>
+                                <input
+                                  type="number"
+                                  value={editingStock}
+                                  onChange={(e) => setEditingStock(e.target.value)}
+                                  placeholder={stock.toString()}
+                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
+                                />
+                              </div>
+                            </div>
+                            <div className="space-y-0.5">
+                              <label className="text-slate-500 block">Demand Index</label>
+                              <select
+                                value={editingDemand ? 'trending' : 'standard'}
+                                onChange={(e) => setEditingDemand(e.target.value === 'trending')}
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white font-bold"
+                              >
+                                <option value="trending">🔥 Trending High</option>
+                                <option value="standard">📊 Standard</option>
+                              </select>
+                            </div>
+                            <div className="flex gap-1.5 justify-end pt-1">
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateProductPrice(p.id)}
+                                className="bg-emerald-600 text-white font-black text-[9px] px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-emerald-500 cursor-pointer"
+                              >
+                                <Check size={10} /> Save
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingProdId(null)}
+                                className="bg-slate-300 text-slate-800 font-black text-[9px] px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-slate-400 cursor-pointer"
+                              >
+                                <X size={10} /> Cancel
+                              </button>
+                            </div>
                           </div>
                         ) : (
                           <>
@@ -1326,20 +1487,23 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                               {formatPrice(p.price)}
                             </span>
                             <button
+                              type="button"
                               onClick={() => {
                                 setEditingProdId(p.id);
                                 setEditingPrice(p.price.toString());
+                                setEditingStock(stock.toString());
+                                setEditingDemand(isTrending);
                               }}
-                              className="text-[9px] text-orange-600 hover:underline cursor-pointer"
+                              className="text-[10px] bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 font-black border border-orange-200/50 dark:border-orange-900/50 px-2 py-1 rounded-lg hover:bg-orange-100/50 dark:hover:bg-orange-900/40 cursor-pointer flex items-center gap-1"
                             >
-                              Edit Price
+                              Edit Stock & Price
                             </button>
                           </>
                         )}
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>

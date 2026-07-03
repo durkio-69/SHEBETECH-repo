@@ -42,6 +42,8 @@ export interface Product {
   freeDelivery: boolean;
   payOnDelivery: boolean;
   inStock: boolean;
+  stockCount?: number;
+  isTrendingHigh?: boolean;
   variations?: ProductVariation[];
   vendors?: ProductVendor[];
   reviews?: ProductReview[];
