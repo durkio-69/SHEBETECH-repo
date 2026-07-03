@@ -1042,17 +1042,56 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       
       {/* Header Panel */}
       <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
-              <CheckCircle size={10} /> Dokan Pro Partner
-            </span>
-            <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="relative">
+            {currentVendor.logo ? (
+              <img
+                src={currentVendor.logo}
+                alt="Store Logo"
+                className="w-16 h-16 rounded-full object-cover border-2 border-white/80 shadow-md bg-white"
+              />
+            ) : (
+              <div className="w-16 h-16 rounded-full bg-orange-800 text-white flex items-center justify-center font-black text-xl border-2 border-white/80 shadow-md uppercase">
+                {currentVendor.name.charAt(0)}
+              </div>
+            )}
+            <label className="absolute -bottom-1 -right-1 bg-slate-900/80 hover:bg-slate-900 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs border border-white">
+              LOGO
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                      const base64 = reader.result as string;
+                      const updatedVendor = { ...currentVendor, logo: base64 };
+                      setCurrentVendor(updatedVendor);
+                      const updatedAll = allVendors.map(v => v.id === currentVendor.id ? updatedVendor : v);
+                      setAllVendors(updatedAll);
+                      saveDokanVendors(updatedAll);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
           </div>
-          <h2 className="text-xl font-black">{currentVendor.name}</h2>
-          <p className="text-xs text-orange-100 flex items-center gap-1.5">
-            📍 Base: {currentVendor.location} &bull; owner: {currentVendor.ownerName}
-          </p>
+          
+          <div className="space-y-1 text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+              <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+                <CheckCircle size={10} /> Dokan Pro Partner
+              </span>
+              <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
+            </div>
+            <h2 className="text-xl font-black">{currentVendor.name}</h2>
+            <p className="text-xs text-orange-100 flex items-center justify-center sm:justify-start gap-1.5">
+              📍 Base: {currentVendor.location} &bull; owner: {currentVendor.ownerName}
+            </p>
+          </div>
         </div>
 
         {/* Change account switcher on the fly */}
@@ -1304,14 +1343,46 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-500">Product Image URL</label>
-                <input
-                  type="text"
-                  value={prodImage}
-                  onChange={(e) => setProdImage(e.target.value)}
-                  placeholder="Paste https:// unsplash.com/ image..."
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                />
+                <label className="text-slate-500 font-bold block">Product Image</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={prodImage}
+                    onChange={(e) => setProdImage(e.target.value)}
+                    placeholder="Paste URL or upload locally..."
+                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none text-xs"
+                  />
+                  <label className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold cursor-pointer flex items-center justify-center gap-1">
+                    <span>Upload</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setProdImage(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                </div>
+                {prodImage && (
+                  <div className="mt-1.5 relative w-16 h-16 border rounded-lg overflow-hidden bg-slate-50">
+                    <img src={prodImage} alt="Preview" className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => setProdImage('')}
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-0.5 text-[8px]"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">

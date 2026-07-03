@@ -15,7 +15,11 @@ import {
   Clock,
   ThumbsUp,
   Share2,
-  Check
+  Check,
+  Bell,
+  BellRing,
+  Mail,
+  ArrowDown
 } from 'lucide-react';
 import { Product } from '../types';
 import { PRODUCTS, UGANDA_DISTRICTS } from '../data';
@@ -72,22 +76,6 @@ export default function ProductPage({
   const [selectedVariations, setSelectedVariations] = useState<Record<string, string>>({});
   // Selected vendor ID state
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
-  
-  // Track suspended vendors to gray out/offline their offers
-  const [suspendedVendorNames, setSuspendedVendorNames] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem('dokan_vendors');
-      if (saved) {
-        const list = JSON.parse(saved);
-        const suspended = list.filter((v: any) => v.suspended).map((v: any) => v.name.toLowerCase().trim());
-        setSuspendedVendorNames(suspended);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  }, [product]);
 
   // Scroll to top on mount
   useEffect(() => {
@@ -173,10 +161,6 @@ export default function ProductPage({
       }
     });
   }
-
-  // Active/Inactive merchant suspension logic
-  const merchantName = currentVendor ? currentVendor.name : (product.vendors && product.vendors[0]?.name) || `${product.brand} Official Outlet`;
-  const isMerchantSuspended = suspendedVendorNames.includes(merchantName.toLowerCase().trim());
 
   // Handle review post
   const handleAddReview = (e: React.FormEvent) => {
@@ -501,20 +485,10 @@ export default function ProductPage({
             </div>
 
             {/* Selected Seller / Merchant details (Requirement 1 & 3) */}
-            <div className={`p-3.5 border rounded-2xl flex flex-col gap-1 text-xs transition-all ${
-              isMerchantSuspended 
-                ? 'bg-red-50/50 dark:bg-red-950/10 border-red-200 dark:border-red-900/60' 
-                : 'bg-slate-50 dark:bg-slate-950/20 border-slate-100 dark:border-slate-800/80'
-            }`}>
+            <div className="p-3.5 bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/80 rounded-2xl flex flex-col gap-1 text-xs">
               <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
                 <span>Selected Merchant offer</span>
-                {isMerchantSuspended ? (
-                  <span className="text-red-600 dark:text-red-400 font-black animate-pulse flex items-center gap-1">
-                    ⚠️ TEMPORARILY OFFLINE
-                  </span>
-                ) : (
-                  <span className="text-orange-600 dark:text-orange-400 font-black">Fast Dispatch</span>
-                )}
+                <span className="text-orange-600 dark:text-orange-400 font-black">Fast Dispatch</span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-2 mt-1">
                 <div>
@@ -537,11 +511,6 @@ export default function ProductPage({
                   </div>
                 </div>
               </div>
-              {isMerchantSuspended && (
-                <div className="mt-2 pt-2 border-t border-red-100 dark:border-red-950/40 text-[10px] text-red-700 dark:text-red-400 font-extrabold leading-normal">
-                  ⚠️ This partner store's listings are suspended by Admin moderators. Purchases are temporarily offline.
-                </div>
-              )}
             </div>
 
             {/* Variations Selector Component */}
@@ -604,17 +573,13 @@ export default function ProductPage({
                 <div className="divide-y divide-slate-100 dark:divide-slate-800">
                   {product.vendors.map((v) => {
                     const isSelected = selectedVendorId === v.id;
-                    const isSusp = suspendedVendorNames.includes(v.name.toLowerCase().trim());
                     return (
-                      <div key={v.id} className={`py-2.5 flex items-center justify-between gap-3 text-xs transition-all ${isSusp ? 'opacity-40 select-none pointer-events-none' : ''}`}>
+                      <div key={v.id} className="py-2.5 flex items-center justify-between gap-3 text-xs">
                         <div className="space-y-0.5">
                           <p className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                             {v.name}
                             {v.isOfficial && (
                               <span className="bg-blue-600 text-[8px] text-white font-black px-1 rounded uppercase tracking-wider">Official</span>
-                            )}
-                            {isSusp && (
-                              <span className="bg-red-600 text-[8px] text-white font-black px-1 rounded uppercase tracking-wider animate-pulse">Suspended</span>
                             )}
                           </p>
                           <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400 font-bold">
@@ -643,20 +608,15 @@ export default function ProductPage({
 
                           <button
                             onClick={() => {
-                              if (!isSusp) {
-                                setSelectedVendorId(isSelected ? null : v.id);
-                              }
+                              setSelectedVendorId(isSelected ? null : v.id);
                             }}
-                            disabled={isSusp}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all border ${
-                              isSusp
-                                ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 border-slate-200 dark:border-slate-800 cursor-not-allowed'
-                                : isSelected
-                                ? 'bg-orange-600 text-white border-orange-600 cursor-pointer'
-                                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50 cursor-pointer'
+                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer border ${
+                              isSelected
+                                ? 'bg-orange-600 text-white border-orange-600'
+                                : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
                             }`}
                           >
-                            {isSusp ? 'Offline' : isSelected ? 'Selected' : 'Select'}
+                            {isSelected ? 'Selected' : 'Select'}
                           </button>
                         </div>
                       </div>
@@ -729,40 +689,22 @@ export default function ProductPage({
                 </button>
               </div>
 
-               {/* Add to Basket */}
+              {/* Add to Basket */}
               <button
-                onClick={() => {
-                  if (!isMerchantSuspended) {
-                    onAddToCart(product, quantity, selectedVariations, currentVendor?.name || undefined, adjustedPrice);
-                  }
-                }}
-                disabled={isMerchantSuspended}
-                className={`flex-1 font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md text-xs uppercase tracking-wider min-w-[160px] ${
-                  isMerchantSuspended 
-                    ? 'bg-slate-200 dark:bg-slate-800 text-slate-400 cursor-not-allowed border border-slate-350 dark:border-slate-700' 
-                    : 'bg-orange-600 hover:bg-orange-500 text-white hover:scale-[1.01] active:scale-95 cursor-pointer'
-                }`}
+                onClick={() => onAddToCart(product, quantity, selectedVariations, currentVendor?.name || undefined, adjustedPrice)}
+                className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-black py-3.5 rounded-2xl flex items-center justify-center gap-2 transition-all shadow-md hover:scale-[1.01] active:scale-95 cursor-pointer text-xs uppercase tracking-wider min-w-[160px]"
               >
                 <ShoppingCart size={15} />
-                <span>{isMerchantSuspended ? 'Seller Suspended' : `Add ${quantity} to Basket`}</span>
+                <span>Add {quantity} to Basket</span>
               </button>
 
               {/* Quick Buy Trigger */}
               <button
-                onClick={() => {
-                  if (!isMerchantSuspended) {
-                    setIsQuickBuyOpen(true);
-                  }
-                }}
-                disabled={isMerchantSuspended}
-                className={`font-black py-3.5 px-6 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md text-xs uppercase tracking-wider ${
-                  isMerchantSuspended 
-                    ? 'bg-slate-250 dark:bg-slate-800/85 text-slate-450 cursor-not-allowed' 
-                    : 'bg-red-600 hover:bg-red-500 text-white hover:scale-[1.01] active:scale-95 cursor-pointer'
-                }`}
+                onClick={() => setIsQuickBuyOpen(true)}
+                className="bg-red-600 hover:bg-red-500 text-white font-black py-3.5 px-6 rounded-2xl flex items-center justify-center gap-1.5 transition-all shadow-md hover:scale-[1.01] active:scale-95 cursor-pointer text-xs uppercase tracking-wider"
               >
-                <Sparkles size={14} className={isMerchantSuspended ? '' : 'animate-pulse'} />
-                <span>{isMerchantSuspended ? 'Offline' : 'Buy Now (Express)'}</span>
+                <Sparkles size={14} className="animate-pulse" />
+                <span>Buy Now (Express)</span>
               </button>
             </div>
           </div>

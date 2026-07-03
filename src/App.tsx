@@ -336,82 +336,7 @@ export default function App() {
         onAccountClick={() => setIsAccountOpen(true)}
       />
 
-      {/* E-Commerce Multi-Portal Subheader Switcher */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800/80 sticky top-[72px] z-40 transition-colors">
-        <div className="max-w-7xl mx-auto px-4 py-2.5 sm:py-3 flex flex-wrap items-center justify-between gap-3">
-          
-          {/* Active app portal description label */}
-          <div className="flex items-center gap-2">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f68b1e] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f68b1e]"></span>
-            </span>
-            <p className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Active Portal: <span className="text-[#f68b1e] font-extrabold">{activeApp === 'customer' ? 'Kampala Customer App' : activeApp === 'vendor' ? 'WooCommerce Dokan Pro Vendor App' : activeApp === 'delivery' ? 'Boda Boda Courier dispatch' : 'Central Super Admin Console'}</span>
-            </p>
-          </div>
 
-          {/* Quick switcher buttons list */}
-          <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              onClick={() => {
-                setActiveApp('customer');
-                setActiveProductPage(null);
-                setSelectedSpecialTab('all');
-              }}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeApp === 'customer'
-                  ? 'bg-[#f68b1e] text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Laptop size={14} />
-              <span className="hidden md:inline">Customer App</span>
-              <span className="inline md:hidden">Customer</span>
-            </button>
-
-            <button
-              onClick={() => setActiveApp('vendor')}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeApp === 'vendor'
-                  ? 'bg-orange-600 text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Briefcase size={14} />
-              <span className="hidden md:inline">Vendors App</span>
-              <span className="inline md:hidden">Vendor</span>
-            </button>
-
-            <button
-              onClick={() => setActiveApp('delivery')}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeApp === 'delivery'
-                  ? 'bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <MapPin size={14} />
-              <span className="hidden md:inline">Boda Delivery</span>
-              <span className="inline md:hidden">Delivery</span>
-            </button>
-
-            <button
-              onClick={() => setActiveApp('admin')}
-              className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
-                activeApp === 'admin'
-                  ? 'bg-red-600 text-white shadow-sm'
-                  : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
-              }`}
-            >
-              <Key size={14} />
-              <span className="hidden md:inline">Super Admin</span>
-              <span className="inline md:hidden">Admin</span>
-            </button>
-          </div>
-
-        </div>
-      </div>
 
       {/* Main Content Layout */}
       <main className="flex-1 space-y-4 pb-16 md:pb-12">
@@ -668,6 +593,8 @@ export default function App() {
         onShowToast={showToast}
         currency={currency}
         onAddToCart={handleAddToCart}
+        activeApp={activeApp}
+        setActiveApp={setActiveApp}
       />
 
       {/* 12. Custom Interactive Promotion Modal */}

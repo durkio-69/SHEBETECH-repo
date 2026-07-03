@@ -767,24 +767,59 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
             {vendors.map(v => (
               <div key={v.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="space-y-1.5">
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100">{v.name}</p>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
-                      v.status === 'approved' 
-                        ? 'bg-emerald-100 text-emerald-800' 
-                        : v.status === 'pending'
-                        ? 'bg-amber-100 text-amber-800 animate-pulse'
-                        : 'bg-rose-100 text-rose-800'
-                    }`}>
-                      {v.status}
-                    </span>
-                    {v.suspended && (
-                      <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse">
-                        ⚠️ Suspended / Inactive
+                <div className="flex items-start gap-3">
+                  {v.logo ? (
+                    <img src={v.logo} alt="Store Logo" className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shadow-xs" />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 flex items-center justify-center font-black text-sm border border-slate-200 dark:border-slate-700 uppercase">
+                      {v.name.charAt(0)}
+                    </div>
+                  )}
+                  <div className="space-y-1.5">
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">{v.name}</p>
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                        v.status === 'approved' 
+                          ? 'bg-emerald-100 text-emerald-800' 
+                          : v.status === 'pending'
+                          ? 'bg-amber-100 text-amber-800 animate-pulse'
+                          : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {v.status}
                       </span>
-                    )}
-                  </div>
+                      {v.suspended && (
+                        <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse">
+                          ⚠️ Suspended / Inactive
+                        </span>
+                      )}
+                      
+                      <label className="text-[9px] bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 px-1.5 py-0.5 rounded cursor-pointer transition-colors font-bold block">
+                        Change Logo
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const base64 = reader.result as string;
+                                const updatedVendors = vendors.map(vItem => {
+                                  if (vItem.id === v.id) {
+                                    return { ...vItem, logo: base64 };
+                                  }
+                                  return vItem;
+                                });
+                                saveDokanVendors(updatedVendors);
+                                setVendors(updatedVendors);
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
 
                   <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
                     <p>👤 Owner: <span className="text-slate-700 dark:text-slate-300">{v.ownerName}</span> &bull; ✉️ {v.email}</p>
@@ -801,6 +836,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     )}
                   </div>
                 </div>
+              </div>
 
                 <div className="flex gap-2">
                   {v.status === 'pending' && (

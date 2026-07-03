@@ -13,7 +13,11 @@ import {
   TrendingUp, 
   Truck, 
   AlertCircle,
-  PhoneCall
+  PhoneCall,
+  Laptop,
+  Briefcase,
+  MapPin,
+  Key
 } from 'lucide-react';
 import { PRODUCTS } from '../data';
 import { Product } from '../types';
@@ -24,9 +28,19 @@ interface AccountModalProps {
   onShowToast: (msg: string) => void;
   currency: string;
   onAddToCart: (p: Product, q?: number) => void;
+  activeApp?: 'customer' | 'vendor' | 'delivery' | 'admin';
+  setActiveApp?: (val: 'customer' | 'vendor' | 'delivery' | 'admin') => void;
 }
 
-export default function AccountModal({ isOpen, onClose, onShowToast, currency, onAddToCart }: AccountModalProps) {
+export default function AccountModal({ 
+  isOpen, 
+  onClose, 
+  onShowToast, 
+  currency, 
+  onAddToCart,
+  activeApp = 'customer',
+  setActiveApp
+}: AccountModalProps) {
   // Authentication tab
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'orders' | 'wallet'>('login');
   
@@ -186,15 +200,15 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
               {/* Profile Card Header */}
               <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-orange-100 text-[#f68b1e] font-black text-lg rounded-full flex items-center justify-center border border-orange-200 shadow-inner">
+                  <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950 text-trust-price font-black text-lg rounded-full flex items-center justify-center border border-amber-200 shadow-inner">
                     {currentUser.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                    <h3 className="font-extrabold text-sm text-trust-text-primary dark:text-slate-100 flex items-center gap-1.5">
                       {currentUser.name}
-                      <span className="bg-[#f68b1e]/10 text-[#f68b1e] text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
+                      <span className="bg-trust-cta text-trust-text-primary text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
                     </h3>
-                    <p className="text-xs text-slate-400 font-medium">{currentUser.email}</p>
+                    <p className="text-xs text-trust-text-secondary font-medium">{currentUser.email}</p>
                     <p className="text-[10px] text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
                   </div>
                 </div>
@@ -205,6 +219,58 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                 >
                   <LogOut size={16} />
                 </button>
+              </div>
+
+              {/* Active Workspace / Role Switcher Inside Account Modal (as requested by user) */}
+              <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-[11px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                    Switch Active Workspace Portal
+                  </h4>
+                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                    Secure Switch
+                  </span>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { id: 'customer', label: 'Customer App', desc: 'Kampala Storefront', icon: <Laptop size={14} className="text-trust-link" /> },
+                    { id: 'vendor', label: 'Vendor Portal', desc: 'Dokan Seller Pro', icon: <Briefcase size={14} className="text-orange-500" /> },
+                    { id: 'delivery', label: 'Boda Dispatch', desc: 'Rider & Courier', icon: <MapPin size={14} className="text-zinc-600" /> },
+                    { id: 'admin', label: 'Super Admin', desc: 'Console Moderation', icon: <Key size={14} className="text-red-500" /> },
+                  ].map((role) => {
+                    const isSelected = activeApp === role.id;
+                    return (
+                      <button
+                        key={role.id}
+                        type="button"
+                        onClick={() => {
+                          if (setActiveApp) {
+                            setActiveApp(role.id as any);
+                            onShowToast(`Workspace switched to ${role.label}!`);
+                          }
+                        }}
+                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2 ${
+                          isSelected
+                            ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 shadow-xs ring-1 ring-amber-300'
+                            : 'bg-white dark:bg-slate-900 border-slate-150 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                        }`}
+                      >
+                        <div className="mt-0.5">{role.icon}</div>
+                        <div>
+                          <p className={`text-xs font-black uppercase tracking-wide ${
+                            isSelected ? 'text-trust-text-primary dark:text-white font-extrabold' : 'text-slate-700 dark:text-slate-300'
+                          }`}>
+                            {role.label}
+                          </p>
+                          <p className="text-[9px] text-trust-text-secondary dark:text-slate-500 font-medium">
+                            {role.desc}
+                          </p>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
 
               {/* Navigation Tabs for Account View */}
@@ -372,15 +438,14 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
               </div>
             </div>
           ) : (
-            
-            /* ANONYMOUS GUEST VIEW (LOGIN & REGISTER TABS) */
+                        /* ANONYMOUS GUEST VIEW (LOGIN & REGISTER TABS) */
             <div className="space-y-4">
               <div className="flex border-b border-slate-100 dark:border-slate-800 pb-1">
                 <button
                   onClick={() => setActiveTab('login')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'login'
-                      ? 'border-[#f68b1e] text-[#f68b1e]'
+                      ? 'border-trust-cta text-trust-text-primary dark:text-amber-400'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -390,7 +455,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                   onClick={() => setActiveTab('register')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'register'
-                      ? 'border-[#f68b1e] text-[#f68b1e]'
+                      ? 'border-trust-cta text-trust-text-primary dark:text-amber-400'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -410,7 +475,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
@@ -425,21 +490,58 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
                   </div>
 
+                  {/* PORTAL ACCESS SELECTION ON LOGIN (As requested by user) */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                      Choose Your Destination Workspace Portal
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'customer', label: 'Customer', desc: 'Shop & Checkout', icon: <Laptop size={12} className="text-trust-link" /> },
+                        { id: 'vendor', label: 'Vendor Store', desc: 'Dokan Pro Seller', icon: <Briefcase size={12} className="text-orange-500" /> },
+                        { id: 'delivery', label: 'Boda Dispatch', desc: 'Courier Rider', icon: <MapPin size={12} className="text-zinc-600" /> },
+                        { id: 'admin', label: 'Super Admin', desc: 'Control Panel', icon: <Key size={12} className="text-red-500" /> },
+                      ].map((role) => {
+                        const isSelected = activeApp === role.id;
+                        return (
+                          <button
+                            key={role.id}
+                            type="button"
+                            onClick={() => {
+                              if (setActiveApp) setActiveApp(role.id as any);
+                            }}
+                            className={`p-2 rounded-xl border text-left transition-all flex items-start gap-1.5 cursor-pointer ${
+                              isSelected
+                                ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 text-[#111111] dark:text-white font-extrabold ring-1 ring-amber-300'
+                                : 'bg-slate-50/50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            <div className="mt-0.5">{role.icon}</div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-wider">{role.label}</p>
+                              <p className="text-[8px] text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" className="rounded text-[#f68b1e] focus:ring-0" defaultChecked />
+                      <input type="checkbox" className="rounded text-amber-500 focus:ring-0" defaultChecked />
                       <span>Remember Me</span>
                     </label>
                     <button 
                       type="button" 
                       onClick={() => onShowToast("Reset password instruction sent to email!")}
-                      className="hover:text-[#f68b1e] hover:underline"
+                      className="hover:text-trust-link hover:underline text-[10px]"
                     >
                       Forgot Password?
                     </button>
@@ -447,7 +549,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
                   <button
                     type="submit"
-                    className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-trust-cta hover:bg-trust-cta-hover text-trust-text-primary py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <CheckCircle size={14} />
                     <span>Sign In Securely</span>
@@ -467,7 +569,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ivan Okello"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
@@ -482,7 +584,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
@@ -497,7 +599,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+256 772 123456"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
@@ -512,15 +614,52 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Create strong password"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
                         required
                       />
                     </div>
                   </div>
 
+                  {/* PORTAL ACCESS SELECTION ON SIGN UP (As requested by user) */}
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                      Choose Your Destination Workspace Portal
+                    </label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {[
+                        { id: 'customer', label: 'Customer', desc: 'Shop & Checkout', icon: <Laptop size={12} className="text-trust-link" /> },
+                        { id: 'vendor', label: 'Vendor Store', desc: 'Dokan Pro Seller', icon: <Briefcase size={12} className="text-orange-500" /> },
+                        { id: 'delivery', label: 'Boda Dispatch', desc: 'Courier Rider', icon: <MapPin size={12} className="text-zinc-600" /> },
+                        { id: 'admin', label: 'Super Admin', desc: 'Control Panel', icon: <Key size={12} className="text-red-500" /> },
+                      ].map((role) => {
+                        const isSelected = activeApp === role.id;
+                        return (
+                          <button
+                            key={role.id}
+                            type="button"
+                            onClick={() => {
+                              if (setActiveApp) setActiveApp(role.id as any);
+                            }}
+                            className={`p-2 rounded-xl border text-left transition-all flex items-start gap-1.5 cursor-pointer ${
+                              isSelected
+                                ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 text-[#111111] dark:text-white font-extrabold ring-1 ring-amber-300'
+                                : 'bg-slate-50/50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            }`}
+                          >
+                            <div className="mt-0.5">{role.icon}</div>
+                            <div>
+                              <p className="text-[10px] font-black uppercase tracking-wider">{role.label}</p>
+                              <p className="text-[8px] text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
                   <button
                     type="submit"
-                    className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-trust-cta hover:bg-trust-cta-hover text-trust-text-primary py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Sparkles size={14} />
                     <span>Register New Account</span>
