@@ -632,7 +632,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   />
                   <Tooltip 
                     contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '12px', color: '#fff' }}
-                    formatter={(value: any) => [`Shs ${value.toLocaleString()}`, 'Commission Revenue']}
+                    formatter={(value: any) => [`Shs ${(value ?? 0).toLocaleString()}`, 'Commission Revenue']}
                   />
                   <Line 
                     type="monotone" 

@@ -81,7 +81,7 @@ export function emitEventDrivenNotifications(
       channel: 'whatsapp',
       recipient: 'Super Admin',
       recipientContact: '0772 900000',
-      message: `🚨 Olimart Admin Radar: Order ${orderId} has been placed by ${customerName} (${customerPhone}) from ${customerLocation}. Total: Shs ${total.toLocaleString()}. Platform 15% commission is +Shs ${commission.toLocaleString()}.`,
+      message: `🚨 Olimart Admin Radar: Order ${orderId} has been placed by ${customerName} (${customerPhone}) from ${customerLocation}. Total: Shs ${(total ?? 0).toLocaleString()}. Platform 15% commission is +Shs ${(commission ?? 0).toLocaleString()}.`,
       status: 'delivered'
     });
 
@@ -90,7 +90,7 @@ export function emitEventDrivenNotifications(
       channel: 'sms',
       recipient: 'Super Admin',
       recipientContact: '0772 900000',
-      message: `Olimart Escrow Admin: Invoice ${orderId} created for Shs ${total.toLocaleString()}. Net commissions: Shs ${commission.toLocaleString()}. Assigned for auto-boda routing.`,
+      message: `Olimart Escrow Admin: Invoice ${orderId} created for Shs ${(total ?? 0).toLocaleString()}. Net commissions: Shs ${(commission ?? 0).toLocaleString()}. Assigned for auto-boda routing.`,
       status: 'delivered'
     });
 
@@ -105,17 +105,18 @@ export function emitEventDrivenNotifications(
       'Ssebaggala Mobiles Ltd': { email: 'sseba.mobiles@gmail.com', phone: '0772 555666' }
     };
 
-    items.forEach((item: any) => {
+    (items || []).forEach((item: any) => {
       const vName = item.selectedVendor || 'Tecno Official Outlet Kampala';
-      const price = item.customPrice !== undefined ? item.customPrice : item.product.price;
-      const sub = price * item.quantity;
+      const price = item.customPrice !== undefined ? item.customPrice : (item.product?.price ?? 0);
+      const qty = item.quantity ?? 1;
+      const sub = price * qty;
       const current = vendorMap.get(vName) || { sub: 0, qty: 0, email: 'sales@dokanvendor.co.ug', phone: '0700 000000' };
       
       const contacts = sampleContacts[vName] || { email: `${vName.toLowerCase().replace(/\s+/g, '')}@olimart.co.ug`, phone: '0770 123456' };
 
       vendorMap.set(vName, {
         sub: current.sub + sub,
-        qty: current.qty + item.quantity,
+        qty: current.qty + qty,
         email: contacts.email,
         phone: contacts.phone
       });
@@ -130,7 +131,7 @@ export function emitEventDrivenNotifications(
         channel: 'email',
         recipient: `Vendor: ${vendorName}`,
         recipientContact: info.email,
-        message: `Subject: [NEW ORDER] Olimart Dokan Order ${orderId} Received!\n\nDear Store Manager of ${vendorName},\n\nYou have received a new customer order on Olimart. \n\nOrder Ref: ${orderId}\nTotal Items: ${info.qty}\nSubtotal Sales: Shs ${info.sub.toLocaleString()}\nYour 85% Wallet Earnings: Shs ${vEarn.toLocaleString()} (Credited to Escrow Ledger)\nCustomer Destination: ${customerLocation}\n\nPlease prepare the shipment immediately for the Boda Courier dispatch pickup.`,
+        message: `Subject: [NEW ORDER] Olimart Dokan Order ${orderId} Received!\n\nDear Store Manager of ${vendorName},\n\nYou have received a new customer order on Olimart. \n\nOrder Ref: ${orderId}\nTotal Items: ${info.qty}\nSubtotal Sales: Shs ${(info.sub ?? 0).toLocaleString()}\nYour 85% Wallet Earnings: Shs ${(vEarn ?? 0).toLocaleString()} (Credited to Escrow Ledger)\nCustomer Destination: ${customerLocation}\n\nPlease prepare the shipment immediately for the Boda Courier dispatch pickup.`,
         status: 'delivered'
       });
 
@@ -140,7 +141,7 @@ export function emitEventDrivenNotifications(
         channel: 'sms',
         recipient: `Vendor: ${vendorName}`,
         recipientContact: info.phone,
-        message: `Olimart Dokan: New Order ${orderId} received for ${vendorName}! Items count: ${info.qty}. Wallet earnings: +Shs ${vEarn.toLocaleString()} credited. Fulfill immediately.`,
+        message: `Olimart Dokan: New Order ${orderId} received for ${vendorName}! Items count: ${info.qty}. Wallet earnings: +Shs ${(vEarn ?? 0).toLocaleString()} credited. Fulfill immediately.`,
         status: 'delivered'
       });
     });
@@ -156,11 +157,12 @@ export function emitEventDrivenNotifications(
       'Ssebaggala Mobiles Ltd': { email: 'sseba.mobiles@gmail.com', phone: '0772 555666' }
     };
 
-    items.forEach((item: any) => {
+    (items || []).forEach((item: any) => {
       const vName = item.selectedVendor || 'Tecno Official Outlet Kampala';
       const contacts = sampleContacts[vName] || { email: 'sales@vendor.co.ug', phone: '0770 123456' };
-      const itemPrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
-      const earn = Math.round(itemPrice * item.quantity * 0.85);
+      const itemPrice = item.customPrice !== undefined ? item.customPrice : (item.product?.price ?? 0);
+      const qty = item.quantity ?? 1;
+      const earn = Math.round(itemPrice * qty * 0.85);
 
       // SMS notification to Vendor on delivery
       addDokanNotification({
@@ -168,7 +170,7 @@ export function emitEventDrivenNotifications(
         channel: 'sms',
         recipient: `Vendor: ${vName}`,
         recipientContact: contacts.phone,
-        message: `Olimart Dispatch: Order ${orderId} has been successfully delivered to ${customerName}. Shs ${earn.toLocaleString()} is fully cleared in your available wallet. Mwebale!`,
+        message: `Olimart Dispatch: Order ${orderId} has been successfully delivered to ${customerName}. Shs ${(earn ?? 0).toLocaleString()} is fully cleared in your available wallet. Mwebale!`,
         status: 'delivered'
       });
 
@@ -203,7 +205,7 @@ export function emitEventDrivenNotifications(
       channel: 'email',
       recipient: 'Super Admin',
       recipientContact: 'admin@olimart.co.ug',
-      message: `Subject: [ALERT] Payout Withdrawal Request from ${vendorName}\n\nOlimart Central Treasury,\n\nVendor "${vendorName}" has submitted a new payout request for Shs ${amount.toLocaleString()} using the payment route: "${method}".\n\nPayout details: ${details}\n\nPlease audit their commission ledger and approve or deny this transaction immediately in the Admin Console.`,
+      message: `Subject: [ALERT] Payout Withdrawal Request from ${vendorName}\n\nOlimart Central Treasury,\n\nVendor "${vendorName}" has submitted a new payout request for Shs ${(amount ?? 0).toLocaleString()} using the payment route: "${method}".\n\nPayout details: ${details}\n\nPlease audit their commission ledger and approve or deny this transaction immediately in the Admin Console.`,
       status: 'delivered'
     });
 
@@ -212,7 +214,7 @@ export function emitEventDrivenNotifications(
       channel: 'whatsapp',
       recipient: 'Super Admin',
       recipientContact: '0772 900000',
-      message: `💸 Olympus Treasury Alert: Vendor "${vendorName}" has requested a payout of Shs ${amount.toLocaleString()} via ${method.toUpperCase()} (${details}). Review at /admin-withdrawals.`,
+      message: `💸 Olympus Treasury Alert: Vendor "${vendorName}" has requested a payout of Shs ${(amount ?? 0).toLocaleString()} via ${method.toUpperCase()} (${details}). Review at /admin-withdrawals.`,
       status: 'delivered'
     });
   }
