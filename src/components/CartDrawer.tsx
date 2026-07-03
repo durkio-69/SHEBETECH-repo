@@ -20,7 +20,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { CartItem } from '../types';
-import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky } from '../lib/dokanStore';
+import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky, calculateOrderCommissionAndEarnings, getAdminSettings, isItemBulky } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import Stepper, { OrderStatus } from './Stepper';
 
@@ -206,8 +206,7 @@ export default function CartDrawer({
       const generatedId = `OM-${Math.floor(10000 + Math.random() * 90000)}-${selectedLocation.substring(0, 3).toUpperCase()}`;
       setOrderId(generatedId);
       
-      const commission = Math.round(subtotal * 0.15);
-      const vendorEarnings = subtotal - commission;
+      const { commission, vendorEarnings } = calculateOrderCommissionAndEarnings(cartItems);
 
       // 1. Save to central Dokan Pro Store orders
       try {
@@ -235,12 +234,16 @@ export default function CartDrawer({
 
         // 2. Distribute funds to vendors' wallets
         const vendors = getDokanVendors();
+        const settings = getAdminSettings();
         cartItems.forEach(item => {
           const vName = item.selectedVendor || 'Tecno Official Outlet Kampala';
           const matched = vendors.find(v => v.name.toLowerCase() === vName.toLowerCase() || v.ownerName.toLowerCase() === vName.toLowerCase());
           const itemPrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
           const itemSubtotal = itemPrice * item.quantity;
-          const itemEarn = Math.round(itemSubtotal * 0.85);
+          
+          const isBulky = isItemBulky(item.product);
+          const commRate = isBulky ? settings.bulkyCommission : settings.lightCommission;
+          const itemEarn = itemSubtotal - Math.round(itemSubtotal * (commRate / 100));
 
           if (matched) {
             matched.balance += itemEarn;

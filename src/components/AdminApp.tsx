@@ -26,7 +26,11 @@ import {
   addAdminLog,
   getAdminLogs,
   saveAdminLogs,
-  AdminLog
+  AdminLog,
+  getAdminSettings,
+  saveAdminSettings,
+  isItemBulky,
+  AdminCommissionSettings
 } from '../lib/dokanStore';
 import { 
   ShieldAlert, 
@@ -111,6 +115,17 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
   const [brandsList, setBrandsList] = useState<string[]>(['Tecno', 'Infinix', 'Apple', 'Samsung', 'Hisense', 'Nile Fresh']);
   const [tagsList, setTagsList] = useState<string[]>(['Dokan Pro', 'Verified', 'Bulky Cargo', 'Kampala Local', 'Discounted']);
+
+  // Admin Commission & Transport Settings State
+  const [adminSettings, setAdminSettingsState] = useState<AdminCommissionSettings>(() => getAdminSettings());
+
+  const handleSaveSettings = (e: React.FormEvent) => {
+    e.preventDefault();
+    saveAdminSettings(adminSettings);
+    addAdminLog('SETTINGS_UPDATE', `Updated global pricing rules: Bulky Comm: ${adminSettings.bulkyCommission}%, Light Comm: ${adminSettings.lightCommission}%, Bulky Transport: Shs ${adminSettings.bulkyTransportRate}/km, Light Transport: Shs ${adminSettings.lightTransportRate}/km`, 'success');
+    window.dispatchEvent(new Event('storage'));
+    alert('🎉 Global Commission and Transport pricing parameters updated successfully!');
+  };
 
   // Hydrate admin data
   useEffect(() => {
@@ -1024,38 +1039,200 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
       {/* TAB 5: MODERATE CATALOG */}
       {activeTab === 'catalog' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
-            Catalog moderator (Moderation of products posted by ALL vendors)
-          </h3>
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div>
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+                Catalog Moderator & Global Pricing Configurations
+              </h3>
+              <p className="text-xs text-slate-400 mt-1">
+                Configure commission policies and delivery fees. Set individual overrides on products.
+              </p>
+            </div>
+          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {products.map(p => (
-              <div key={p.id} className="border border-slate-100 dark:border-slate-800 rounded-2xl p-3.5 space-y-3 flex flex-col justify-between">
-                <div className="flex gap-3">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className="w-12 h-12 object-contain bg-slate-50 dark:bg-slate-800 rounded-lg"
-                  />
-                  <div className="space-y-0.5">
-                    <p className="text-xs font-black text-slate-900 dark:text-white line-clamp-2">{p.title}</p>
-                    <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
-                    <p className="text-[11px] font-black text-slate-950 dark:text-slate-100">{formatPrice(p.price)}</p>
+          {/* Global Commission & Transport Settings Card */}
+          <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
+            <div className="flex items-center gap-2">
+              <Percent className="text-orange-600" size={18} />
+              <h4 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+                Global Commission & Shipping Tariffs
+              </h4>
+            </div>
+            <p className="text-xs text-slate-550 leading-relaxed font-medium">
+              Define the platform's commercial guidelines. Products are categorized into <strong className="text-orange-600">Bulky</strong> (e.g. appliances, heavy solar equipment) and <strong className="text-orange-600">Light</strong> (e.g. phones, beauty products, garments). Commissions and courier boda rates will calculate automatically based on these variables.
+            </p>
+
+            <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
+              {/* Commission Rates */}
+              <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl">
+                <p className="font-black text-orange-600 uppercase tracking-wide text-[10px]">Commission Rates (%)</p>
+                
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Bulky Products Commission (%)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      max="100"
+                      value={adminSettings.bulkyCommission}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, bulkyCommission: Number(e.target.value) })}
+                      className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Light Products Commission (%)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      max="100"
+                      value={adminSettings.lightCommission}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, lightCommission: Number(e.target.value) })}
+                      className="w-20 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
                   </div>
                 </div>
+              </div>
 
-                <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between text-[10px] font-extrabold text-slate-500">
-                  <span>Brand: {p.brand}</span>
-                  <button
-                    onClick={() => handleDeleteProduct(p.id)}
-                    className="text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer font-black"
-                  >
-                    <Trash2 size={12} /> Moderate & Delete
-                  </button>
+              {/* Delivery Tariffs */}
+              <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl">
+                <p className="font-black text-orange-600 uppercase tracking-wide text-[10px]">Boda Transport & Shipping Tariffs (UGX)</p>
+                
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Bulky Rate (per KM)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={adminSettings.bulkyTransportRate}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, bulkyTransportRate: Number(e.target.value) })}
+                      className="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Light Rate (per KM)</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={adminSettings.lightTransportRate}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, lightTransportRate: Number(e.target.value) })}
+                      className="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center border-t border-slate-100 dark:border-slate-800 pt-2">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Bulky Min Fee</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={adminSettings.bulkyTransportMin}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, bulkyTransportMin: Number(e.target.value) })}
+                      className="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <label className="text-slate-600 dark:text-slate-300 font-bold">Light Min Fee</label>
+                    <input
+                      type="number"
+                      required
+                      min="0"
+                      value={adminSettings.lightTransportMin}
+                      onChange={(e) => setAdminSettingsState({ ...adminSettings, lightTransportMin: Number(e.target.value) })}
+                      className="w-24 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-2 py-1 text-center font-bold text-slate-800 dark:text-white"
+                    />
+                  </div>
                 </div>
               </div>
-            ))}
+
+              {/* Submit settings button */}
+              <div className="md:col-span-2 flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold px-6 py-2.5 rounded-xl uppercase tracking-wider transition-all duration-200 cursor-pointer shadow-md text-xs"
+                >
+                  Save pricing configurations
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Product list with Type override options */}
+          <div className="space-y-3">
+            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+              Assigned Products List & Overrides ({products.length} products)
+            </h4>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {products.map(p => (
+                <div key={p.id} className="border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-3 flex flex-col justify-between bg-white dark:bg-slate-900 shadow-sm hover:shadow-md transition-shadow">
+                  <div className="space-y-2">
+                    <div className="flex gap-3">
+                      <img
+                        src={p.image}
+                        alt={p.title}
+                        className="w-12 h-12 object-contain bg-slate-50 dark:bg-slate-800 rounded-lg p-1"
+                        referrerPolicy="no-referrer"
+                      />
+                      <div className="space-y-0.5 flex-1">
+                        <p className="text-xs font-black text-slate-900 dark:text-white line-clamp-2 leading-tight">{p.title}</p>
+                        <p className="text-[10px] text-slate-400 capitalize font-semibold">Category: {p.category}</p>
+                        <p className="text-[11px] font-mono font-black text-orange-600 dark:text-orange-500">{formatPrice(p.price)}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-1.5 pt-1">
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${
+                        isItemBulky(p) 
+                          ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-900/30' 
+                          : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-300 dark:border-indigo-900/30'
+                      }`}>
+                        {isItemBulky(p) ? '📦 Bulky Cargo' : '🪶 Light Product'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
+                    <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-500">
+                      <span>Brand: {p.brand}</span>
+                      <button
+                        onClick={() => handleDeleteProduct(p.id)}
+                        className="text-rose-600 hover:text-rose-700 flex items-center gap-1 cursor-pointer font-black transition-colors"
+                      >
+                        <Trash2 size={12} /> Delete
+                      </button>
+                    </div>
+
+                    {/* Quick switch override */}
+                    <div className="flex items-center justify-between pt-1 border-t border-dashed border-slate-100 dark:border-slate-800 text-[10px] font-bold">
+                      <span className="text-slate-400">Class Override:</span>
+                      <button
+                        onClick={() => {
+                          const currentIsBulky = isItemBulky(p);
+                          const targetType = currentIsBulky ? 'light' : 'bulky';
+                          const updated = products.map(prod => {
+                            if (prod.id === p.id) {
+                              return { ...prod, productType: targetType as 'bulky' | 'light' };
+                            }
+                            return prod;
+                          });
+                          setProducts(updated);
+                          localStorage.setItem('olimart_dynamic_products', JSON.stringify(updated));
+                          addAdminLog('PRODUCT_TYPE_TOGGLE', `Toggled product "${p.title.split(' - ')[0]}" type state to "${targetType.toUpperCase()}" override`, 'info');
+                          window.dispatchEvent(new Event('storage'));
+                        }}
+                        className="text-[10px] font-black px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700 uppercase tracking-wider transition-colors cursor-pointer"
+                      >
+                        Set {isItemBulky(p) ? '🪶 Light' : '📦 Bulky'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

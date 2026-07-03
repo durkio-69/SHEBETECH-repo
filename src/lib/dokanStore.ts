@@ -64,10 +64,78 @@ export interface DokanCategory {
   imageUrl: string;
 }
 
+export interface AdminCommissionSettings {
+  bulkyCommission: number; // e.g., 15 for 15%
+  lightCommission: number; // e.g., 8 for 8%
+  bulkyTransportRate: number; // e.g., 2800 Shs / km
+  lightTransportRate: number; // e.g., 1200 Shs / km
+  bulkyTransportMin: number; // e.g., 7500 Shs
+  lightTransportMin: number; // e.g., 3000 Shs
+}
+
+const DEFAULT_ADMIN_SETTINGS: AdminCommissionSettings = {
+  bulkyCommission: 15,
+  lightCommission: 8,
+  bulkyTransportRate: 2800,
+  lightTransportRate: 1200,
+  bulkyTransportMin: 7500,
+  lightTransportMin: 3000,
+};
+
+export function getAdminSettings(): AdminCommissionSettings {
+  const saved = localStorage.getItem('olimart_admin_settings');
+  if (saved) {
+    try {
+      return { ...DEFAULT_ADMIN_SETTINGS, ...JSON.parse(saved) };
+    } catch (e) {
+      return DEFAULT_ADMIN_SETTINGS;
+    }
+  }
+  return DEFAULT_ADMIN_SETTINGS;
+}
+
+export function saveAdminSettings(settings: AdminCommissionSettings) {
+  localStorage.setItem('olimart_admin_settings', JSON.stringify(settings));
+}
+
 // Bulky product verification
 export function isProductBulky(category: string): boolean {
   const c = category.toLowerCase();
   return c === 'electronics' || c === 'home' || c === 'farmers-market';
+}
+
+export function isItemBulky(product: Product): boolean {
+  if (product.productType) {
+    return product.productType === 'bulky';
+  }
+  return isProductBulky(product.category);
+}
+
+// Calculate commission and vendor earnings for a given list of cart items
+export function calculateOrderCommissionAndEarnings(items: CartItem[]): {
+  commission: number;
+  vendorEarnings: number;
+} {
+  const settings = getAdminSettings();
+  let totalCommission = 0;
+  let totalSubtotal = 0;
+
+  items.forEach(item => {
+    const activePrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
+    const itemSubtotal = activePrice * item.quantity;
+    totalSubtotal += itemSubtotal;
+
+    // Detect type
+    const isBulky = isItemBulky(item.product);
+    const rate = isBulky ? settings.bulkyCommission : settings.lightCommission;
+    const itemCommission = Math.round(itemSubtotal * (rate / 100));
+    totalCommission += itemCommission;
+  });
+
+  return {
+    commission: totalCommission,
+    vendorEarnings: totalSubtotal - totalCommission
+  };
 }
 
 // Distance estimator based on Uganda district grid
@@ -118,13 +186,12 @@ export function calculateDynamicDeliveryFee(items: CartItem[], deliveryDist: str
   const distanceKm = estimateDistance(vendorLoc, deliveryDist);
   
   // Detect if there are any bulky products in the cart
-  const hasBulkyItem = items.some(item => isProductBulky(item.product.category));
+  const hasBulkyItem = items.some(item => isItemBulky(item.product));
   
-  // Dynamic tariffs
-  // Bulky categories: Shs 2,800/km (min 7,500 Shs)
-  // Standard categories: Shs 1,200/km (min 3,000 Shs)
-  const ratePerKm = hasBulkyItem ? 2800 : 1200;
-  const minFee = hasBulkyItem ? 7500 : 3000;
+  // Dynamic tariffs from admin settings
+  const settings = getAdminSettings();
+  const ratePerKm = hasBulkyItem ? settings.bulkyTransportRate : settings.lightTransportRate;
+  const minFee = hasBulkyItem ? settings.bulkyTransportMin : settings.lightTransportMin;
   
   let calculated = distanceKm * ratePerKm;
   if (calculated < minFee) {

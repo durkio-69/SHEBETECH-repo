@@ -48,6 +48,7 @@ export interface Product {
   vendors?: ProductVendor[];
   reviews?: ProductReview[];
   tags?: string[];
+  productType?: 'bulky' | 'light';
 }
 
 export interface CartItem {
