@@ -12,6 +12,8 @@ export interface DokanVendor {
   balance: number; // 85% of their total sales
   totalSales: number;
   paymentDetails: string;
+  trustBadges?: string[];
+  reviews?: { id: string; customerName: string; rating: number; comment: string; date: string }[];
 }
 
 export interface WithdrawalRequest {
@@ -163,7 +165,11 @@ const INITIAL_VENDORS: DokanVendor[] = [
     status: 'approved',
     balance: 850000,
     totalSales: 1000000,
-    paymentDetails: 'Standard Chartered Bank - A/C 0102003004'
+    paymentDetails: 'Standard Chartered Bank - A/C 0102003004',
+    trustBadges: ['Authentic Products', 'Verified Business'],
+    reviews: [
+      { id: 'rev-v1-1', customerName: 'Sempijja Ronald', rating: 5, comment: 'High quality Mukwano soaps directly from factory!', date: '2026-06-29T12:00:00Z' }
+    ]
   },
   {
     id: 'v2',
@@ -176,7 +182,11 @@ const INITIAL_VENDORS: DokanVendor[] = [
     status: 'approved',
     balance: 2380000,
     totalSales: 2800000,
-    paymentDetails: 'MTN Mobile Money - 0772123456'
+    paymentDetails: 'MTN Mobile Money - 0772123456',
+    trustBadges: ['Highly Recommended', 'Speedy Processing'],
+    reviews: [
+      { id: 'rev-v2-1', customerName: 'Nakato Sarah', rating: 5, comment: 'Incredible speed in packaging and very responsive support!', date: '2026-07-01T15:20:00Z' }
+    ]
   },
   {
     id: 'v3',
@@ -189,7 +199,9 @@ const INITIAL_VENDORS: DokanVendor[] = [
     status: 'pending', // Temporary Gate trigger
     balance: 0,
     totalSales: 0,
-    paymentDetails: 'Airtel Money - 0702555666'
+    paymentDetails: 'Airtel Money - 0702555666',
+    trustBadges: [],
+    reviews: []
   }
 ];
 
@@ -416,12 +428,14 @@ export interface DokanRider {
   helmetOrHub?: string;
   cargoVolume?: string;
   licenseTonnage?: string;
+  trustBadges?: string[];
+  reviews?: { id: string; customerName: string; rating: number; comment: string; date: string }[];
 }
 
 const INITIAL_RIDERS: DokanRider[] = [
-  { id: 'r1', name: 'Sula Boda Boda Mukono [DKN-RDR-719]', phone: '0772 123456', motorcyclePlate: 'UFA 450Y', location: 'Mukono Town', completedDeliveries: 12, earnings: 84000, transportMeans: 'boda', helmetOrHub: 'HELMET-771' },
-  { id: 'r2', name: 'Ronald Express Kampala [DKN-RDR-114]', phone: '0701 987654', motorcyclePlate: 'UEG 112Z', location: 'Kampala Central', completedDeliveries: 45, earnings: 320000, transportMeans: 'boda', helmetOrHub: 'HELMET-102' },
-  { id: 'r3', name: 'Patrick Wakiso Courier [DKN-RDR-889]', phone: '0755 456789', motorcyclePlate: 'UEX 889A', location: 'Wakiso Center', completedDeliveries: 8, earnings: 45500, transportMeans: 'van', cargoVolume: '15 Cubic Meters' }
+  { id: 'r1', name: 'Sula Boda Boda Mukono [DKN-RDR-719]', phone: '0772 123456', motorcyclePlate: 'UFA 450Y', location: 'Mukono Town', completedDeliveries: 12, earnings: 84000, transportMeans: 'boda', helmetOrHub: 'HELMET-771', trustBadges: ['Safe Rider', 'Rainproof Box'], reviews: [{ id: 'rev-r1-1', customerName: 'Kato Derrick', rating: 5, comment: 'Delivered in heavy rain, but package stayed 100% dry inside his rainproof carrier box!', date: '2026-06-30T10:00:00Z' }] },
+  { id: 'r2', name: 'Ronald Express Kampala [DKN-RDR-114]', phone: '0701 987654', motorcyclePlate: 'UEG 112Z', location: 'Kampala Central', completedDeliveries: 45, earnings: 320000, transportMeans: 'boda', helmetOrHub: 'HELMET-102', trustBadges: ['Always Punctual', 'Safe Rider'], reviews: [{ id: 'rev-r2-1', customerName: 'Nakato Sarah', rating: 5, comment: 'Extremely fast Boda Boda, very polite and professional driver.', date: '2026-07-01T15:20:00Z' }] },
+  { id: 'r3', name: 'Patrick Wakiso Courier [DKN-RDR-889]', phone: '0755 456789', motorcyclePlate: 'UEX 889A', location: 'Wakiso Center', completedDeliveries: 8, earnings: 45500, transportMeans: 'van', cargoVolume: '15 Cubic Meters', trustBadges: ['Excellent Communication'], reviews: [] }
 ];
 
 export function getDokanRiders(): DokanRider[] {
@@ -433,5 +447,58 @@ export function getDokanRiders(): DokanRider[] {
 
 export function saveDokanRiders(riders: DokanRider[]) {
   localStorage.setItem('dokan_riders', JSON.stringify(riders));
+}
+
+export interface AdminLog {
+  id: string;
+  timestamp: string;
+  action: string;
+  details: string;
+  severity: 'info' | 'warning' | 'critical' | 'success';
+  ipAddress: string;
+}
+
+export function getAdminLogs(): AdminLog[] {
+  const saved = localStorage.getItem('dokan_admin_logs');
+  if (saved) return JSON.parse(saved);
+  const initialLogs: AdminLog[] = [
+    {
+      id: 'log-1',
+      timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+      action: 'SYSTEM_BOOT',
+      details: 'Olimart Dokan central database initialized on port 3000.',
+      severity: 'info',
+      ipAddress: '127.0.0.1'
+    },
+    {
+      id: 'log-2',
+      timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
+      action: 'VENDOR_APPROVAL',
+      details: 'Vendor store "Mukwano Industries Online" has been successfully approved.',
+      severity: 'success',
+      ipAddress: '192.168.1.102'
+    }
+  ];
+  localStorage.setItem('dokan_admin_logs', JSON.stringify(initialLogs));
+  return initialLogs;
+}
+
+export function saveAdminLogs(logs: AdminLog[]) {
+  localStorage.setItem('dokan_admin_logs', JSON.stringify(logs));
+}
+
+export function addAdminLog(action: string, details: string, severity: 'info' | 'warning' | 'critical' | 'success' = 'info') {
+  const logs = getAdminLogs();
+  const newLog: AdminLog = {
+    id: `log-${Math.random().toString(36).substr(2, 9)}`,
+    timestamp: new Date().toISOString(),
+    action,
+    details,
+    severity,
+    ipAddress: `197.156.${Math.floor(Math.random() * 255)}.${Math.floor(Math.random() * 255)}`
+  };
+  logs.unshift(newLog);
+  saveAdminLogs(logs);
+  window.dispatchEvent(new Event('storage'));
 }
 

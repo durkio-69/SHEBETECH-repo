@@ -17,10 +17,16 @@ import {
   saveDokanOrders, 
   getDokanCategories, 
   saveDokanCategories,
+  getDokanRiders,
+  DokanRider,
   DokanVendor, 
   WithdrawalRequest, 
   DokanOrder,
-  DokanCategory
+  DokanCategory,
+  addAdminLog,
+  getAdminLogs,
+  saveAdminLogs,
+  AdminLog
 } from '../lib/dokanStore';
 import { 
   ShieldAlert, 
@@ -55,7 +61,8 @@ import {
   ThumbsUp,
   AlertCircle,
   PlusCircle,
-  Send
+  Send,
+  Store
 } from 'lucide-react';
 import { Product } from '../types';
 import { getDokanNotifications, saveDokanNotifications, emitEventDrivenNotifications, DokanNotification } from '../lib/notificationStore';
@@ -69,10 +76,12 @@ interface AdminAppProps {
 
 export default function AdminApp({ products, setProducts, formatPrice }: AdminAppProps) {
   const [vendors, setVendors] = useState<DokanVendor[]>([]);
+  const [riders, setRiders] = useState<DokanRider[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [orders, setOrders] = useState<DokanOrder[]>([]);
   const [categories, setCategories] = useState<DokanCategory[]>([]);
-  const [activeTab, setActiveTab] = useState<'revenue' | 'vendors' | 'withdrawals' | 'orders' | 'catalog' | 'taxonomies' | 'reviews' | 'notifications' | 'database'>('revenue');
+  const [adminLogsList, setAdminLogsList] = useState<AdminLog[]>([]);
+  const [activeTab, setActiveTab] = useState<'revenue' | 'vendors' | 'withdrawals' | 'orders' | 'catalog' | 'taxonomies' | 'reviews' | 'notifications' | 'database' | 'logs'>('revenue');
 
   // Security Lock-Screen States
   const [isUnlocked, setIsUnlocked] = useState(() => {
@@ -106,10 +115,12 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   // Hydrate admin data
   useEffect(() => {
     setVendors(getDokanVendors());
+    setRiders(getDokanRiders());
     setWithdrawals(getDokanWithdrawals());
     setOrders(getDokanOrders());
     setCategories(getDokanCategories());
     setNotificationsList(getDokanNotifications());
+    setAdminLogsList(getAdminLogs());
   }, []);
 
   // Dynamic past 7 days commission aggregates
@@ -145,10 +156,12 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   useEffect(() => {
     const handleStorage = () => {
       setVendors(getDokanVendors());
+      setRiders(getDokanRiders());
       setWithdrawals(getDokanWithdrawals());
       setOrders(getDokanOrders());
       setCategories(getDokanCategories());
       setNotificationsList(getDokanNotifications());
+      setAdminLogsList(getAdminLogs());
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
@@ -156,6 +169,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
   // Admin approves vendor store
   const handleApproveVendor = (vendorId: string) => {
+    const targetVendor = vendors.find(v => v.id === vendorId);
     const updated = vendors.map(v => {
       if (v.id === vendorId) {
         return { ...v, status: 'approved' as const };
@@ -164,11 +178,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     });
     saveDokanVendors(updated);
     setVendors(updated);
+    addAdminLog('VENDOR_APPROVAL', `Approved vendor store "${targetVendor?.name || 'Unknown'}" (ID: ${vendorId})`, 'success');
     window.dispatchEvent(new Event('storage'));
     alert('Vendor profile successfully approved and published live!');
   };
 
   const handleRejectVendor = (vendorId: string) => {
+    const targetVendor = vendors.find(v => v.id === vendorId);
     const updated = vendors.map(v => {
       if (v.id === vendorId) {
         return { ...v, status: 'rejected' as const };
@@ -177,6 +193,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     });
     saveDokanVendors(updated);
     setVendors(updated);
+    addAdminLog('VENDOR_REJECTION', `Rejected vendor store "${targetVendor?.name || 'Unknown'}" (ID: ${vendorId})`, 'warning');
     window.dispatchEvent(new Event('storage'));
     alert('Vendor profile marked as rejected.');
   };
@@ -190,6 +207,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     targetReq.status = 'approved';
     saveDokanWithdrawals(reqs);
     setWithdrawals(reqs);
+    addAdminLog('WITHDRAWAL_APPROVAL', `Approved payout of Shs ${(targetReq.amount ?? 0).toLocaleString()} to "${targetReq.vendorName}" via ${targetReq.method.toUpperCase()}`, 'success');
     window.dispatchEvent(new Event('storage'));
     alert('Withdrawal wire approved! Funds released to vendor coordinates.');
   };
@@ -217,6 +235,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     saveDokanVendors(updatedVendors);
     setVendors(updatedVendors);
 
+    addAdminLog('WITHDRAWAL_DECLINE', `Declined payout of Shs ${(targetReq.amount ?? 0).toLocaleString()} to "${targetReq.vendorName}" (Funds reverted to balance)`, 'warning');
     window.dispatchEvent(new Event('storage'));
     alert('Withdrawal wire declined. Funds returned to vendor account ledger.');
   };
@@ -238,6 +257,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     const updated = [...currentCats, newCat];
     saveDokanCategories(updated);
     setCategories(updated);
+    addAdminLog('CATEGORY_CREATION', `Created category taxonomy "${newCatName}" (slug: ${newSlug})`, 'success');
     setNewCatName('');
     window.dispatchEvent(new Event('storage'));
     alert(`WooCommerce Taxonomy: Category "${newCatName}" published and sent to Vendor dashboards!`);
@@ -248,6 +268,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     e.preventDefault();
     if (!newBrand) return;
     setBrandsList([...brandsList, newBrand]);
+    addAdminLog('BRAND_CREATION', `Created brand taxonomy "${newBrand}"`, 'info');
     setNewBrand('');
     alert(`Brand "${newBrand}" registered successfully!`);
   };
@@ -256,6 +277,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     e.preventDefault();
     if (!newTag) return;
     setTagsList([...tagsList, newTag]);
+    addAdminLog('TAG_CREATION', `Created tag taxonomy "${newTag}"`, 'info');
     setNewTag('');
     alert(`Tag "${newTag}" registered successfully!`);
   };
@@ -263,8 +285,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   // Admin deletes catalog item (moderator power)
   const handleDeleteProduct = (prodId: string) => {
     if (confirm("Are you sure you want to moderate and DELETE this product from Olimart?")) {
+      const targetProd = products.find(p => p.id === prodId);
       const filtered = products.filter(p => p.id !== prodId);
       setProducts(filtered);
+      addAdminLog('PRODUCT_DELETION', `Moderator deleted product "${targetProd?.title || 'Unknown'}" (ID: ${prodId})`, 'critical');
     }
   };
 
@@ -572,6 +596,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
         >
           💾 System Database ER
         </button>
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
+            activeTab === 'logs' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          🔒 Secure Admin Logs ({adminLogsList.length})
+        </button>
       </div>
 
       {/* TAB 1: COMMISSION LEDGER */}
@@ -731,6 +763,15 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     <p>👤 Owner: <span className="text-slate-700 dark:text-slate-300">{v.ownerName}</span> &bull; ✉️ {v.email}</p>
                     <p>📞 Phone: {v.phone} &bull; 📍 Store Base: {v.location}</p>
                     <p>💳 payout Route: <span className="font-mono text-slate-800 dark:text-slate-200">{v.paymentDetails}</span></p>
+                    {v.trustBadges && v.trustBadges.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1.5 pt-1">
+                        {v.trustBadges.map(badge => (
+                          <span key={badge} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                            🏅 {badge}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -1059,47 +1100,181 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
       {/* TAB 7: REVIEWS */}
       {activeTab === 'reviews' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-4">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-            <MessageSquare size={16} className="text-orange-600" /> Customer Comments & Reviews Moderator
-          </h3>
+        <div className="space-y-6 text-left">
+          
+          {/* Section 1: Product Comments */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <MessageSquare size={16} className="text-orange-600" /> Customer Product Comments & Reviews Moderator
+            </h3>
 
-          {allReviews.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 text-xs">No customer reviews published yet.</div>
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {allReviews.map((r, i) => (
-                <div key={i} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <img
-                        src={r.productImage}
-                        alt=""
-                        className="w-8 h-8 object-contain bg-slate-50 rounded"
-                      />
+            {allReviews.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 text-xs">No customer reviews published yet.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {allReviews.map((r, i) => (
+                  <div key={i} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 text-xs">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={r.productImage}
+                          alt=""
+                          className="w-8 h-8 object-contain bg-slate-50 rounded"
+                        />
+                        <div>
+                          <p className="font-black text-slate-800 dark:text-slate-200">{r.productTitle}</p>
+                          <p className="text-[10px] text-slate-400">Reviewer: {r.name}</p>
+                        </div>
+                      </div>
+
+                      <p className="text-slate-600 dark:text-slate-300 italic font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl">
+                        &ldquo;{r.text}&rdquo;
+                      </p>
+                    </div>
+
+                    <div className="flex flex-col items-end gap-1 shrink-0">
+                      <div className="flex text-amber-400">
+                        {[...Array(5)].map((_, idx) => (
+                          <Star key={idx} size={12} fill={idx < r.rating ? 'currentColor' : 'none'} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-slate-400">{r.date}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Vendor Store Reviews and Trust Badges Ledger (Requirement 5) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <Store size={16} className="text-indigo-600" /> Dokan Store Trust Badges & Customer Feedback Ledger
+              </h3>
+              <p className="text-[11px] text-slate-400 font-bold mt-1">
+                Monitor live customer feedback and the trust badge awards given to vendor stores. Excellent for quality tracking and SLA enforcement.
+              </p>
+            </div>
+
+            <div className="space-y-6 divide-y divide-slate-100 dark:divide-slate-800">
+              {vendors.map((v) => {
+                const hasFeedback = (v.trustBadges && v.trustBadges.length > 0) || (v.reviews && v.reviews.length > 0);
+                return (
+                  <div key={v.id} className="pt-4 first:pt-0 space-y-3">
+                    <div className="flex justify-between items-start gap-2">
                       <div>
-                        <p className="font-black text-slate-800 dark:text-slate-200">{r.productTitle}</p>
-                        <p className="text-[10px] text-slate-400">Reviewer: {r.name}</p>
+                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{v.name} &bull; <span className="text-slate-500 font-bold text-[10px]">Owner: {v.ownerName}</span></h4>
+                        <p className="text-[10px] text-slate-400">📍 {v.location} &bull; 📞 {v.phone}</p>
+                      </div>
+
+                      {/* Summary of Badges */}
+                      <div className="flex flex-wrap gap-1 justify-end max-w-xs">
+                        {v.trustBadges && v.trustBadges.length > 0 ? (
+                          v.trustBadges.map((badge, bIdx) => (
+                            <span key={bIdx} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                              🏅 {badge}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-[9px] text-slate-400 italic">No trust badges awarded yet</span>
+                        )}
                       </div>
                     </div>
 
-                    <p className="text-slate-600 dark:text-slate-300 italic font-medium leading-relaxed bg-slate-50 dark:bg-slate-800/40 p-2.5 rounded-xl">
-                      &ldquo;{r.text}&rdquo;
-                    </p>
+                    {/* Customer reviews for this vendor */}
+                    {v.reviews && v.reviews.length > 0 ? (
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-3 border border-slate-150 dark:border-slate-900 space-y-2">
+                        <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">Customer Testimonials ({v.reviews.length})</p>
+                        <div className="space-y-2">
+                          {v.reviews.map((rev) => (
+                            <div key={rev.id} className="text-[11px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
+                              <div className="flex justify-between items-center">
+                                <span className="font-black text-slate-700 dark:text-slate-300">{rev.customerName}</span>
+                                <div className="flex text-amber-400">
+                                  {[...Array(5)].map((_, idx) => (
+                                    <Star key={idx} size={10} fill={idx < rev.rating ? 'currentColor' : 'none'} />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-slate-600 dark:text-slate-300 italic">"{rev.comment}"</p>
+                              <p className="text-[8px] text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-[10px] text-slate-400 italic">No testimonials written for this vendor yet.</p>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 3: Rider Reviews and Trust Badges Ledger (Requirement 5) */}
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 space-y-4">
+            <div className="border-b border-slate-100 dark:border-slate-800 pb-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <Truck size={16} className="text-emerald-600" /> Boda Boda Logistics Trust Badges & Review Monitoring
+              </h3>
+              <p className="text-[11px] text-slate-400 font-bold mt-1">
+                Easily monitor and track customer ratings, trust badges, and comments awarded to Boda Boda dispatch couriers.
+              </p>
+            </div>
+
+            <div className="space-y-6 divide-y divide-slate-100 dark:divide-slate-800">
+              {riders.map((r) => (
+                <div key={r.id} className="pt-4 first:pt-0 space-y-3">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">🏍️ {r.name} &bull; <span className="text-slate-500 font-bold text-[10px]">Courier Service</span></h4>
+                      <p className="text-[10px] text-slate-400">📞 {r.phone} &bull; Proximity: {r.proximity} &bull; Rating: {r.rating} ⭐</p>
+                    </div>
+
+                    {/* Summary of Badges */}
+                    <div className="flex flex-wrap gap-1 justify-end max-w-xs">
+                      {r.trustBadges && r.trustBadges.length > 0 ? (
+                        r.trustBadges.map((badge, bIdx) => (
+                          <span key={bIdx} className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                            🏍️ {badge}
+                          </span>
+                        ))
+                      ) : (
+                        <span className="text-[9px] text-slate-400 italic">No trust badges awarded yet</span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    <div className="flex text-amber-400">
-                      {[...Array(5)].map((_, idx) => (
-                        <Star key={idx} size={12} fill={idx < r.rating ? 'currentColor' : 'none'} />
-                      ))}
+                  {/* Customer reviews for this rider */}
+                  {r.reviews && r.reviews.length > 0 ? (
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-3 border border-slate-150 dark:border-slate-900 space-y-2">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">Rider Delivery Testimonials ({r.reviews.length})</p>
+                      <div className="space-y-2">
+                        {r.reviews.map((rev) => (
+                          <div key={rev.id} className="text-[11px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
+                            <div className="flex justify-between items-center">
+                              <span className="font-black text-slate-700 dark:text-slate-300">{rev.customerName}</span>
+                              <div className="flex text-amber-400">
+                                {[...Array(5)].map((_, idx) => (
+                                  <Star key={idx} size={10} fill={idx < rev.rating ? 'currentColor' : 'none'} />
+                                ))}
+                              </div>
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 italic">"{rev.comment}"</p>
+                            <p className="text-[8px] text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <span className="text-[10px] text-slate-400">{r.date}</span>
-                  </div>
+                  ) : (
+                    <p className="text-[10px] text-slate-400 italic">No testimonials written for this courier yet.</p>
+                  )}
                 </div>
               ))}
             </div>
-          )}
+          </div>
+
         </div>
       )}
 
@@ -1417,6 +1592,126 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               ))}
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* TAB 10: SECURE ADMINISTRATIVE AUDIT LOGS */}
+      {activeTab === 'logs' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-6">
+          <div className="border-b border-slate-100 dark:border-slate-800 pb-4 flex justify-between items-center flex-wrap gap-4">
+            <div>
+              <h3 className="text-sm font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <ShieldAlert size={18} className="text-red-600 animate-pulse" /> Secure Administrative Audit Ledger
+              </h3>
+              <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                Immutable record of sensitive database modifications, financial clearance authorizations, and platform administrative actions.
+              </p>
+            </div>
+            
+            <button
+              onClick={() => {
+                if (confirm("Are you sure you want to clear the audit logs? This action is highly audited.")) {
+                  const resetLogs: AdminLog[] = [
+                    {
+                      id: 'log-reset',
+                      timestamp: new Date().toISOString(),
+                      action: 'AUDIT_LOGS_CLEARED',
+                      details: 'Audit ledger manually cleared by Super Admin session. Fresh sequence started.',
+                      severity: 'critical',
+                      ipAddress: '127.0.0.1'
+                    }
+                  ];
+                  saveAdminLogs(resetLogs);
+                  setAdminLogsList(resetLogs);
+                  window.dispatchEvent(new Event('storage'));
+                }
+              }}
+              className="bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <Trash2 size={13} />
+              <span>Clear Audit Ledger</span>
+            </button>
+          </div>
+
+          {/* Quick Metrics */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Activities</span>
+              <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">{adminLogsList.length}</p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] uppercase font-black tracking-wider text-amber-500">Warnings / Alerts</span>
+              <p className="text-xl font-black text-amber-500 mt-1">
+                {adminLogsList.filter(l => l.severity === 'warning').length}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] uppercase font-black tracking-wider text-red-600">Critical Modifies</span>
+              <p className="text-xl font-black text-red-600 mt-1">
+                {adminLogsList.filter(l => l.severity === 'critical').length}
+              </p>
+            </div>
+            <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
+              <span className="text-[10px] uppercase font-black tracking-wider text-green-600">Secure Status</span>
+              <p className="text-xl font-black text-green-600 mt-1 flex items-center gap-1">
+                <span>100% SECURE</span>
+              </p>
+            </div>
+          </div>
+
+          {/* Table list of logs */}
+          <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-2xl">
+            <table className="w-full text-xs text-slate-700 dark:text-slate-300 text-left">
+              <thead>
+                <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400">
+                  <th className="p-3 w-44">Timestamp</th>
+                  <th className="p-3 w-40">Action Tag</th>
+                  <th className="p-3">Audit Details</th>
+                  <th className="p-3 w-28 text-center">Severity</th>
+                  <th className="p-3 w-32">Operator IP</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+                {adminLogsList.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-slate-400">
+                      No admin activities logged in this lifecycle.
+                    </td>
+                  </tr>
+                ) : (
+                  adminLogsList.map((log) => (
+                    <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/10">
+                      <td className="p-3 font-mono text-slate-500 text-[10px]">
+                        {new Date(log.timestamp).toLocaleString()}
+                      </td>
+                      <td className="p-3 font-mono text-xs font-black text-slate-900 dark:text-slate-200">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px]">
+                          {log.action}
+                        </span>
+                      </td>
+                      <td className="p-3 text-slate-700 dark:text-slate-300 font-sans text-xs">
+                        {log.details}
+                      </td>
+                      <td className="p-3 text-center">
+                        <span className={`inline-block text-[9px] px-2 py-0.5 rounded font-black uppercase ${
+                          log.severity === 'critical' ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300' :
+                          log.severity === 'warning' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' :
+                          log.severity === 'success' ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300' :
+                          'bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300'
+                        }`}>
+                          {log.severity}
+                        </span>
+                      </td>
+                      <td className="p-3 font-mono text-[10px] text-slate-500 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                        {log.ipAddress}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
       )}

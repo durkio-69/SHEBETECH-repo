@@ -20,7 +20,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { CartItem } from '../types';
-import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, DokanOrder, isProductBulky } from '../lib/dokanStore';
+import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import Stepper, { OrderStatus } from './Stepper';
 
@@ -64,6 +64,15 @@ export default function CartDrawer({
 
   // Simulated live state tracker for stepper on success page
   const [currentOrderTrackStatus, setCurrentOrderTrackStatus] = useState<OrderStatus>('placed');
+
+  // Customer feedback states (Requirement: customers can give trust badges and reviews to vendors & riders)
+  const [storeBadges, setStoreBadges] = useState<string[]>([]);
+  const [storeRating, setStoreRating] = useState<number>(5);
+  const [storeComment, setStoreComment] = useState<string>('');
+  const [riderBadges, setRiderBadges] = useState<string[]>([]);
+  const [riderRating, setRiderRating] = useState<number>(5);
+  const [riderComment, setRiderComment] = useState<string>('');
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
 
   // Live Tracking and Communication states (Requirement 4)
   const [activeRecipient, setActiveRecipient] = useState<'vendor' | 'rider'>('vendor');
@@ -343,6 +352,83 @@ export default function CartDrawer({
     }
   };
 
+  const handleSubmitFeedback = () => {
+    try {
+      const ords = getDokanOrders();
+      const targetOrder = ords.find(o => o.id === orderId);
+      if (!targetOrder) return;
+
+      const firstVendorName = targetOrder.items?.[0]?.selectedVendor || 'Tecno Official Outlet Kampala';
+
+      // 1. Update Vendor in storage
+      const vendorsList = getDokanVendors();
+      const vendorIndex = vendorsList.findIndex(v => 
+        v.name.toLowerCase() === firstVendorName.toLowerCase() || 
+        v.ownerName.toLowerCase() === firstVendorName.toLowerCase()
+      );
+
+      if (vendorIndex !== -1) {
+        const v = vendorsList[vendorIndex];
+        const updatedBadges = Array.from(new Set([...(v.trustBadges || []), ...storeBadges]));
+        const updatedReviews = [
+          ...(v.reviews || []),
+          {
+            id: `rev-${Date.now()}-v`,
+            customerName: customerName || 'Verified Buyer',
+            rating: storeRating,
+            comment: storeComment || 'Excellent vendor store!',
+            date: new Date().toISOString()
+          }
+        ];
+        vendorsList[vendorIndex] = {
+          ...v,
+          trustBadges: updatedBadges,
+          reviews: updatedReviews
+        };
+        saveDokanVendors(vendorsList);
+      }
+
+      // 2. Update Rider in storage
+      if (targetOrder.assignedRider) {
+        const ridersList = getDokanRiders();
+        const riderIndex = ridersList.findIndex(r => r.name === targetOrder.assignedRider);
+        if (riderIndex !== -1) {
+          const r = ridersList[riderIndex];
+          const updatedBadges = Array.from(new Set([...(r.trustBadges || []), ...riderBadges]));
+          const updatedReviews = [
+            ...(r.reviews || []),
+            {
+              id: `rev-${Date.now()}-r`,
+              customerName: customerName || 'Verified Customer',
+              rating: riderRating,
+              comment: riderComment || 'Excellent and very polite delivery!',
+              date: new Date().toISOString()
+            }
+          ];
+          ridersList[riderIndex] = {
+            ...r,
+            trustBadges: updatedBadges,
+            reviews: updatedReviews
+          };
+          saveDokanRiders(ridersList);
+        }
+      }
+
+      // 3. Log to Admin Audit Trail
+      addAdminLog(
+        'CUSTOMER_FEEDBACK_SUBMITTED',
+        `Customer "${customerName || 'Anonymous'}" submitted ratings & trust badges for store "${firstVendorName}" (${storeRating}⭐) and delivery agent "${targetOrder.assignedRider || 'Standard Rider'}" (${riderRating}⭐)`,
+        'success'
+      );
+
+      setFeedbackSubmitted(true);
+      window.dispatchEvent(new Event('storage'));
+      alert('Mwebale nnyo! Your trust badges and reviews have been submitted successfully. They are now live on the Admin Audit Trail and Courier Profiles!');
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleCloseAndReset = () => {
     if (step === 'success') {
       onClearCart();
@@ -350,6 +436,13 @@ export default function CartDrawer({
       setPhoneNumber('');
       setCustomerName('');
       setCustomerAddress('');
+      setStoreBadges([]);
+      setStoreRating(5);
+      setStoreComment('');
+      setRiderBadges([]);
+      setRiderRating(5);
+      setRiderComment('');
+      setFeedbackSubmitted(false);
     }
     onClose();
   };
@@ -1045,6 +1138,156 @@ export default function CartDrawer({
                     </button>
                   </form>
                 </div>
+
+                {/* CUSTOMER TRUST BADGES AND REVIEWS FEEDBACK WIDGET */}
+                {currentOrderTrackStatus === 'delivered' && (
+                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-left space-y-4">
+                    <div className="border-b border-slate-150 dark:border-slate-800 pb-2">
+                      <h5 className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                        <Sparkles size={14} className="text-amber-500 animate-pulse" /> Award Customer Trust Badges
+                      </h5>
+                      <p className="text-[10px] text-slate-500">
+                        Praise the vendor store and delivery rider by choosing official badges and entering ratings. This updates the Admin ledger and profiles in real-time.
+                      </p>
+                    </div>
+
+                    {feedbackSubmitted ? (
+                      <div className="py-4 text-center space-y-2 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
+                        <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">✔️ Feedback Registered Successfully!</p>
+                        <p className="text-[10px] text-slate-500">Your badges and ratings are live in the central super admin and courier ledgers.</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {/* 1. STORE BADGES AND REVIEW */}
+                        <div className="space-y-2.5">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🏬 Rate Vendor Store</p>
+                          
+                          {/* Stars Selector */}
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <button
+                                key={num}
+                                type="button"
+                                onClick={() => setStoreRating(num)}
+                                className={`text-base cursor-pointer focus:outline-none ${num <= storeRating ? 'text-amber-400' : 'text-slate-300'}`}
+                              >
+                                ★
+                              </button>
+                            ))}
+                            <span className="text-[10px] font-black text-slate-500 ml-1">({storeRating}/5 Stars)</span>
+                          </div>
+
+                          {/* Badges select */}
+                          <div className="space-y-1">
+                            <p className="text-[9px] text-slate-400 font-bold">Select Trust Badges for Store:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {['Authentic Products', 'Speedy Processing', 'Top Quality', 'Highly Recommended', 'Verified Business'].map((badge) => {
+                                const active = storeBadges.includes(badge);
+                                return (
+                                  <button
+                                    key={badge}
+                                    type="button"
+                                    onClick={() => {
+                                      if (active) {
+                                        setStoreBadges(storeBadges.filter(b => b !== badge));
+                                      } else {
+                                        setStoreBadges([...storeBadges, badge]);
+                                      }
+                                    }}
+                                    className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                                      active 
+                                        ? 'bg-orange-600 text-white border-orange-600' 
+                                        : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    🏅 {badge}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Comment input */}
+                          <input
+                            type="text"
+                            placeholder="Write store review comment..."
+                            value={storeComment}
+                            onChange={(e) => setStoreComment(e.target.value)}
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* 2. RIDER BADGES AND REVIEW */}
+                        <div className="space-y-2.5 border-t border-slate-150 dark:border-slate-800 pt-3">
+                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🏍️ Rate Logistics Delivery Rider</p>
+                          
+                          {/* Stars Selector */}
+                          <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((num) => (
+                              <button
+                                key={num}
+                                type="button"
+                                onClick={() => setRiderRating(num)}
+                                className={`text-base cursor-pointer focus:outline-none ${num <= riderRating ? 'text-amber-400' : 'text-slate-300'}`}
+                              >
+                                ★
+                              </button>
+                            ))}
+                            <span className="text-[10px] font-black text-slate-500 ml-1">({riderRating}/5 Stars)</span>
+                          </div>
+
+                          {/* Badges select */}
+                          <div className="space-y-1">
+                            <p className="text-[9px] text-slate-400 font-bold">Select Trust Badges for Rider:</p>
+                            <div className="flex flex-wrap gap-1">
+                              {['Safe Rider', 'Excellent Communication', 'Always Punctual', 'Rainproof Box', 'Polite & Friendly'].map((badge) => {
+                                const active = riderBadges.includes(badge);
+                                return (
+                                  <button
+                                    key={badge}
+                                    type="button"
+                                    onClick={() => {
+                                      if (active) {
+                                        setRiderBadges(riderBadges.filter(b => b !== badge));
+                                      } else {
+                                        setRiderBadges([...riderBadges, badge]);
+                                      }
+                                    }}
+                                    className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                                      active 
+                                        ? 'bg-indigo-600 text-white border-indigo-600' 
+                                        : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
+                                    }`}
+                                  >
+                                    🏍️ {badge}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* Comment input */}
+                          <input
+                            type="text"
+                            placeholder="Write rider review comment..."
+                            value={riderComment}
+                            onChange={(e) => setRiderComment(e.target.value)}
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none"
+                          />
+                        </div>
+
+                        {/* Submit Button */}
+                        <button
+                          type="button"
+                          onClick={handleSubmitFeedback}
+                          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-wider py-2.5 rounded-xl cursor-pointer"
+                        >
+                          Submit Trust Badges & Ratings
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Summary container */}

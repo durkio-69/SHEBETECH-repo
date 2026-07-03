@@ -11,7 +11,8 @@ import {
   saveDokanRiders,
   DokanVendor, 
   WithdrawalRequest,
-  DokanOrder
+  DokanOrder,
+  DokanRider
 } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import { 
@@ -52,7 +53,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [allVendors, setAllVendors] = useState<DokanVendor[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [orders, setOrders] = useState<DokanOrder[]>([]);
+  const [riders, setRiders] = useState<DokanRider[]>([]);
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet'>('dashboard');
+  const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<string | null>(null);
 
   // Registration states
   const [ownerName, setOwnerName] = useState('');
@@ -112,6 +115,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setAllVendors(vList);
     setWithdrawals(getDokanWithdrawals());
     setOrders(getDokanOrders());
+    setRiders(getDokanRiders());
 
     // Try auto logging-in as the first approved vendor "Tecno Official Outlet Kampala"
     const autoLog = vList.find(v => v.id === 'v2');
@@ -127,6 +131,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       setAllVendors(vList);
       setWithdrawals(getDokanWithdrawals());
       setOrders(getDokanOrders());
+      setRiders(getDokanRiders());
       
       if (currentVendor) {
         const refreshed = vList.find(v => v.id === currentVendor.id);
@@ -340,10 +345,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   };
 
   // Vendor order dispatcher status change (accept/cancel)
-  const handleUpdateOrderStatus = (orderId: string, newStatus: 'dispatched' | 'placed') => {
+  const handleUpdateOrderStatus = (orderId: string, newStatus: 'dispatched' | 'placed', riderName?: string) => {
     const updated = orders.map(o => {
       if (o.id === orderId) {
-        return { ...o, status: newStatus };
+        return { 
+          ...o, 
+          status: newStatus, 
+          assignedRider: riderName || o.assignedRider 
+        };
       }
       return o;
     });
@@ -1556,6 +1565,114 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                         </div>
                       ))}
                     </div>
+
+                    {o.assignedRider && (
+                      <div className="mt-2 p-2 bg-indigo-50/55 dark:bg-indigo-950/25 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-[10px] text-indigo-700 dark:text-indigo-400 font-black flex items-center gap-1">
+                        <span>🏍️ Dispatch Logistics Rider:</span>
+                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-[9px] font-mono">
+                          {o.assignedRider}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* RIDER SELECTION DRAWER */}
+                    {assigningRiderOrderId === o.id && (
+                      <div className="mt-4 p-4 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-2xl space-y-4">
+                        <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
+                          <div>
+                            <p className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                              <span>🏍️ Assign Nearest Delivery Agent</span>
+                            </p>
+                            <p className="text-[10px] text-slate-500">
+                              Displaying verified couriers. Nearest options highlighted based on customer coordinates ({o.customerLocation}).
+                            </p>
+                          </div>
+                          <button
+                            onClick={() => setAssigningRiderOrderId(null)}
+                            className="text-xs font-black text-rose-600 hover:text-rose-500 cursor-pointer"
+                          >
+                            Close
+                          </button>
+                        </div>
+
+                        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
+                          {riders.map((rider) => {
+                            const isNear = rider.location.toLowerCase() === o.customerLocation.toLowerCase() || 
+                                           rider.location.toLowerCase().includes('kampala') && o.customerLocation.toLowerCase().includes('kampala');
+                            const avgRating = rider.reviews && rider.reviews.length > 0 
+                              ? (rider.reviews.reduce((acc, curr) => acc + curr.rating, 0) / rider.reviews.length).toFixed(1)
+                              : "5.0";
+
+                            return (
+                              <div 
+                                key={rider.id} 
+                                className={`p-3 border rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white dark:bg-slate-900 transition-all ${
+                                  isNear 
+                                    ? 'border-emerald-500 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/5' 
+                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
+                                }`}
+                              >
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100">{rider.name}</span>
+                                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase">
+                                      {rider.transportMeans} • {rider.motorcyclePlate}
+                                    </span>
+                                    {isNear && (
+                                      <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
+                                        📍 Nearest (Within Area)
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                    <span>Primary Location:</span> 
+                                    <span className="font-bold text-slate-700 dark:text-slate-300">{rider.location}</span>
+                                    <span>• Ph:</span>
+                                    <span className="font-mono text-slate-700 dark:text-slate-300">{rider.phone}</span>
+                                  </p>
+
+                                  {/* Trust Badges */}
+                                  <div className="flex gap-1 flex-wrap pt-0.5">
+                                    {(rider.trustBadges || ['Safe Driver', 'Punctual']).map((badge) => (
+                                      <span 
+                                        key={badge} 
+                                        className="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/50 text-[8px] font-black px-1.5 py-0.5 rounded-md"
+                                      >
+                                        ⭐ {badge}
+                                      </span>
+                                    ))}
+                                  </div>
+
+                                  {/* Reviews Expander */}
+                                  {rider.reviews && rider.reviews.length > 0 && (
+                                    <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
+                                      <p className="text-[9px] uppercase font-black tracking-wider text-indigo-500">Customer Feedback ({avgRating} ⭐):</p>
+                                      {rider.reviews.map(rev => (
+                                        <div key={rev.id} className="text-[9px] text-slate-500 dark:text-slate-400 italic">
+                                          "{rev.comment}" — <span className="font-bold">{rev.customerName}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+
+                                <button
+                                  onClick={() => {
+                                    handleUpdateOrderStatus(o.id, 'dispatched', rider.name);
+                                    setAssigningRiderOrderId(null);
+                                    alert(`Order Assigned! 🏍️ Dispatch notice sent to courier driver "${rider.name}".`);
+                                  }}
+                                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-xl shrink-0 cursor-pointer text-center"
+                                >
+                                  Assign & Dispatch
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex flex-col items-end gap-2 shrink-0">
@@ -1566,10 +1683,10 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       {o.status === 'placed' && (
                         <>
                           <button
-                            onClick={() => handleUpdateOrderStatus(o.id, 'dispatched')}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => setAssigningRiderOrderId(o.id)}
+                            className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
                           >
-                            <PackageCheck size={12} /> Accept Dispatch
+                            <PackageCheck size={12} /> Assign Rider & Dispatch
                           </button>
                           <button
                             onClick={() => {
