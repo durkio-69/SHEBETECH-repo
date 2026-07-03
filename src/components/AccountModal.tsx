@@ -161,7 +161,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Banner Top accent */}
-        <div className="bg-gradient-to-r from-[#EA6A0C] to-red-600 px-6 py-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-[#f68b1e] to-red-600 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <User size={18} className="text-white fill-white" />
             <span className="font-black uppercase tracking-wider text-xs">
@@ -186,13 +186,13 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
               {/* Profile Card Header */}
               <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-orange-100 text-[#EA6A0C] font-black text-lg rounded-full flex items-center justify-center border border-orange-200 shadow-inner">
+                  <div className="w-12 h-12 bg-orange-100 text-[#f68b1e] font-black text-lg rounded-full flex items-center justify-center border border-orange-200 shadow-inner">
                     {currentUser.name.charAt(0)}
                   </div>
                   <div>
                     <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                       {currentUser.name}
-                      <span className="bg-[#EA6A0C]/10 text-[#EA6A0C] text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
+                      <span className="bg-[#f68b1e]/10 text-[#f68b1e] text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
                     </h3>
                     <p className="text-xs text-slate-400 font-medium">{currentUser.email}</p>
                     <p className="text-[10px] text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
@@ -218,7 +218,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                       activeTab === tab.id
-                        ? 'border-[#EA6A0C] text-[#EA6A0C]'
+                        ? 'border-[#f68b1e] text-[#f68b1e]'
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
@@ -241,7 +241,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                     currentUser.orders.map((ord) => (
                       <div 
                         key={ord.id}
-                        className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-[#EA6A0C]/30 transition-all bg-slate-50/50 dark:bg-slate-950/10 space-y-2.5"
+                        className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-[#f68b1e]/30 transition-all bg-slate-50/50 dark:bg-slate-950/10 space-y-2.5"
                       >
                         <div className="flex justify-between items-center text-[11px] font-bold">
                           <span className="text-slate-400">Order ID: <strong className="text-slate-800 dark:text-slate-100 font-extrabold">{ord.id}</strong></span>
@@ -272,7 +272,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                             
                             {/* Active Line track */}
                             <div 
-                              className="absolute left-[30px] top-[14px] h-[3px] bg-[#EA6A0C] transition-all duration-500 -z-0" 
+                              className="absolute left-[30px] top-[14px] h-[3px] bg-[#f68b1e] transition-all duration-500 -z-0" 
                               style={{ 
                                 width: `${(getStatusStep(ord.status) / 3) * 82}%` 
                               }} 
@@ -289,7 +289,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                                   <div 
                                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                                       isCompleted 
-                                        ? 'bg-[#EA6A0C] text-white shadow-xs' 
+                                        ? 'bg-[#f68b1e] text-white shadow-xs' 
                                         : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                                     } ${isCurrent ? 'ring-4 ring-orange-100 dark:ring-orange-950/40 scale-105' : ''}`}
                                     title={stage.fullLabel}
@@ -298,7 +298,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                                   </div>
                                   <span className={`text-[8px] font-black tracking-tight mt-1.5 transition-colors ${
                                     isCurrent 
-                                      ? 'text-[#EA6A0C]' 
+                                      ? 'text-[#f68b1e]' 
                                       : isCompleted 
                                         ? 'text-slate-800 dark:text-slate-200' 
                                         : 'text-slate-400 dark:text-slate-500'
@@ -312,8 +312,8 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         </div>
                         
                         {ord.status === 'In Transit' && (
-                          <div className="flex items-center gap-1.5 bg-[#EA6A0C]/10 p-2 rounded-lg border border-[#EA6A0C]/20 text-[10px] text-slate-700 dark:text-slate-300 font-medium">
-                            <Truck size={12} className="text-[#EA6A0C]" />
+                          <div className="flex items-center gap-1.5 bg-[#f68b1e]/10 p-2 rounded-lg border border-[#f68b1e]/20 text-[10px] text-slate-700 dark:text-slate-300 font-medium">
+                            <Truck size={12} className="text-[#f68b1e]" />
                             <span>Dispatch Note: Currently cleared Kampala, arriving district shortly.</span>
                           </div>
                         )}
@@ -328,7 +328,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                               handleReorder(ord.item, ord.total);
                               onClose();
                             }}
-                            className="bg-[#EA6A0C] hover:bg-[#C2560A] text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
+                            className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
                           >
                             Re-order Item
                           </button>
@@ -345,7 +345,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                   <div className="p-4 rounded-2xl bg-yellow-400/10 border border-yellow-400 text-slate-900 dark:text-slate-100 flex items-center justify-between">
                     <div>
                       <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider block">OliMart wallet balance</span>
-                      <span className="text-xl font-black text-[#EA6A0C]">{formatPrice(currentUser.balance)}</span>
+                      <span className="text-xl font-black text-[#f68b1e]">{formatPrice(currentUser.balance)}</span>
                     </div>
                     <div className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
                       MTN MoMo Active
@@ -367,7 +367,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
               {/* Prompt Help */}
               <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 font-semibold">
-                <AlertCircle size={14} className="text-[#EA6A0C]" />
+                <AlertCircle size={14} className="text-[#f68b1e]" />
                 <span>Need assistance? Call toll-free <strong>0200 804 020</strong> to chat with Kampala customer care.</span>
               </div>
             </div>
@@ -380,7 +380,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                   onClick={() => setActiveTab('login')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'login'
-                      ? 'border-[#EA6A0C] text-[#EA6A0C]'
+                      ? 'border-[#f68b1e] text-[#f68b1e]'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -390,7 +390,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                   onClick={() => setActiveTab('register')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'register'
-                      ? 'border-[#EA6A0C] text-[#EA6A0C]'
+                      ? 'border-[#f68b1e] text-[#f68b1e]'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -410,7 +410,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -425,7 +425,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -433,13 +433,13 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
                   <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" className="rounded text-[#EA6A0C] focus:ring-0" defaultChecked />
+                      <input type="checkbox" className="rounded text-[#f68b1e] focus:ring-0" defaultChecked />
                       <span>Remember Me</span>
                     </label>
                     <button 
                       type="button" 
                       onClick={() => onShowToast("Reset password instruction sent to email!")}
-                      className="hover:text-[#EA6A0C] hover:underline"
+                      className="hover:text-[#f68b1e] hover:underline"
                     >
                       Forgot Password?
                     </button>
@@ -447,7 +447,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
                   <button
                     type="submit"
-                    className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <CheckCircle size={14} />
                     <span>Sign In Securely</span>
@@ -467,7 +467,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ivan Okello"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -482,7 +482,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -497,7 +497,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+256 772 123456"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -512,7 +512,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Create strong password"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#f68b1e]"
                         required
                       />
                     </div>
@@ -520,7 +520,7 @@ export default function AccountModal({ isOpen, onClose, onShowToast, currency, o
 
                   <button
                     type="submit"
-                    className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Sparkles size={14} />
                     <span>Register New Account</span>

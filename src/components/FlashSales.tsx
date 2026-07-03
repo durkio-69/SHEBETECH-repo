@@ -193,7 +193,7 @@ export default function FlashSales({
                   </p>
                   <h3 
                     onClick={() => onProductClick(product)}
-                    className="font-bold text-[11px] text-slate-800 dark:text-slate-200 line-clamp-2 h-7 leading-tight hover:text-[#EA6A0C] transition-colors cursor-pointer"
+                    className="font-bold text-[11px] text-slate-800 dark:text-slate-200 line-clamp-2 h-7 leading-tight hover:text-[#f68b1e] transition-colors cursor-pointer"
                   >
                     {product.title}
                   </h3>
@@ -227,7 +227,7 @@ export default function FlashSales({
                     </div>
                     <div className="w-full h-1 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
                       <div 
-                        className={`h-full rounded-full ${progress > 85 ? 'bg-red-600' : 'bg-[#EA6A0C]'}`}
+                        className={`h-full rounded-full ${progress > 85 ? 'bg-red-600' : 'bg-[#f68b1e]'}`}
                         style={{ width: `${progress}%` }}
                       />
                     </div>

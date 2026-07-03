@@ -106,7 +106,7 @@ export default function JumiaCirclesBanner({
     {
       id: 'flash-sales',
       label: 'Crazy Deals',
-      icon: <Flame className="w-6 h-6 text-[#EA6A0C] animate-bounce" />,
+      icon: <Flame className="w-6 h-6 text-[#f68b1e] animate-bounce" />,
       action: () => onSpecialTabSelect('flash-sales'),
       bgColor: 'bg-amber-50 dark:bg-amber-950/40',
       borderColor: 'border-amber-200 dark:border-amber-900/60',
@@ -130,14 +130,14 @@ export default function JumiaCirclesBanner({
         <div className="flex flex-wrap justify-between items-center mb-5 gap-2 border-b border-slate-50 dark:border-slate-800/60 pb-3">
           <div>
             <h2 className="text-sm font-black uppercase text-slate-800 dark:text-white flex items-center gap-2">
-              <span className="w-2.5 h-4 bg-[#EA6A0C] rounded-xs" />
+              <span className="w-2.5 h-4 bg-[#f68b1e] rounded-xs" />
               <span>Explore Jumia Uganda Departments</span>
             </h2>
             <p className="text-[10px] text-slate-400 font-bold mt-0.5">
               Select any circle department to view related products horizontally below
             </p>
           </div>
-          <div className="flex items-center gap-1 bg-[#EA6A0C]/10 text-[#EA6A0C] text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
+          <div className="flex items-center gap-1 bg-[#f68b1e]/10 text-[#f68b1e] text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
             <span>Official Mall Stores</span>
           </div>
         </div>
@@ -163,18 +163,18 @@ export default function JumiaCirclesBanner({
               >
                 <div 
                   className={`w-14 h-14 rounded-full ${circle.bgColor} ${circle.borderColor} border flex items-center justify-center shadow-xs transition-all duration-300 group-hover:scale-110 group-active:scale-95 relative ${
-                    isFilterActive ? 'ring-4 ring-[#EA6A0C]/30 border-[#EA6A0C] scale-105 bg-[#EA6A0C]/10' : 'group-hover:shadow-md'
+                    isFilterActive ? 'ring-4 ring-[#f68b1e]/30 border-[#f68b1e] scale-105 bg-[#f68b1e]/10' : 'group-hover:shadow-md'
                   }`}
                 >
                   {circle.icon}
                   {isFilterActive && (
-                    <span className="absolute -top-1 -right-1 bg-[#EA6A0C] text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide border border-white dark:border-slate-950">
+                    <span className="absolute -top-1 -right-1 bg-[#f68b1e] text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide border border-white dark:border-slate-950">
                       On
                     </span>
                   )}
                 </div>
                 <span className={`text-[10px] font-black mt-2.5 text-center leading-tight transition-colors line-clamp-2 max-w-[85px] ${
-                  isFilterActive ? 'text-[#EA6A0C]' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
+                  isFilterActive ? 'text-[#f68b1e]' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
                 }`}>
                   {circle.label}
                 </span>

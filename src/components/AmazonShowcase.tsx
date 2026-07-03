@@ -82,7 +82,7 @@ export default function AmazonShowcase({
           
           <button 
             onClick={() => onSpecialTabSelect('todays-deal')}
-            className="text-xs font-bold text-[#EA6A0C] hover:text-[#C2560A] mt-4 flex items-center gap-1 group/btn text-left"
+            className="text-xs font-bold text-[#f68b1e] hover:text-[#e07510] mt-4 flex items-center gap-1 group/btn text-left"
           >
             <span>See all Hot Deals</span>
             <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -93,7 +93,7 @@ export default function AmazonShowcase({
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 p-4 rounded-2xl flex flex-col justify-between shadow-xs">
           <div>
             <h3 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-              <Award size={15} className="text-[#EA6A0C]" />
+              <Award size={15} className="text-[#f68b1e]" />
               <span>Bestselling Gadgets</span>
             </h3>
             <p className="text-[10px] text-slate-400 font-bold mb-3">Top selling appliances and smart devices</p>
@@ -124,7 +124,7 @@ export default function AmazonShowcase({
           
           <button 
             onClick={() => onSpecialTabSelect('todays-deal')}
-            className="text-xs font-bold text-[#EA6A0C] hover:text-[#C2560A] mt-4 flex items-center gap-1 group/btn text-left"
+            className="text-xs font-bold text-[#f68b1e] hover:text-[#e07510] mt-4 flex items-center gap-1 group/btn text-left"
           >
             <span>Explore best sellers</span>
             <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -135,7 +135,7 @@ export default function AmazonShowcase({
         <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 p-4 rounded-2xl flex flex-col justify-between shadow-xs">
           <div>
             <h3 className="font-black text-sm text-slate-900 dark:text-white uppercase tracking-wide mb-1.5 flex items-center gap-1.5">
-              <Zap size={15} className="text-[#EA6A0C]" />
+              <Zap size={15} className="text-[#f68b1e]" />
               <span>Fashion & Lifestyle</span>
             </h3>
             <p className="text-[10px] text-slate-400 font-bold mb-3">Factory direct clothing, watches, and bags</p>
@@ -168,7 +168,7 @@ export default function AmazonShowcase({
           
           <button 
             onClick={() => onSpecialTabSelect('discount')}
-            className="text-xs font-bold text-[#EA6A0C] hover:text-[#C2560A] mt-4 flex items-center gap-1 group/btn text-left"
+            className="text-xs font-bold text-[#f68b1e] hover:text-[#e07510] mt-4 flex items-center gap-1 group/btn text-left"
           >
             <span>Browse fashion discounts</span>
             <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -210,7 +210,7 @@ export default function AmazonShowcase({
           
           <button 
             onClick={() => onSpecialTabSelect('discount')}
-            className="text-xs font-bold text-[#EA6A0C] hover:text-[#C2560A] mt-4 flex items-center gap-1 group/btn text-left"
+            className="text-xs font-bold text-[#f68b1e] hover:text-[#e07510] mt-4 flex items-center gap-1 group/btn text-left"
           >
             <span>Shop essentials</span>
             <ChevronRight size={14} className="group-hover/btn:translate-x-0.5 transition-transform" />
@@ -225,12 +225,12 @@ export default function AmazonShowcase({
         <div className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="space-y-0.5">
             <h2 className="font-black text-sm text-slate-900 dark:text-slate-50 uppercase tracking-wide flex items-center gap-1.5">
-              <Award size={16} className="text-[#EA6A0C] animate-bounce" />
+              <Award size={16} className="text-[#f68b1e] animate-bounce" />
               <span>Amazon Style Best Sellers in Uganda</span>
             </h2>
             <p className="text-[10px] text-slate-400 font-bold">The most popular items on OliMart based on sales volume, updated hourly.</p>
           </div>
-          <span className="text-[9px] font-black text-[#EA6A0C] bg-orange-50 dark:bg-orange-950/40 px-2 py-1 rounded">
+          <span className="text-[9px] font-black text-[#f68b1e] bg-orange-50 dark:bg-orange-950/40 px-2 py-1 rounded">
             Updated Hourly
           </span>
         </div>
@@ -265,8 +265,8 @@ export default function AmazonShowcase({
                   </div>
 
                   <div className="space-y-1">
-                    <p className="text-[8px] font-black text-[#EA6A0C] uppercase tracking-wider">{p.brand}</p>
-                    <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-[#EA6A0C] transition-colors leading-tight">
+                    <p className="text-[8px] font-black text-[#f68b1e] uppercase tracking-wider">{p.brand}</p>
+                    <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-1 group-hover:text-[#f68b1e] transition-colors leading-tight">
                       {p.title}
                     </h4>
                     

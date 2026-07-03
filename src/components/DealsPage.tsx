@@ -139,7 +139,7 @@ export default function DealsPage({
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-6" id={`deals-page-${type}`}>
       {/* Breadcrumbs Navigation */}
       <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
-        <button onClick={onBack} className="hover:text-[#EA6A0C] cursor-pointer flex items-center gap-1">
+        <button onClick={onBack} className="hover:text-[#f68b1e] cursor-pointer flex items-center gap-1">
           <ArrowLeft size={12} />
           <span>Back to Home</span>
         </button>
@@ -195,7 +195,7 @@ export default function DealsPage({
             onClick={() => setSelectedCategory('all')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer border transition-all ${
               selectedCategory === 'all'
-                ? 'bg-[#EA6A0C] border-[#EA6A0C] text-white'
+                ? 'bg-[#f68b1e] border-[#f68b1e] text-white'
                 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
             }`}
           >
@@ -207,7 +207,7 @@ export default function DealsPage({
               onClick={() => setSelectedCategory(c.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer border transition-all ${
                 selectedCategory === c.id
-                  ? 'bg-[#EA6A0C] border-[#EA6A0C] text-white'
+                  ? 'bg-[#f68b1e] border-[#f68b1e] text-white'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
               }`}
             >
@@ -244,7 +244,7 @@ export default function DealsPage({
             return (
               <div
                 key={p.id}
-                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-3 flex flex-col justify-between hover:shadow-md hover:border-[#EA6A0C] transition-all cursor-pointer relative group/card overflow-hidden"
+                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-3 flex flex-col justify-between hover:shadow-md hover:border-[#f68b1e] transition-all cursor-pointer relative group/card overflow-hidden"
               >
                 {/* Save Badges */}
                 {p.discountBadge && (
@@ -290,7 +290,7 @@ export default function DealsPage({
                 <div className="space-y-2 flex-1 flex flex-col justify-between" onClick={() => onProductClick(p)}>
                   <div className="space-y-1">
                     <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">{p.brand}</p>
-                    <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover/card:text-[#EA6A0C] transition-colors">
+                    <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover/card:text-[#f68b1e] transition-colors">
                       {p.title}
                     </h3>
 
@@ -337,7 +337,7 @@ export default function DealsPage({
                         e.stopPropagation();
                         onAddToCart(p);
                       }}
-                      className="w-full bg-slate-950 dark:bg-slate-800 hover:bg-[#EA6A0C] hover:text-white dark:hover:bg-[#EA6A0C] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer mt-1"
+                      className="w-full bg-slate-950 dark:bg-slate-800 hover:bg-[#f68b1e] hover:text-white dark:hover:bg-[#f68b1e] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer mt-1"
                     >
                       <ShoppingCart size={11} />
                       <span>Buy Now</span>
@@ -354,7 +354,7 @@ export default function DealsPage({
           <p className="text-xs text-slate-400 max-w-md mx-auto">Please select a different category pill above or clear active filters to discover our premium discount products.</p>
           <button 
             onClick={() => setSelectedCategory('all')} 
-            className="bg-[#EA6A0C] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-orange-500 cursor-pointer"
+            className="bg-[#f68b1e] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-orange-500 cursor-pointer"
           >
             Clear Filters
           </button>

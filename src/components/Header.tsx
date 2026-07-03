@@ -115,7 +115,7 @@ export default function Header({
   return (
     <header className="w-full bg-white shadow-xs sticky top-0 z-40" id="main-header">
       {/* Top Utility Bar */}
-      <div className="hidden md:block bg-gradient-to-r from-[#10131a] via-[#161a22] to-[#10131a] text-slate-300 text-[11px] py-1.5 px-4 border-b border-white/5">
+      <div className="hidden md:block bg-[#1a1a1a] text-slate-300 text-[11px] py-1.5 px-4 border-b border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           {/* Left Side: Delivery, Sell option & Watchlist */}
           <div className="flex items-center gap-4 flex-wrap justify-center md:justify-start">
@@ -352,18 +352,18 @@ export default function Header({
               setSearchQuery('');
               setSelectedSpecialTab('all');
             }}>
-              <div className="bg-[#EA6A0C] p-1.5 rounded-lg mr-1 flex items-center justify-center shadow-xs">
+              <div className="bg-[#f68b1e] p-1.5 rounded-lg mr-1 flex items-center justify-center shadow-xs">
                 <ShoppingBag size={15} className="text-white fill-white" />
               </div>
               <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white select-none">
-                Oli<span className="text-[#EA6A0C]">Mart</span>
+                Oli<span className="text-[#f68b1e]">Mart</span>
               </span>
             </div>
 
             {/* Mobile Cart */}
             <button 
               onClick={onCartClick} 
-              className="md:hidden relative p-2 bg-[#EA6A0C] rounded-lg hover:bg-[#C2560A] text-white transition-colors animate-pulse"
+              className="md:hidden relative p-2 bg-[#f68b1e] rounded-lg hover:bg-[#e07510] text-white transition-colors animate-pulse"
             >
               <ShoppingCart size={18} />
               {cartItemsCount > 0 && (
@@ -376,7 +376,7 @@ export default function Header({
 
           {/* Search bar */}
           <div ref={searchRef} className="w-full md:flex-1 max-w-2xl flex items-center relative" id="header-search-container">
-            <div className="flex w-full rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-[#EA6A0C] relative shadow-xs">
+            <div className="flex w-full rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-[#f68b1e] relative shadow-xs">
               {/* Category selector */}
               <div className="hidden lg:block relative border-r border-slate-200 dark:border-slate-700">
                 <select
@@ -419,7 +419,7 @@ export default function Header({
               </div>
 
               {/* Search button */}
-              <button className="bg-[#EA6A0C] text-white px-7 font-black hover:bg-[#C2560A] transition-colors uppercase text-xs tracking-wider flex items-center gap-1.5 cursor-pointer">
+              <button className="bg-[#f68b1e] text-white px-7 font-black hover:bg-[#e07510] transition-colors uppercase text-xs tracking-wider flex items-center gap-1.5 cursor-pointer">
                 <Search size={14} strokeWidth={3} />
                 <span className="hidden sm:inline">Search</span>
               </button>
@@ -456,7 +456,7 @@ export default function Header({
                               className="w-full text-left px-2 py-2 rounded-lg text-xs font-extrabold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-between group transition-colors"
                             >
                               <span className="flex items-center gap-2">
-                                <span className="text-[#EA6A0C] group-hover:scale-110 transition-transform">
+                                <span className="text-[#f68b1e] group-hover:scale-110 transition-transform">
                                   {cat.id === 'phones' ? <Smartphone size={13} /> :
                                    cat.id === 'electronics' ? <Tv size={13} /> :
                                    cat.id === 'fashion' ? <Shirt size={13} /> :
@@ -466,7 +466,7 @@ export default function Header({
                                 </span>
                                 <span>{cat.name}</span>
                               </span>
-                              <span className="text-[9px] bg-orange-50 dark:bg-orange-950/40 text-[#EA6A0C] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
+                              <span className="text-[9px] bg-orange-50 dark:bg-orange-950/40 text-[#f68b1e] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
                                 Go to Department
                               </span>
                             </button>
@@ -484,7 +484,7 @@ export default function Header({
                       <div>
                         <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
                           <span>Suggested Products</span>
-                          <span className="text-[9px] text-[#EA6A0C] lowercase font-bold">matching "{searchQuery}"</span>
+                          <span className="text-[9px] text-[#f68b1e] lowercase font-bold">matching "{searchQuery}"</span>
                         </div>
                         <div className="space-y-1">
                           {suggestedProducts.map((p) => (
@@ -506,7 +506,7 @@ export default function Header({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-1.5">
-                                  <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate group-hover:text-[#EA6A0C] transition-colors">
+                                  <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate group-hover:text-[#f68b1e] transition-colors">
                                     {p.title}
                                   </p>
                                   <span className="text-[10px] text-orange-600 dark:text-orange-400 font-black flex-shrink-0">
@@ -542,9 +542,9 @@ export default function Header({
             <div className="relative group/account">
               <button 
                 onClick={onAccountClick} 
-                className="flex items-center gap-1 py-1 px-2.5 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
+                className="flex items-center gap-1 py-1 px-2.5 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
               >
-                <User size={18} className="text-slate-600 dark:text-slate-300 group-hover/account:text-[#EA6A0C]" />
+                <User size={18} className="text-slate-600 dark:text-slate-300 group-hover/account:text-[#f68b1e]" />
                 <span className="uppercase tracking-wide">Account</span>
                 <ChevronDown size={11} className="transition-transform group-hover/account:rotate-180" />
               </button>
@@ -553,19 +553,19 @@ export default function Header({
               <div className="absolute right-0 mt-1 w-60 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl py-3 px-3.5 hidden group-hover/account:block z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <button 
                   onClick={onAccountClick}
-                  className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider text-center block mb-2.5 shadow-sm transition-all"
+                  className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider text-center block mb-2.5 shadow-sm transition-all"
                 >
                   Sign In / Register
                 </button>
                 <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
                 <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
                     <User size={13} /> <span>My Profile & Settings</span>
                   </button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
                     <ShoppingBag size={13} /> <span>My Orders & Returns</span>
                   </button>
-                  <button onClick={() => { setSelectedCategory('all'); setSelectedSpecialTab('flash-sales'); }} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
+                  <button onClick={() => { setSelectedCategory('all'); setSelectedSpecialTab('flash-sales'); }} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
                     <Heart size={13} /> <span>Saved Items / Watchlist</span>
                   </button>
                 </div>
@@ -574,7 +574,7 @@ export default function Header({
 
             {/* Help Jumia-Style Hover Dropdown */}
             <div className="relative group/help">
-              <button className="flex items-center gap-1 py-1 px-2.5 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
+              <button className="flex items-center gap-1 py-1 px-2.5 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
                 <HelpCircle size={18} className="text-slate-600 dark:text-slate-300" />
                 <span className="uppercase tracking-wide">Help</span>
                 <ChevronDown size={11} className="transition-transform group-hover/help:rotate-180" />
@@ -583,10 +583,10 @@ export default function Header({
               {/* Help Dropdown Panel */}
               <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl py-2 px-3 hidden group-hover/help:block z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Help Center</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Place an order</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Payment options</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Delivery timelines</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Help Center</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Place an order</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Payment options</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Delivery timelines</button>
                 </div>
               </div>
             </div>
@@ -601,10 +601,10 @@ export default function Header({
                   {cartItemsCount}
                 </span>
               )}
-              <div className="text-slate-700 dark:text-slate-300 group-hover:text-[#EA6A0C] transition-colors">
+              <div className="text-slate-700 dark:text-slate-300 group-hover:text-[#f68b1e] transition-colors">
                 <ShoppingCart size={20} />
               </div>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#EA6A0C] mt-0.5 uppercase tracking-wide">Cart</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#f68b1e] mt-0.5 uppercase tracking-wide">Cart</span>
             </div>
           </div>
         </div>
@@ -622,7 +622,7 @@ export default function Header({
                 onProductClick({} as Product); // Back to listings
               }}
               className={`py-3 px-4 font-bold text-xs flex items-center gap-2 transition-colors cursor-pointer ${
-                selectedCategory === 'all' && selectedSpecialTab === 'all' ? 'text-[#EA6A0C] bg-[#EA6A0C]/5' : 'text-slate-800 dark:text-slate-200 hover:text-[#EA6A0C]'
+                selectedCategory === 'all' && selectedSpecialTab === 'all' ? 'text-[#f68b1e] bg-[#f68b1e]/5' : 'text-slate-800 dark:text-slate-200 hover:text-[#f68b1e]'
               }`}
             >
               <Menu size={14} />
@@ -653,11 +653,11 @@ export default function Header({
               }}
               className={`py-3 px-5 text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                 selectedSpecialTab === 'flash-sales'
-                  ? 'text-[#EA6A0C] border-b-2 border-[#EA6A0C] bg-[#EA6A0C]/5 font-black' 
-                  : 'text-slate-700 dark:text-slate-300 hover:text-[#EA6A0C] hover:bg-slate-50 dark:hover:bg-slate-800 font-bold'
+                  ? 'text-[#f68b1e] border-b-2 border-[#f68b1e] bg-[#f68b1e]/5 font-black' 
+                  : 'text-slate-700 dark:text-slate-300 hover:text-[#f68b1e] hover:bg-slate-50 dark:hover:bg-slate-800 font-bold'
               }`}
             >
-              <Zap size={13} className="text-[#EA6A0C]" />
+              <Zap size={13} className="text-[#f68b1e]" />
               <span>Flash Sales</span>
             </button>
 
@@ -711,7 +711,7 @@ export default function Header({
           {/* Left slide drawer panel */}
           <div className="relative flex flex-col w-[295px] max-w-[85vw] h-full bg-white dark:bg-slate-950 shadow-2xl z-10 animate-slide-right overflow-y-auto text-slate-800 dark:text-slate-100 flex-shrink-0">
             {/* Drawer Header (Jumia VIP Banner Theme) */}
-            <div className="bg-gradient-to-r from-[#EA6A0C] to-orange-600 text-white p-5 space-y-3.5">
+            <div className="bg-gradient-to-r from-[#f68b1e] to-orange-600 text-white p-5 space-y-3.5">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-black tracking-tight select-none">
                   Oli<span className="text-yellow-300">Mart</span>
@@ -768,11 +768,11 @@ export default function Header({
                       setIsMobileMenuOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between ${
-                      selectedSpecialTab === 'flash-sales' ? 'bg-orange-50 text-[#EA6A0C]' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                      selectedSpecialTab === 'flash-sales' ? 'bg-orange-50 text-[#f68b1e]' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/40'
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <Zap size={14} className="text-[#EA6A0C]" />
+                      <Zap size={14} className="text-[#f68b1e]" />
                       <span>Flash Sales</span>
                     </span>
                     <span className="bg-orange-600 text-white font-black text-[8px] px-1.5 rounded uppercase animate-pulse">LIVELY</span>
@@ -854,7 +854,7 @@ export default function Header({
                   }}
                   className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-50"
                 >
-                  <MapPin size={14} className="text-[#EA6A0C]" />
+                  <MapPin size={14} className="text-[#f68b1e]" />
                   <span>Deliver to: {selectedLocation}</span>
                 </button>
 
@@ -877,7 +877,7 @@ export default function Header({
                         onClick={() => setCurrency(curr)}
                         className={`px-2 py-1 rounded text-[10px] font-black ${
                           currency === curr 
-                            ? 'bg-[#EA6A0C] text-white' 
+                            ? 'bg-[#f68b1e] text-white' 
                             : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
                         }`}
                       >

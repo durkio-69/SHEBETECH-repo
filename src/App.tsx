@@ -330,11 +330,11 @@ export default function App() {
           {/* Active app portal description label */}
           <div className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#EA6A0C] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#EA6A0C]"></span>
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#f68b1e] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#f68b1e]"></span>
             </span>
             <p className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400">
-              Active Portal: <span className="text-[#EA6A0C] font-extrabold">{activeApp === 'customer' ? 'Kampala Customer App' : activeApp === 'vendor' ? 'WooCommerce Dokan Pro Vendor App' : activeApp === 'delivery' ? 'Boda Boda Courier dispatch' : 'Central Super Admin Console'}</span>
+              Active Portal: <span className="text-[#f68b1e] font-extrabold">{activeApp === 'customer' ? 'Kampala Customer App' : activeApp === 'vendor' ? 'WooCommerce Dokan Pro Vendor App' : activeApp === 'delivery' ? 'Boda Boda Courier dispatch' : 'Central Super Admin Console'}</span>
             </p>
           </div>
 
@@ -348,7 +348,7 @@ export default function App() {
               }}
               className={`px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeApp === 'customer'
-                  ? 'bg-[#EA6A0C] text-white shadow-sm'
+                  ? 'bg-[#f68b1e] text-white shadow-sm'
                   : 'bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700'
               }`}
             >
@@ -474,12 +474,12 @@ export default function App() {
                     id="jumia-horizontal-category-products" 
                     className="max-w-7xl mx-auto px-4 my-6 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs relative"
                   >
-                    <div className="absolute top-0 left-0 right-0 h-[4px] bg-[#EA6A0C] rounded-t-2xl" />
+                    <div className="absolute top-0 left-0 right-0 h-[4px] bg-[#f68b1e] rounded-t-2xl" />
                     
                     <div className="flex justify-between items-center mb-5 border-b border-slate-100 dark:border-slate-800/60 pb-3">
                       <div>
                         <h2 className="text-base font-black uppercase text-slate-800 dark:text-white flex items-center gap-2">
-                          <span className="w-2.5 h-4 bg-[#EA6A0C] rounded-xs animate-pulse" />
+                          <span className="w-2.5 h-4 bg-[#f68b1e] rounded-xs animate-pulse" />
                           <span>Featured {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Products'} Deals</span>
                         </h2>
                         <p className="text-[10px] text-slate-400 font-bold mt-0.5">
@@ -488,7 +488,7 @@ export default function App() {
                       </div>
                       <button 
                         onClick={() => setSelectedCategory('all')} 
-                        className="text-xs font-black uppercase text-[#EA6A0C] hover:text-[#C2560A]"
+                        className="text-xs font-black uppercase text-[#f68b1e] hover:text-[#e07510]"
                       >
                         Clear Filter
                       </button>
@@ -519,10 +519,10 @@ export default function App() {
                                 )}
                               </div>
                               <div className="mt-3.5 space-y-1">
-                                <span className="text-[9px] text-[#EA6A0C] font-extrabold uppercase">{p.brand}</span>
+                                <span className="text-[9px] text-[#f68b1e] font-extrabold uppercase">{p.brand}</span>
                                 <h3 
                                   onClick={() => handleProductClick(p)}
-                                  className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#EA6A0C] cursor-pointer min-h-[32px] leading-tight"
+                                  className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#f68b1e] cursor-pointer min-h-[32px] leading-tight"
                                 >
                                   {p.title}
                                 </h3>
@@ -542,7 +542,7 @@ export default function App() {
                               </div>
                               <button
                                 onClick={() => handleAddToCart(p)}
-                                className="bg-[#EA6A0C]/10 hover:bg-[#EA6A0C] text-[#EA6A0C] hover:text-white p-2 rounded-xl transition-colors cursor-pointer"
+                                className="bg-[#f68b1e]/10 hover:bg-[#f68b1e] text-[#f68b1e] hover:text-white p-2 rounded-xl transition-colors cursor-pointer"
                               >
                                 <ShoppingCart size={13} />
                               </button>
@@ -667,7 +667,7 @@ export default function App() {
             >
               <X size={16} />
             </button>
-            <div className="flex items-center gap-3 mb-4 text-[#EA6A0C]">
+            <div className="flex items-center gap-3 mb-4 text-[#f68b1e]">
               <Info size={24} />
               <h3 className="font-black uppercase tracking-wider text-sm text-slate-900 dark:text-slate-100">
                 {activePromotion.title}
@@ -678,7 +678,7 @@ export default function App() {
             </p>
             <button 
               onClick={() => setActivePromotion(null)}
-              className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider shadow-sm cursor-pointer"
+              className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-2.5 rounded-xl font-bold text-xs transition-all uppercase tracking-wider shadow-sm cursor-pointer"
             >
               Understood, Great!
             </button>
@@ -695,10 +695,10 @@ export default function App() {
             setActiveProductPage(null);
             window.scrollTo({ top: 0, behavior: 'smooth' });
           }} 
-          className="flex flex-col items-center text-slate-500 hover:text-[#EA6A0C] transition-colors cursor-pointer"
+          className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors cursor-pointer"
         >
-          <Home size={18} className={selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'}`}>Home</span>
+          <Home size={18} className={selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
+          <span className={`text-[9px] font-bold mt-0.5 ${selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Home</span>
         </button>
         
         <button 
@@ -710,34 +710,34 @@ export default function App() {
               element.scrollIntoView({ behavior: 'smooth' });
             }
           }} 
-          className="flex flex-col items-center text-slate-500 hover:text-[#EA6A0C] transition-colors cursor-pointer"
+          className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors cursor-pointer"
         >
           <span className="relative">
-            <CheckCircle2 size={18} className={selectedSpecialTab === 'flash-sales' ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'} />
+            <CheckCircle2 size={18} className={selectedSpecialTab === 'flash-sales' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
             <span className="absolute -top-1 -right-1.5 bg-red-600 text-white text-[7px] font-black px-1 rounded-full uppercase scale-75 animate-pulse">Hot</span>
           </span>
-          <span className={`text-[9px] font-bold mt-0.5 ${selectedSpecialTab === 'flash-sales' ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'}`}>Flash Deals</span>
+          <span className={`text-[9px] font-bold mt-0.5 ${selectedSpecialTab === 'flash-sales' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Flash Deals</span>
         </button>
 
         <button 
           onClick={() => setIsAccountOpen(true)} 
-          className="flex flex-col items-center text-slate-500 hover:text-[#EA6A0C] transition-colors cursor-pointer"
+          className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors cursor-pointer"
         >
-          <User size={18} className={isAccountOpen ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${isAccountOpen ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'}`}>Account</span>
+          <User size={18} className={isAccountOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
+          <span className={`text-[9px] font-bold mt-0.5 ${isAccountOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Account</span>
         </button>
 
         <button 
           onClick={() => setIsCartOpen(true)} 
-          className="flex flex-col items-center text-slate-500 hover:text-[#EA6A0C] transition-colors relative cursor-pointer"
+          className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors relative cursor-pointer"
         >
           {totalCartCount > 0 && (
             <span className="absolute -top-1.5 -right-2 bg-red-600 text-white font-black text-[8px] w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md animate-pulse">
               {totalCartCount}
             </span>
           )}
-          <ShoppingCart size={18} className={isCartOpen ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${isCartOpen ? 'text-[#EA6A0C]' : 'text-slate-500 dark:text-slate-400'}`}>Cart</span>
+          <ShoppingCart size={18} className={isCartOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
+          <span className={`text-[9px] font-bold mt-0.5 ${isCartOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Cart</span>
         </button>
       </div>
 

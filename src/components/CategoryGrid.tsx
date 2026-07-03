@@ -56,7 +56,7 @@ export default function CategoryGrid({
       <div className="flex items-end justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-[#EA6A0C]/10 text-[#EA6A0C] dark:bg-orange-950/40 dark:text-orange-400 font-extrabold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span className="bg-[#f68b1e]/10 text-[#f68b1e] dark:bg-orange-950/40 dark:text-orange-400 font-extrabold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <Flame size={10} className="fill-orange-500 animate-pulse text-orange-600" />
               <span> Kampala Hot Trend</span>
             </span>
@@ -105,7 +105,7 @@ export default function CategoryGrid({
               {/* Image & Floating Buttons */}
               <div className="relative mb-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl p-3 flex items-center justify-center overflow-hidden aspect-square">
                 {/* Floating "Trending" Badge */}
-                <span className="absolute top-2 left-2 bg-gradient-to-r from-[#EA6A0C] to-red-600 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-xs z-10 flex items-center gap-0.5">
+                <span className="absolute top-2 left-2 bg-gradient-to-r from-[#f68b1e] to-red-600 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-xs z-10 flex items-center gap-0.5">
                   <TrendingUp size={8} /> Trending
                 </span>
 
@@ -130,7 +130,7 @@ export default function CategoryGrid({
                       e.stopPropagation();
                       onProductClick(p);
                     }}
-                    className="p-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-slate-500 hover:text-[#EA6A0C] shadow-sm cursor-pointer"
+                    className="p-1.5 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 rounded-lg text-slate-500 hover:text-[#f68b1e] shadow-sm cursor-pointer"
                     title="Quick Details"
                   >
                     <Eye size={12} />
@@ -166,7 +166,7 @@ export default function CategoryGrid({
 
                 <h3 
                   onClick={() => onProductClick(p)}
-                  className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 h-8 hover:text-[#EA6A0C] transition-colors cursor-pointer leading-tight"
+                  className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 h-8 hover:text-[#f68b1e] transition-colors cursor-pointer leading-tight"
                 >
                   {p.title}
                 </h3>
@@ -200,7 +200,7 @@ export default function CategoryGrid({
 
                   <button
                     onClick={() => onAddToCart(p)}
-                    className="p-1.5 sm:p-2 bg-[#EA6A0C] hover:bg-[#C2560A] text-white rounded-lg transition-colors cursor-pointer flex items-center justify-center shadow-xs"
+                    className="p-1.5 sm:p-2 bg-[#f68b1e] hover:bg-[#e07510] text-white rounded-lg transition-colors cursor-pointer flex items-center justify-center shadow-xs"
                     title="Add to basket"
                   >
                     <ShoppingCart size={11} />

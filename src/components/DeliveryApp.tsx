@@ -360,7 +360,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
 
               {/* Route line */}
               <svg className="absolute inset-0 w-full h-full pointer-events-none">
-                <path d="M 120 110 L 260 210" fill="none" stroke="#EA6A0C" strokeWidth="3" strokeDasharray="6 4" className="animate-pulse" />
+                <path d="M 120 110 L 260 210" fill="none" stroke="#f68b1e" strokeWidth="3" strokeDasharray="6 4" className="animate-pulse" />
               </svg>
 
               {/* Pulsing courier Boda icon */}

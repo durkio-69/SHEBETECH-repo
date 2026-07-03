@@ -518,7 +518,7 @@ export default function CartDrawer({
               {/* Customer Info */}
               <div className="space-y-3 bg-white border border-slate-200 p-4 rounded-xl">
                 <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-3.5 bg-[#EA6A0C] rounded-xs" />
+                  <span className="w-1.5 h-3.5 bg-[#f68b1e] rounded-xs" />
                   <span>1. Enter Delivery Coordinates</span>
                 </h3>
                 
@@ -550,7 +550,7 @@ export default function CartDrawer({
               {/* Payment Methods */}
               <div className="space-y-3 bg-white border border-slate-200 p-4 rounded-xl">
                 <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-3.5 bg-[#EA6A0C] rounded-xs" />
+                  <span className="w-1.5 h-3.5 bg-[#f68b1e] rounded-xs" />
                   <span>2. Secure Gateway Selection</span>
                 </h3>
                 
@@ -1125,7 +1125,7 @@ export default function CartDrawer({
               <div className="border-t border-slate-200 my-2" />
               <div className="flex justify-between items-baseline">
                 <span className="font-extrabold text-sm text-slate-800">Total Price:</span>
-                <span className="text-lg font-black text-[#EA6A0C]">
+                <span className="text-lg font-black text-[#f68b1e]">
                   Shs {total.toLocaleString()}
                 </span>
               </div>

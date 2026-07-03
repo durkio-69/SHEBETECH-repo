@@ -424,12 +424,12 @@ export default function ProductSection({
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="space-y-1">
                   <h2 className="text-sm font-black text-slate-900 dark:text-slate-50 uppercase tracking-wide flex items-center gap-2">
-                    <Sparkles size={16} className="text-[#EA6A0C] animate-pulse" />
+                    <Sparkles size={16} className="text-[#f68b1e] animate-pulse" />
                     <span>Shop {CATEGORIES.find(c => c.id === selectedCategory)?.name || selectedCategory} by Brand & Variation</span>
                   </h2>
                   <p className="text-[10px] text-slate-400 font-bold">Discover direct manufacturer imports & verified local merchant variations</p>
                 </div>
-                <span className="text-[10px] bg-[#EA6A0C]/10 text-[#EA6A0C] px-2 py-1 rounded-md font-black uppercase">
+                <span className="text-[10px] bg-[#f68b1e]/10 text-[#f68b1e] px-2 py-1 rounded-md font-black uppercase">
                   {PRODUCTS.filter(p => p.category === selectedCategory).length} Items found
                 </span>
               </div>
@@ -447,7 +447,7 @@ export default function ProductSection({
                           onClick={() => handleBrandToggle(brand)}
                           className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border cursor-pointer transition-all ${
                             isSelected 
-                              ? 'bg-[#EA6A0C] text-white border-[#EA6A0C] shadow-sm' 
+                              ? 'bg-[#f68b1e] text-white border-[#f68b1e] shadow-sm' 
                               : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
                           }`}
                         >
@@ -467,7 +467,7 @@ export default function ProductSection({
                     <div
                       key={p.id}
                       onClick={() => onProductClick(p)}
-                      className="w-56 flex-shrink-0 bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/60 p-3 rounded-xl hover:border-[#EA6A0C] transition-all cursor-pointer space-y-3 snap-start relative group"
+                      className="w-56 flex-shrink-0 bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/60 p-3 rounded-xl hover:border-[#f68b1e] transition-all cursor-pointer space-y-3 snap-start relative group"
                     >
                       {/* Badge if discount */}
                       {p.discountBadge && (
@@ -487,7 +487,7 @@ export default function ProductSection({
 
                       <div className="space-y-1">
                         <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{p.brand}</p>
-                        <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-[#EA6A0C] transition-colors">
+                        <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-[#f68b1e] transition-colors">
                           {p.title}
                         </h3>
                         
@@ -515,7 +515,7 @@ export default function ProductSection({
 
                         {/* Vendor count badge (Requirement 3) */}
                         {p.vendors && p.vendors.length > 0 && (
-                          <p className="text-[8px] font-extrabold text-[#EA6A0C] dark:text-[#EA6A0C] pt-1">
+                          <p className="text-[8px] font-extrabold text-[#f68b1e] dark:text-[#f68b1e] pt-1">
                             &bull; {p.vendors.length + 1} Merchant Sellers Available
                           </p>
                         )}
@@ -804,7 +804,7 @@ function ProductCard({
                 e.preventDefault();
                 onQuickView(product);
               }}
-              className="bg-[#EA6A0C] hover:bg-[#C2560A] text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-1.5 border border-[#ffb84d]/30"
+              className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-1.5 border border-[#ffb84d]/30"
             >
               <Eye size={12} />
               <span>Quick View</span>
@@ -846,7 +846,7 @@ function ProductCard({
               e.stopPropagation();
               onProductClick(product);
             }}
-            className="absolute bottom-1.5 left-1.5 p-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] hover:bg-white shadow-xs transition-all z-20 cursor-pointer"
+            className="absolute bottom-1.5 left-1.5 p-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] hover:bg-white shadow-xs transition-all z-20 cursor-pointer"
             title="View specifications detail modal"
           >
             <Eye size={12} />
@@ -866,7 +866,7 @@ function ProductCard({
 
           <h3 
             onClick={() => onProductClick(product)}
-            className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors h-9 sm:h-10 cursor-pointer leading-tight"
+            className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors h-9 sm:h-10 cursor-pointer leading-tight"
           >
             {product.title}
           </h3>
@@ -906,7 +906,7 @@ function ProductCard({
         <div className="flex flex-col gap-0.5 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
           {product.payOnDelivery && (
             <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300">
-              <Coins size={10} className="text-[#EA6A0C]" /> Pay on Delivery Available
+              <Coins size={10} className="text-[#f68b1e]" /> Pay on Delivery Available
             </span>
           )}
           <span className="text-slate-400">⚡ Delivered within 24-48 hours</span>
@@ -914,7 +914,7 @@ function ProductCard({
 
         <button
           onClick={() => onAddToCart(product)}
-          className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-2 sm:py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-200 shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
+          className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-2 sm:py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-200 shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
         >
           <ShoppingCart size={12} />
           <span>Add to Cart</span>
