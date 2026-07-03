@@ -198,6 +198,28 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     alert('Vendor profile marked as rejected.');
   };
 
+  // Admin toggles active/inactive (suspended) state of vendor store
+  const handleToggleSuspension = (vendorId: string) => {
+    const targetVendor = vendors.find(v => v.id === vendorId);
+    if (!targetVendor) return;
+    const newSuspended = !targetVendor.suspended;
+    const updated = vendors.map(v => {
+      if (v.id === vendorId) {
+        return { ...v, suspended: newSuspended };
+      }
+      return v;
+    });
+    saveDokanVendors(updated);
+    setVendors(updated);
+    addAdminLog(
+      'VENDOR_SUSPENSION_TOGGLE',
+      `Toggled vendor store "${targetVendor.name}" (ID: ${vendorId}) suspension state to: ${newSuspended ? 'SUSPENDED (Inactive)' : 'ACTIVE (Live)'}`,
+      newSuspended ? 'warning' : 'success'
+    );
+    window.dispatchEvent(new Event('storage'));
+    alert(`Vendor "${targetVendor.name}" has been ${newSuspended ? 'suspended/deactivated' : 're-activated'} successfully!`);
+  };
+
   // Admin approves withdrawal request
   const handleApproveWithdrawal = (reqId: string) => {
     const reqs = getDokanWithdrawals();
@@ -757,6 +779,11 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     }`}>
                       {v.status}
                     </span>
+                    {v.suspended && (
+                      <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse">
+                        ⚠️ Suspended / Inactive
+                      </span>
+                    )}
                   </div>
 
                   <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
@@ -794,9 +821,23 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   )}
                   
                   {v.status === 'approved' && (
-                    <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
-                      ✅ Partner Published Live
-                    </span>
+                    <div className="flex flex-col items-end gap-1.5">
+                      <span className={`text-[10px] font-extrabold flex items-center gap-1 ${
+                        v.suspended ? 'text-rose-650 dark:text-rose-450' : 'text-emerald-600'
+                      }`}>
+                        {v.suspended ? '⚠️ Suspended & Offline' : '✅ Partner Published Live'}
+                      </span>
+                      <button
+                        onClick={() => handleToggleSuspension(v.id)}
+                        className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
+                          v.suspended 
+                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' 
+                            : 'bg-rose-600 hover:bg-rose-500 text-white shadow-xs'
+                        }`}
+                      >
+                        {v.suspended ? 'Activate Listing' : 'Suspend Listing'}
+                      </button>
+                    </div>
                   )}
 
                   {v.status === 'rejected' && (

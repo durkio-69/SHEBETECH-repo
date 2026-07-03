@@ -14,6 +14,7 @@ export interface DokanVendor {
   paymentDetails: string;
   trustBadges?: string[];
   reviews?: { id: string; customerName: string; rating: number; comment: string; date: string }[];
+  suspended?: boolean;
 }
 
 export interface WithdrawalRequest {
