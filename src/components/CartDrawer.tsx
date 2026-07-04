@@ -450,40 +450,135 @@ export default function CartDrawer({
     onClose();
   };
 
+  const isFullPageStep = step !== 'cart';
+
+  // Amazon-style order summary card, reused across the full-page checkout steps
+  const OrderSummaryCard = () => (
+    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 sticky top-6">
+      <h3 className="font-black text-sm text-slate-900 uppercase tracking-wide border-b border-slate-100 pb-3">
+        Order Summary
+      </h3>
+
+      <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
+        {cartItems.map((item) => {
+          const itemKey = `${item.product.id}-${item.selectedVendor || 'default'}-${JSON.stringify(item.selectedVariation || {})}`;
+          const activePrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
+          return (
+            <div key={itemKey} className="flex gap-3 items-start">
+              <div className="relative flex-shrink-0">
+                <img
+                  src={item.product.image}
+                  alt={item.product.title}
+                  className="w-12 h-12 object-contain rounded-lg bg-slate-50 border border-slate-100 p-1"
+                  referrerPolicy="no-referrer"
+                />
+                <span className="absolute -top-1.5 -right-1.5 bg-slate-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                  {item.quantity}
+                </span>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-bold text-slate-800 line-clamp-2 leading-snug">{item.product.title}</p>
+                <p className="text-[10px] text-slate-400 font-semibold">Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}</p>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs text-slate-600">
+        <div className="flex justify-between font-semibold">
+          <span>Items ({cartItems.reduce((a, i) => a + i.quantity, 0)}):</span>
+          <span className="text-slate-900 font-bold">Shs {(subtotal ?? 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between font-semibold">
+          <span className="flex items-center gap-1">
+            Delivery Fee:
+            {deliveryInfo.hasBulkyItem && (
+              <span className="bg-red-100 text-red-800 text-[8px] font-black px-1.5 rounded uppercase">Bulky</span>
+            )}
+          </span>
+          <span className="text-slate-900 font-bold">Shs {(deliveryFee ?? 0).toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between text-[9px] text-slate-400">
+          <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
+          <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
+        </div>
+        <div className="border-t border-slate-200 my-2" />
+        <div className="flex justify-between items-baseline">
+          <span className="font-extrabold text-sm text-slate-900">Order Total:</span>
+          <span className="text-xl font-black text-[#f68b1e]">Shs {(total ?? 0).toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-semibold pt-1">
+        <ShieldCheck size={12} className="text-emerald-600" />
+        <span>256-bit SSL Encrypted &bull; Buyer Protection Guarantee</span>
+      </div>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 overflow-hidden" id="cart-drawer-container">
-      {/* Dark overlay */}
-      <div 
-        className="absolute inset-0 bg-black/60 transition-opacity" 
-        onClick={handleCloseAndReset}
-      />
+      {/* Dark overlay - only for the slide-over mini cart */}
+      {!isFullPageStep && (
+        <div 
+          className="absolute inset-0 bg-black/60 transition-opacity" 
+          onClick={handleCloseAndReset}
+        />
+      )}
 
-      {/* Slider Panel */}
-      <div className="absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col justify-between animate-slide-left">
+      {/* Slider Panel (cart) OR Full-page checkout (details/processing/success) */}
+      <div className={isFullPageStep
+        ? "absolute inset-0 w-full h-full bg-[#f5f6f8] flex flex-col overflow-y-auto"
+        : "absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col justify-between animate-slide-left"
+      }>
         
         {/* HEADER */}
-        <div className="p-4 border-b border-slate-100 bg-[#232f3e] text-white flex justify-between items-center">
-          <div className="flex items-center gap-2">
-            <ShoppingBag className="text-[#ff9900]" size={20} />
-            <h2 className="font-sans text-xs font-black uppercase tracking-wider">
-              {step === 'cart' && `Secure Cart (${cartItems.length})`}
-              {step === 'details' && 'Secure Checkout'}
-              {step === 'processing' && 'Securing Order'}
-              {step === 'success' && 'Order Placed!'}
-            </h2>
+        <div className={isFullPageStep
+          ? "px-4 sm:px-8 py-3.5 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm"
+          : "p-4 border-b border-slate-100 bg-[#232f3e] text-white flex justify-between items-center"
+        }>
+          <div className="flex items-center gap-2.5">
+            {isFullPageStep ? (
+              <>
+                <span className="font-black text-lg tracking-tight text-slate-900">olimart<span className="text-[#f68b1e]">.</span></span>
+                <span className="h-5 w-px bg-slate-300 hidden sm:block" />
+                <h2 className="font-sans text-xs sm:text-sm font-extrabold text-slate-700 hidden sm:block">
+                  {step === 'details' && 'Checkout'}
+                  {step === 'processing' && 'Securing Order'}
+                  {step === 'success' && 'Order Confirmation'}
+                </h2>
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="text-[#ff9900]" size={20} />
+                <h2 className="font-sans text-xs font-black uppercase tracking-wider">
+                  {`Secure Cart (${cartItems.length})`}
+                </h2>
+              </>
+            )}
           </div>
-          <button 
-            onClick={handleCloseAndReset}
-            className="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
-          >
-            <X size={20} />
-          </button>
+          {isFullPageStep ? (
+            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
+              <ShieldCheck size={13} />
+              <span className="hidden sm:inline">Secure checkout</span>
+            </div>
+          ) : (
+            <button 
+              onClick={handleCloseAndReset}
+              className="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
+            >
+              <X size={20} />
+            </button>
+          )}
         </div>
 
         {/* BODY */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          
-          {/* STEP 1: CART LIST */}
+        <div className={isFullPageStep
+          ? "flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
+          : "flex-1 overflow-y-auto p-4 space-y-4"
+        }>
+          {/* STEP 1: CART LIST (drawer mode only) */}
           {step === 'cart' && (
             <>
               {cartItems.length > 0 ? (
@@ -597,6 +692,18 @@ export default function CartDrawer({
               )}
             </>
           )}
+
+          {isFullPageStep && (
+            <div className="lg:col-span-2 space-y-4">
+              {step === 'details' && (
+                <button
+                  type="button"
+                  onClick={() => setStep('cart')}
+                  className="text-[11px] font-bold text-slate-500 hover:text-orange-600 flex items-center gap-1 mb-1"
+                >
+                  &larr; Back to cart
+                </button>
+              )}
 
           {/* STEP 2: CHECKOUT DETAILS & PAYMENT */}
           {step === 'details' && (
@@ -1333,6 +1440,16 @@ export default function CartDrawer({
                   Return to Marketplace
                 </button>
               </div>
+            </div>
+          )}
+
+            </div>
+          )}
+
+          {/* Sticky order summary sidebar for the full-page checkout/success steps */}
+          {isFullPageStep && step !== 'processing' && (
+            <div className="lg:col-span-1">
+              <OrderSummaryCard />
             </div>
           )}
 
