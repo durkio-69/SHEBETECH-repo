@@ -3,7 +3,7 @@ import { genericSyncWithDatabase } from './dokanStore';
 export interface DokanNotification {
   id: string;
   timestamp: string;
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'vendor_approved' | 'vendor_rejected' | 'rider_assigned' | 'rider_accepted' | 'rider_rejected' | 'rider_payout_submitted';
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'vendor_approved' | 'vendor_rejected' | 'rider_assigned' | 'rider_accepted' | 'rider_rejected' | 'rider_payout_submitted' | 'refund_requested' | 'refund_vendor_decision' | 'refund_admin_decision';
   channel: 'sms' | 'email' | 'whatsapp';
   recipient: string; // e.g. "Vendor: Mukwano Online", "Admin", "Customer"
   recipientContact: string; // Phone, Email or account number
@@ -86,7 +86,7 @@ export function addDokanNotification(notif: Omit<DokanNotification, 'id' | 'time
 
 // Emits beautiful event-driven alerts simultaneously across multiple channels (SMS, Email, WhatsApp)
 export function emitEventDrivenNotifications(
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration',
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'refund_requested' | 'refund_vendor_decision' | 'refund_admin_decision',
   data: any
 ) {
   if (eventType === 'order_placed') {
@@ -296,13 +296,32 @@ export function emitEventDrivenNotifications(
   if (eventType === 'vendor_registration') {
     const { storeName, email, phone, accessLink, uniqueId } = data;
 
-    // WhatsApp Simulation Log
+    // WhatsApp Simulation Log to the new vendor
     addDokanNotification({
       eventType: 'vendor_registration',
       channel: 'whatsapp',
       recipient: `Vendor: ${storeName}`,
       recipientContact: phone,
       message: `Store ${storeName} registered! Unique Vendor ID: ${uniqueId}. Admin review in progress. Access dashboard: ${accessLink}`,
+      status: 'delivered'
+    });
+
+    // Notify Super Admin that a new vendor is pending approval
+    addDokanNotification({
+      eventType: 'vendor_registration',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `🆕 New Seller Application: "${storeName}" (ID: ${uniqueId}) has registered and is PENDING approval. Contact: ${phone} / ${email}. Please review in the Vendor Approvals queue.`,
+      status: 'delivered'
+    });
+
+    addDokanNotification({
+      eventType: 'vendor_registration',
+      channel: 'email',
+      recipient: 'Super Admin',
+      recipientContact: 'admin@olimart.ug',
+      message: `Subject: New Vendor Pending Approval — ${storeName}\n\nA new seller account has been submitted and is awaiting your review.\n\nStore: ${storeName}\nVendor ID: ${uniqueId}\nEmail: ${email}\nPhone: ${phone}\n\nPlease log in to the Admin Console → Vendor Approvals to approve or reject this application.`,
       status: 'delivered'
     });
   }
@@ -426,6 +445,66 @@ export function emitEventDrivenNotifications(
       recipient: 'Super Admin',
       recipientContact: 'admin@olimart.co.ug',
       message: `Subject: [RIDER TRANS] New Boda Payout Transaction Details Submitted\n\nDear Central Treasury,\n\nCourier Rider "${riderName}" has submitted payout details to unlock their escrow balance of Shs ${amount.toLocaleString()}.\n\nMethod: ${method.toUpperCase()}\nAccount: ${details}\nTransaction Reference Number: ${txRef}\n\nPlease audit their completed drops and approve payout transactions.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'refund_requested') {
+    const { orderId, customerName, vendorName, amount, reason } = data;
+    // Notify Vendor — they get first right of response
+    addDokanNotification({
+      eventType: 'refund_requested',
+      channel: 'whatsapp',
+      recipient: `Vendor: ${vendorName}`,
+      recipientContact: '0700 000000',
+      message: `💸 Refund Requested: Customer ${customerName} has requested a refund of Shs ${(amount ?? 0).toLocaleString()} for Order ${orderId}. Reason: "${reason}". Please review and respond within 48 hours.`,
+      status: 'delivered'
+    });
+    // Notify Admin for visibility
+    addDokanNotification({
+      eventType: 'refund_requested',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `💸 New Refund Request: Order ${orderId} (Vendor: ${vendorName}, Customer: ${customerName}) — Shs ${(amount ?? 0).toLocaleString()}. Awaiting vendor response, then admin finalization.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'refund_vendor_decision') {
+    const { orderId, customerName, customerPhone, vendorName, decision, amount } = data;
+    // Notify Admin to finalize
+    addDokanNotification({
+      eventType: 'refund_vendor_decision',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `Vendor "${vendorName}" has ${decision === 'vendor_approved' ? 'APPROVED' : 'REJECTED'} the refund for Order ${orderId} (Shs ${(amount ?? 0).toLocaleString()}). ${decision === 'vendor_approved' ? 'Please process the final payout to the customer.' : 'Customer may escalate — please review.'}`,
+      status: 'delivered'
+    });
+    // Notify Customer of progress
+    addDokanNotification({
+      eventType: 'refund_vendor_decision',
+      channel: 'sms',
+      recipient: `Customer: ${customerName}`,
+      recipientContact: customerPhone || '0772 123456',
+      message: decision === 'vendor_approved'
+        ? `Olimart: Good news — ${vendorName} approved your refund for Order ${orderId}. Our admin team is finalizing your payout.`
+        : `Olimart: ${vendorName} was unable to approve your refund for Order ${orderId} directly. Your case has been escalated to Olimart Admin for review.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'refund_admin_decision') {
+    const { orderId, customerName, customerPhone, amount, decision } = data;
+    addDokanNotification({
+      eventType: 'refund_admin_decision',
+      channel: 'sms',
+      recipient: `Customer: ${customerName}`,
+      recipientContact: customerPhone || '0772 123456',
+      message: decision === 'refunded'
+        ? `Olimart: Your refund of Shs ${(amount ?? 0).toLocaleString()} for Order ${orderId} has been processed. Funds will reflect within 24-48 hours.`
+        : `Olimart: After review, Olimart Admin was unable to approve your refund request for Order ${orderId}. Contact support for more details.`,
       status: 'delivered'
     });
   }
