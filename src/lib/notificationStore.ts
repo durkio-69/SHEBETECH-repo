@@ -1,7 +1,7 @@
 export interface DokanNotification {
   id: string;
   timestamp: string;
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment';
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration';
   channel: 'sms' | 'email' | 'whatsapp';
   recipient: string; // e.g. "Vendor: Mukwano Online", "Admin", "Customer"
   recipientContact: string; // Phone, Email or account number
@@ -69,7 +69,7 @@ export function addDokanNotification(notif: Omit<DokanNotification, 'id' | 'time
 
 // Emits beautiful event-driven alerts simultaneously across multiple channels (SMS, Email, WhatsApp)
 export function emitEventDrivenNotifications(
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment',
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration',
   data: any
 ) {
   if (eventType === 'order_placed') {
@@ -238,6 +238,54 @@ export function emitEventDrivenNotifications(
       recipient: 'Super Admin',
       recipientContact: '0772 900000',
       message: `Olimart Reviews Guard: Customer ${customerName} rated "${productTitle.split(' - ')[0]}" with ${rating} stars. Comment: "${comment.substring(0, 45)}..."`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'rider_registration') {
+    const { riderName, phone, email, idCard, motorcyclePlate, accessLink } = data;
+
+    // 1. WhatsApp Simulation Log
+    addDokanNotification({
+      eventType: 'rider_registration',
+      channel: 'whatsapp',
+      recipient: `Rider: ${riderName}`,
+      recipientContact: phone,
+      message: `Hi ${riderName}, congratulations! Your Olimart Boda profile is active. Access dashboard: ${accessLink}`,
+      status: 'delivered'
+    });
+
+    // 2. SMS Simulation Log
+    addDokanNotification({
+      eventType: 'rider_registration',
+      channel: 'sms',
+      recipient: `Rider: ${riderName}`,
+      recipientContact: phone,
+      message: `OLIMART DISPATCH: Driver account approved. Access dashboard at: ${accessLink}`,
+      status: 'delivered'
+    });
+
+    // 3. Email Simulation Log
+    addDokanNotification({
+      eventType: 'rider_registration',
+      channel: 'email',
+      recipient: `Rider: ${riderName}`,
+      recipientContact: email,
+      message: `Subject: Olimart Boda Partner Welcom Kit\n\nDear ${riderName},\n\nYour driver headshot and vehicle details (Reg: ${motorcyclePlate}) are verified. Access link: ${accessLink}`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'vendor_registration') {
+    const { storeName, email, phone, accessLink, uniqueId } = data;
+
+    // WhatsApp Simulation Log
+    addDokanNotification({
+      eventType: 'vendor_registration',
+      channel: 'whatsapp',
+      recipient: `Vendor: ${storeName}`,
+      recipientContact: phone,
+      message: `Store ${storeName} registered! Unique Vendor ID: ${uniqueId}. Admin review in progress. Access dashboard: ${accessLink}`,
       status: 'delivered'
     });
   }

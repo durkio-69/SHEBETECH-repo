@@ -15,6 +15,13 @@ export interface DokanVendor {
   trustBadges?: string[];
   reviews?: { id: string; customerName: string; rating: number; comment: string; date: string }[];
   suspended?: boolean;
+  businessName?: string;
+  storeLogo?: string;
+  storeBanner?: string;
+  businessSpecifications?: string;
+  bankAccountNumber?: string;
+  momoNumber?: string;
+  paypalAccount?: string;
 }
 
 export interface WithdrawalRequest {
@@ -498,6 +505,11 @@ export interface DokanRider {
   licenseTonnage?: string;
   trustBadges?: string[];
   reviews?: { id: string; customerName: string; rating: number; comment: string; date: string }[];
+  email?: string;
+  idCard?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  drivingPermit?: string;
+  pictureUrl?: string;
 }
 
 const INITIAL_RIDERS: DokanRider[] = [

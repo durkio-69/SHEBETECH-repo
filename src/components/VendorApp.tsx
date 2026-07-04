@@ -75,6 +75,10 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   // Rider/Courier registration states
   const [riderName, setRiderName] = useState('');
   const [riderPhone, setRiderPhone] = useState('');
+  const [riderEmail, setRiderEmail] = useState('');
+  const [riderIdCard, setRiderIdCard] = useState('');
+  const [riderDrivingPermit, setRiderDrivingPermit] = useState('');
+  const [riderPictureUrl, setRiderPictureUrl] = useState('');
   const [riderLocation, setRiderLocation] = useState('Kampala Central');
   const [transportMeans, setTransportMeans] = useState<'boda' | 'bicycle' | 'van' | 'truck'>('boda');
   const [vehiclePlate, setVehiclePlate] = useState('');
@@ -178,32 +182,58 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       alert(`🎉 Dokan Pro Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
     } 
     else if (regRole === 'delivery') {
-      if (!riderName || !riderPhone) return;
+      if (!riderName || !riderPhone || !riderIdCard) {
+        alert("Error: Full Name, Phone Number, and National ID Card are compulsory!");
+        return;
+      }
       const uniqueRdrId = `DKN-RDR-${Math.floor(100 + Math.random() * 900)}`;
       const fullRiderName = `${riderName} [${uniqueRdrId}]`;
       
-      const newRider = {
+      const newRider: DokanRider = {
         id: `r-${Date.now()}`,
         name: fullRiderName,
         phone: riderPhone,
-        motorcyclePlate: vehiclePlate || 'BICYCLE-NA',
+        email: riderEmail || `${riderName.toLowerCase().replace(/\s+/g, '')}@olimart-courier.ug`,
+        idCard: riderIdCard,
+        drivingPermit: riderDrivingPermit || 'PERMIT-PENDING',
+        pictureUrl: riderPictureUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=60',
+        motorcyclePlate: vehiclePlate || 'UPB 221X',
         location: riderLocation,
         completedDeliveries: 0,
         earnings: 0,
         transportMeans,
-        helmetOrHub: helmetOrHub || undefined,
+        helmetOrHub: helmetOrHub || 'HELMET-PENDING',
         cargoVolume: cargoVolume || undefined,
-        licenseTonnage: licenseTonnage || undefined
+        licenseTonnage: licenseTonnage || undefined,
+        status: 'pending' // Gated waiting for admin approval
       };
 
       const currentRiders = getDokanRiders();
       const updated = [...currentRiders, newRider];
       saveDokanRiders(updated);
       
-      alert(`🏍️ Dokan Delivery Partner Registered!\nName: ${fullRiderName}\nMeans of Transport: ${transportMeans.toUpperCase()}\nRelated category information was saved to the platform securely.\nYou can now login with this profile in the Courier Portal!`);
+      // Emit simulated email, SMS, and WhatsApp dispatch notifications
+      emitEventDrivenNotifications('rider_registration', {
+        riderName: fullRiderName,
+        phone: riderPhone,
+        email: newRider.email,
+        idCard: riderIdCard,
+        motorcyclePlate: newRider.motorcyclePlate,
+        accessLink: `https://olimart-courier.ug/dashboard/${newRider.id}`
+      });
+
+      alert(`🏍️ Dokan Delivery Partner Registered successfully!\n\n` +
+            `• System Auto-Generated Rider ID: ${uniqueRdrId}\n` +
+            `• Onboarding Status: AWAITING ADMIN APPROVAL\n\n` +
+            `💬 Simulated Notification Dispatched: An SMS, WhatsApp message, and Email have been simulated with a secure link to access your Courier Dashboard once the Super Admin approves your application.`);
+      
       // Reset rider registration form
       setRiderName('');
       setRiderPhone('');
+      setRiderEmail('');
+      setRiderIdCard('');
+      setRiderDrivingPermit('');
+      setRiderPictureUrl('');
       setVehiclePlate('');
       setHelmetOrHub('');
       setCargoVolume('');
@@ -628,7 +658,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-500">Contact Telephone Number</label>
+                    <label className="text-slate-500">Contact Telephone (WhatsApp Number)</label>
                     <input
                       type="tel"
                       required
@@ -637,6 +667,68 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       placeholder="e.g. 0772 123456"
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
                     />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Email Address</label>
+                    <input
+                      type="email"
+                      required
+                      value={riderEmail}
+                      onChange={(e) => setRiderEmail(e.target.value)}
+                      placeholder="e.g. robert@olimart-courier.ug"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500 font-extrabold text-[#f68b1e]">National ID Card No (Compulsory) ⚠️</label>
+                    <input
+                      type="text"
+                      required
+                      value={riderIdCard}
+                      onChange={(e) => setRiderIdCard(e.target.value)}
+                      placeholder="e.g. CM84010110XP1B (Uganda ID)"
+                      className="w-full bg-amber-50 dark:bg-slate-950 border border-[#f68b1e] text-slate-800 dark:text-amber-100 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Driving Permit / License Details</label>
+                    <input
+                      type="text"
+                      required
+                      value={riderDrivingPermit}
+                      onChange={(e) => setRiderDrivingPermit(e.target.value)}
+                      placeholder="e.g. DL-948194-KLA"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-slate-500">Profile Picture / Headshot</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onloadend = () => {
+                              setRiderPictureUrl(reader.result as string);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                        className="text-xs text-slate-500 block w-full file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-150"
+                      />
+                      {riderPictureUrl && (
+                        <img src={riderPictureUrl} alt="Preview" className="w-8 h-8 rounded-full object-cover border border-orange-500" />
+                      )}
+                    </div>
                   </div>
                 </div>
 
