@@ -99,7 +99,7 @@ export default function DealsPage({
       case 'todays-deal':
         return {
           title: "Today's Gold Box Deals",
-          subtitle: "Up to 60% Off. Exciting top tier brands, updated every 24 hours.",
+          subtitle: "Up to 60% off exciting deals from top-tier brands, updated every 24 hours.",
           bgColor: "from-amber-500 to-orange-600",
           icon: <Sparkles className="text-yellow-300 animate-pulse" size={24} />,
           badge: "Featured Savings",
@@ -108,7 +108,7 @@ export default function DealsPage({
       case 'flash-sales':
         return {
           title: "MoMo Thunder Flash Sales",
-          subtitle: "Extreme discounts in short bursts. Lock your stock before it sells out!",
+          subtitle: "Extreme discounts in short bursts. Grab your item before it sells out!",
           bgColor: "from-red-600 to-yellow-600",
           icon: <Zap className="text-yellow-300 animate-bounce" size={24} />,
           badge: "Limited Stock Left",
