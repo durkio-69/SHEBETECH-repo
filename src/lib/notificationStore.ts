@@ -1,7 +1,7 @@
 export interface DokanNotification {
   id: string;
   timestamp: string;
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration';
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'vendor_approved' | 'vendor_rejected' | 'rider_assigned' | 'rider_accepted' | 'rider_rejected' | 'rider_payout_submitted';
   channel: 'sms' | 'email' | 'whatsapp';
   recipient: string; // e.g. "Vendor: Mukwano Online", "Admin", "Customer"
   recipientContact: string; // Phone, Email or account number
@@ -286,6 +286,129 @@ export function emitEventDrivenNotifications(
       recipient: `Vendor: ${storeName}`,
       recipientContact: phone,
       message: `Store ${storeName} registered! Unique Vendor ID: ${uniqueId}. Admin review in progress. Access dashboard: ${accessLink}`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'vendor_approved') {
+    const { orderId, vendorName, customerName, customerPhone } = data;
+    // Notify Admin
+    addDokanNotification({
+      eventType: 'vendor_approved',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `✅ Order Approved: Vendor "${vendorName}" has APPROVED Order ${orderId} for customer ${customerName}. Ready for Admin to route a nearby rider.`,
+      status: 'delivered'
+    });
+    // Notify Customer
+    addDokanNotification({
+      eventType: 'vendor_approved',
+      channel: 'sms',
+      recipient: `Customer: ${customerName}`,
+      recipientContact: customerPhone || '0772 123456',
+      message: `Olimart: Your order ${orderId} has been approved by the seller (${vendorName})! It is being packed. Our dispatch team is allocating your Boda rider.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'vendor_rejected') {
+    const { orderId, vendorName, customerName, customerPhone } = data;
+    // Notify Admin
+    addDokanNotification({
+      eventType: 'vendor_rejected',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `❌ Order Rejected: Vendor "${vendorName}" has REJECTED Order ${orderId}. Customer: ${customerName}. Please check logs.`,
+      status: 'delivered'
+    });
+    // Notify Customer
+    addDokanNotification({
+      eventType: 'vendor_rejected',
+      channel: 'sms',
+      recipient: `Customer: ${customerName}`,
+      recipientContact: customerPhone || '0772 123456',
+      message: `Olimart Update: We regret to inform you that your order ${orderId} was declined by the seller. Any electronic payment has been instantly refunded to your wallet.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'rider_assigned') {
+    const { orderId, vendorName, riderName, riderPhone, customerName, customerAddress, customerPhone, deliveryFee } = data;
+    // Notify Vendor on who is coming
+    addDokanNotification({
+      eventType: 'rider_assigned',
+      channel: 'sms',
+      recipient: `Vendor: ${vendorName}`,
+      recipientContact: '0700 000000',
+      message: `Olimart Boda Logistics: Dispatch Rider "${riderName}" (${riderPhone}) has been assigned to pick up Order ${orderId}. Please hand over the products on arrival.`,
+      status: 'delivered'
+    });
+    // Notify Rider with order details
+    addDokanNotification({
+      eventType: 'rider_assigned',
+      channel: 'whatsapp',
+      recipient: `Rider: ${riderName}`,
+      recipientContact: riderPhone,
+      message: `🏍️ Olimart New Dispatch Job: Order ${orderId} assigned. Pick up from: ${vendorName}. Deliver to Client: ${customerName} at Address: ${customerAddress} (Phone: ${customerPhone}). Delivery Fee Earned: Shs ${deliveryFee.toLocaleString()}. Accept or Reject the order on your dashboard.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'rider_accepted') {
+    const { orderId, customerName, customerPhone, vendorName, riderName, riderPhone, riderPlate, riderMeans } = data;
+    // Notify Customer with rider details
+    addDokanNotification({
+      eventType: 'rider_accepted',
+      channel: 'sms',
+      recipient: `Customer: ${customerName}`,
+      recipientContact: customerPhone,
+      message: `Olimart: Your package for order ${orderId} is now IN TRANSIT! Assigned Rider: ${riderName} (Phone: ${riderPhone}, Reg Plate: ${riderPlate}, Type: ${riderMeans}). You can track their live progress on your Olimart radar dashboard!`,
+      status: 'delivered'
+    });
+    // Notify Vendor
+    addDokanNotification({
+      eventType: 'rider_accepted',
+      channel: 'sms',
+      recipient: `Vendor: ${vendorName}`,
+      recipientContact: '0700 000000',
+      message: `Olimart: Rider ${riderName} has ACCEPTED your shipment for Order ${orderId} and is currently en-route to pick up the products.`,
+      status: 'delivered'
+    });
+    // Notify Admin
+    addDokanNotification({
+      eventType: 'rider_accepted',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `🏍️ Rider Dispatch Success: Courier ${riderName} has ACCEPTED Order ${orderId} and is on-route. Tracking initiated.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'rider_rejected') {
+    const { orderId, riderName, vendorName } = data;
+    // Notify Admin
+    addDokanNotification({
+      eventType: 'rider_rejected',
+      channel: 'whatsapp',
+      recipient: 'Super Admin',
+      recipientContact: '0772 900000',
+      message: `⚠️ Rider Rejected Job: Courier ${riderName} declined pickup for Order ${orderId} (Vendor: ${vendorName}). Order returned to pending dispatch queue. Please re-assign nearby rider.`,
+      status: 'delivered'
+    });
+  }
+
+  if (eventType === 'rider_payout_submitted') {
+    const { riderName, amount, txRef, method, details } = data;
+    // Notify Admin
+    addDokanNotification({
+      eventType: 'rider_payout_submitted',
+      channel: 'email',
+      recipient: 'Super Admin',
+      recipientContact: 'admin@olimart.co.ug',
+      message: `Subject: [RIDER TRANS] New Boda Payout Transaction Details Submitted\n\nDear Central Treasury,\n\nCourier Rider "${riderName}" has submitted payout details to unlock their escrow balance of Shs ${amount.toLocaleString()}.\n\nMethod: ${method.toUpperCase()}\nAccount: ${details}\nTransaction Reference Number: ${txRef}\n\nPlease audit their completed drops and approve payout transactions.`,
       status: 'delivered'
     });
   }

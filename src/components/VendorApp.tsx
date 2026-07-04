@@ -397,6 +397,37 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     window.dispatchEvent(new Event('storage'));
   };
 
+  // Vendor approves or rejects the order
+  const handleVendorDecision = (orderId: string, decision: 'approved' | 'rejected') => {
+    const updated = orders.map(o => {
+      if (o.id === orderId) {
+        return {
+          ...o,
+          vendorStatus: decision,
+          vendorApprovedAt: decision === 'approved' ? new Date().toISOString() : undefined,
+          // if approved, also mark status as placed so it stays active
+          status: decision === 'approved' ? 'placed' as const : 'placed' as const
+        };
+      }
+      return o;
+    });
+    saveDokanOrders(updated);
+    setOrders(updated);
+    window.dispatchEvent(new Event('storage'));
+
+    const targetOrder = updated.find(o => o.id === orderId);
+    if (targetOrder) {
+      emitEventDrivenNotifications(decision === 'approved' ? 'vendor_approved' : 'vendor_rejected', {
+        orderId: orderId,
+        vendorName: currentVendor.name,
+        customerName: targetOrder.customerName,
+        customerPhone: targetOrder.customerPhone
+      });
+    }
+
+    alert(`Order ${orderId} has been successfully ${decision.toUpperCase()}! notifications dispatched to Admin and Customer.`);
+  };
+
   // Quick edit product price and stock details
   const handleUpdateProductPrice = (prodId: string) => {
     const parsedPrice = parseInt(editingPrice);
@@ -1871,26 +1902,62 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     <p className="text-xs text-slate-400">My Net Earnings (85%):</p>
                     <p className="text-sm font-black text-emerald-600">{formatPrice(o.vendorEarnings)}</p>
 
-                    <div className="flex gap-2 mt-1">
-                      {o.status === 'placed' && (
-                        <>
+                    <div className="flex flex-col items-end gap-1.5 mt-1">
+                      {/* Vendor Decision Panel */}
+                      {(!o.vendorStatus || o.vendorStatus === 'pending') ? (
+                        <div className="flex gap-2">
                           <button
-                            onClick={() => setAssigningRiderOrderId(o.id)}
-                            className="bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
+                            onClick={() => handleVendorDecision(o.id, 'approved')}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
                           >
-                            <PackageCheck size={12} /> Assign Rider & Dispatch
+                            ✔️ Approve Order
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm("Cancel this order?")) {
-                                handleUpdateOrderStatus(o.id, 'placed');
+                              if (confirm("Reject this order? This will notify the customer and admin.")) {
+                                handleVendorDecision(o.id, 'rejected');
                               }
                             }}
-                            className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
+                            className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
                           >
-                            Cancel
+                            ❌ Reject
                           </button>
-                        </>
+                        </div>
+                      ) : (
+                        <div className="text-right space-y-1.5">
+                          <span className={`inline-block text-[10px] font-black uppercase px-2.5 py-1 rounded-md ${
+                            o.vendorStatus === 'approved' 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-rose-100 text-rose-800 border border-rose-300'
+                          }`}>
+                            My Decision: {o.vendorStatus.toUpperCase()}
+                          </span>
+
+                          {o.vendorStatus === 'approved' && (
+                            <div className="text-[10px] font-bold text-slate-500">
+                              {o.status === 'placed' && (
+                                <span className="text-orange-600 animate-pulse block">
+                                  ⌛ Awaiting Super Admin Rider Assignment...
+                                </span>
+                              )}
+                              {o.status === 'dispatched' && (
+                                <span className="text-indigo-600 animate-pulse block">
+                                  📦 Rider Assigned. Awaiting Rider acceptance...
+                                </span>
+                              )}
+                              {o.status === 'transit' && (
+                                <span className="text-purple-600 font-extrabold flex items-center justify-end gap-1 block">
+                                  🏍️ Rider en-route to pick up products
+                                </span>
+                              )}
+                              {o.status === 'delivered' && (
+                                <span className="text-emerald-600 font-black flex items-center justify-end gap-1 block">
+                                  ✅ Cargo Drop Completed & Cleared!
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
                       )}
                       
                       {o.status === 'dispatched' && (

@@ -53,6 +53,17 @@ export interface DokanOrder {
   createdAt: string;
   assignedRider?: string;
   distanceKm: number;
+  vendorStatus?: 'pending' | 'approved' | 'rejected';
+  vendorApprovedAt?: string;
+  riderStatus?: 'pending' | 'accepted' | 'rejected';
+  assignedRiderId?: string;
+  assignedRiderName?: string;
+  assignedRiderPhone?: string;
+  assignedRiderPlate?: string;
+  assignedRiderPic?: string;
+  assignedRiderMeans?: string;
+  riderAcceptedAt?: string;
+  riderTransactionRef?: string;
 }
 
 export interface CustomerComment {
