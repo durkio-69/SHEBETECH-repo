@@ -150,6 +150,43 @@ async function initDb() {
       );
     `);
 
+    // Categories, admin logs, and notifications are also id-keyed JSON documents.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_categories (
+        id VARCHAR(100) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_admin_logs (
+        id VARCHAR(100) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_notifications (
+        id VARCHAR(100) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Generic key-value store for small singleton settings that aren't
+    // arrays of id-keyed records: brand list, tag list, admin commission
+    // settings, etc. One row per logical key, whole value replaced on save.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_settings (
+        key VARCHAR(100) PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Seed products table from the static catalog the first time only.
     const productCheck = await client.query("SELECT COUNT(*) FROM olimart_products");
     const productCount = parseInt(productCheck.rows[0].count, 10);
@@ -525,6 +562,52 @@ async function startServer() {
     table: "olimart_withdrawals",
     extraColumn: "status",
     extraValue: (w) => w.status || null,
+  });
+  registerJsonEntityRoutes({
+    routeName: "categories",
+    table: "olimart_categories",
+  });
+  registerJsonEntityRoutes({
+    routeName: "adminlogs",
+    table: "olimart_admin_logs",
+  });
+  registerJsonEntityRoutes({
+    routeName: "notifications",
+    table: "olimart_notifications",
+  });
+
+  // ==========================================
+  // Generic key-value settings store: brands, tags, admin commission
+  // settings, and any other singleton value the admin console edits.
+  // GET returns { key, value } or 404 if never set.
+  // PUT/POST replaces the whole value for that key.
+  // ==========================================
+  app.get("/api/db/settings/:key", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const result = await pool.query("SELECT value FROM olimart_settings WHERE key = $1", [req.params.key]);
+      if (result.rows.length === 0) return res.status(404).json({ error: "Not found" });
+      res.json({ key: req.params.key, value: result.rows[0].value });
+    } catch (err: any) {
+      console.error(`Failed to read setting ${req.params.key}:`, err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/db/settings/:key", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const value = req.body?.value !== undefined ? req.body.value : req.body;
+      await pool.query(
+        `INSERT INTO olimart_settings (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP`,
+        [req.params.key, JSON.stringify(value)]
+      );
+      res.json({ success: true });
+    } catch (err: any) {
+      console.error(`Failed to save setting ${req.params.key}:`, err);
+      res.status(500).json({ error: err.message });
+    }
   });
 
   // Vite middleware for development vs static asset serving for production

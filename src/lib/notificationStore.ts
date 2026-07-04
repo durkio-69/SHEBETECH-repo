@@ -1,3 +1,5 @@
+import { genericSyncWithDatabase } from './dokanStore';
+
 export interface DokanNotification {
   id: string;
   timestamp: string;
@@ -43,14 +45,29 @@ const INITIAL_NOTIFICATIONS: DokanNotification[] = [
 ];
 
 export function getDokanNotifications(): DokanNotification[] {
+  setTimeout(() => { syncNotificationsWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_notifications');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_notifications', JSON.stringify(INITIAL_NOTIFICATIONS));
   return INITIAL_NOTIFICATIONS;
 }
 
+export async function syncNotificationsWithDatabase() {
+  return genericSyncWithDatabase<DokanNotification>({
+    key: "notifications",
+    apiPath: "/api/db/notifications",
+    localStorageKey: "dokan_notifications",
+    getLocal: getDokanNotifications,
+  });
+}
+
 export function saveDokanNotifications(notifs: DokanNotification[]) {
   localStorage.setItem('dokan_notifications', JSON.stringify(notifs));
+  fetch("/api/db/notifications/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(notifs)
+  }).catch(err => console.warn("Failed to sync notifications on save:", err));
   // Notify listening widgets in other parts of the app
   window.dispatchEvent(new Event('storage'));
 }

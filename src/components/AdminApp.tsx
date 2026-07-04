@@ -30,7 +30,12 @@ import {
   getAdminSettings,
   saveAdminSettings,
   isItemBulky,
-  AdminCommissionSettings
+  AdminCommissionSettings,
+  getDokanBrands,
+  saveDokanBrands,
+  getDokanTags,
+  saveDokanTags,
+  deleteDokanProduct
 } from '../lib/dokanStore';
 import { 
   ShieldAlert, 
@@ -617,8 +622,8 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   const [newBrand, setNewBrand] = useState('');
   const [newTag, setNewTag] = useState('');
 
-  const [brandsList, setBrandsList] = useState<string[]>(['Tecno', 'Infinix', 'Apple', 'Samsung', 'Hisense', 'Nile Fresh']);
-  const [tagsList, setTagsList] = useState<string[]>(['Dokan Pro', 'Verified', 'Bulky Cargo', 'Kampala Local', 'Discounted']);
+  const [brandsList, setBrandsList] = useState<string[]>(() => getDokanBrands());
+  const [tagsList, setTagsList] = useState<string[]>(() => getDokanTags());
 
   // Admin Commission & Transport Settings State
   const [adminSettings, setAdminSettingsState] = useState<AdminCommissionSettings>(() => getAdminSettings());
@@ -808,7 +813,9 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   const handleCreateBrand = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBrand) return;
-    setBrandsList([...brandsList, newBrand]);
+    const updated = [...brandsList, newBrand];
+    setBrandsList(updated);
+    saveDokanBrands(updated);
     addAdminLog('BRAND_CREATION', `Created brand taxonomy "${newBrand}"`, 'info');
     setNewBrand('');
     alert(`Brand "${newBrand}" registered successfully!`);
@@ -817,7 +824,9 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   const handleCreateTag = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTag) return;
-    setTagsList([...tagsList, newTag]);
+    const updated = [...tagsList, newTag];
+    setTagsList(updated);
+    saveDokanTags(updated);
     addAdminLog('TAG_CREATION', `Created tag taxonomy "${newTag}"`, 'info');
     setNewTag('');
     alert(`Tag "${newTag}" registered successfully!`);
@@ -829,6 +838,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
       const targetProd = products.find(p => p.id === prodId);
       const filtered = products.filter(p => p.id !== prodId);
       setProducts(filtered);
+      deleteDokanProduct(prodId);
       addAdminLog('PRODUCT_DELETION', `Moderator deleted product "${targetProd?.title || 'Unknown'}" (ID: ${prodId})`, 'critical');
     }
   };

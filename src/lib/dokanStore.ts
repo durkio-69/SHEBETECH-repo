@@ -101,6 +101,9 @@ const DEFAULT_ADMIN_SETTINGS: AdminCommissionSettings = {
 };
 
 export function getAdminSettings(): AdminCommissionSettings {
+  setTimeout(() => {
+    syncSettingWithDatabase("adminSettings", "olimart_admin_settings", getAdminSettings).catch(() => {});
+  }, 100);
   const saved = localStorage.getItem('olimart_admin_settings');
   if (saved) {
     try {
@@ -114,6 +117,7 @@ export function getAdminSettings(): AdminCommissionSettings {
 
 export function saveAdminSettings(settings: AdminCommissionSettings) {
   localStorage.setItem('olimart_admin_settings', JSON.stringify(settings));
+  pushSettingToDatabase("adminSettings", settings);
 }
 
 // Bulky product verification
@@ -485,6 +489,7 @@ export function saveDokanComments(comments: CustomerComment[]) {
 }
 
 export function getDokanCategories(): DokanCategory[] {
+  setTimeout(() => { syncCategoriesWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_categories');
   if (saved) return JSON.parse(saved);
   const defCats = [
@@ -502,9 +507,24 @@ export function getDokanCategories(): DokanCategory[] {
 
 export function saveDokanCategories(cats: DokanCategory[]) {
   localStorage.setItem('dokan_categories', JSON.stringify(cats));
+  fetch("/api/db/categories/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(cats)
+  }).catch(err => console.warn("Failed to sync categories on save:", err));
+}
+
+export async function syncCategoriesWithDatabase() {
+  return genericSyncWithDatabase<DokanCategory>({
+    key: "categories",
+    apiPath: "/api/db/categories",
+    localStorageKey: "dokan_categories",
+    getLocal: getDokanCategories,
+  });
 }
 
 export function getDokanBrands(): string[] {
+  setTimeout(() => { syncSettingWithDatabase("brands", "dokan_brands", getDokanBrands).catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_brands');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_brands', JSON.stringify(INITIAL_BRANDS));
@@ -513,9 +533,11 @@ export function getDokanBrands(): string[] {
 
 export function saveDokanBrands(brands: string[]) {
   localStorage.setItem('dokan_brands', JSON.stringify(brands));
+  pushSettingToDatabase("brands", brands);
 }
 
 export function getDokanTags(): string[] {
+  setTimeout(() => { syncSettingWithDatabase("tags", "dokan_tags", getDokanTags).catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_tags');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_tags', JSON.stringify(INITIAL_TAGS));
@@ -524,6 +546,7 @@ export function getDokanTags(): string[] {
 
 export function saveDokanTags(tags: string[]) {
   localStorage.setItem('dokan_tags', JSON.stringify(tags));
+  pushSettingToDatabase("tags", tags);
 }
 
 export interface DokanRider {
@@ -580,6 +603,7 @@ export interface AdminLog {
 }
 
 export function getAdminLogs(): AdminLog[] {
+  setTimeout(() => { syncAdminLogsWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_admin_logs');
   if (saved) return JSON.parse(saved);
   const initialLogs: AdminLog[] = [
@@ -606,6 +630,20 @@ export function getAdminLogs(): AdminLog[] {
 
 export function saveAdminLogs(logs: AdminLog[]) {
   localStorage.setItem('dokan_admin_logs', JSON.stringify(logs));
+  fetch("/api/db/adminlogs/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(logs)
+  }).catch(err => console.warn("Failed to sync admin logs on save:", err));
+}
+
+export async function syncAdminLogsWithDatabase() {
+  return genericSyncWithDatabase<AdminLog>({
+    key: "adminlogs",
+    apiPath: "/api/db/adminlogs",
+    localStorageKey: "dokan_admin_logs",
+    getLocal: getAdminLogs,
+  });
 }
 
 export function addAdminLog(action: string, details: string, severity: 'info' | 'warning' | 'critical' | 'success' = 'info') {
@@ -765,7 +803,7 @@ export async function syncRidersWithDatabase() {
 // ==========================================
 const syncLocks: Record<string, boolean> = {};
 
-async function genericSyncWithDatabase<T extends { id: string }>(opts: {
+export async function genericSyncWithDatabase<T extends { id: string }>(opts: {
   key: string;                 // lock key, e.g. "orders"
   apiPath: string;             // e.g. "/api/db/orders"
   localStorageKey: string;     // e.g. "dokan_orders"
@@ -898,6 +936,57 @@ export function saveDokanProducts(products: Product[]) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(products)
   }).catch(err => console.warn("Failed to sync products on save:", err));
+}
+
+// ==========================================
+// Generic key-value settings sync: for singleton values that aren't
+// id-keyed arrays (brand list, tag list, admin commission settings).
+// The DB copy is treated as authoritative once it exists; if the DB has
+// nothing yet, whatever is local gets pushed up to seed it.
+// ==========================================
+async function fetchRemoteSetting<T>(key: string): Promise<T | null> {
+  try {
+    const res = await fetch(`/api/db/settings/${key}`);
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json.value as T;
+  } catch {
+    return null;
+  }
+}
+
+function pushSettingToDatabase(key: string, value: unknown) {
+  fetch(`/api/db/settings/${key}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ value })
+  }).catch(err => console.warn(`Failed to sync setting "${key}" to database:`, err));
+}
+
+const settingSyncLocks: Record<string, boolean> = {};
+export async function syncSettingWithDatabase<T>(
+  key: string,
+  localStorageKey: string,
+  getLocal: () => T
+): Promise<void> {
+  if (settingSyncLocks[key]) return;
+  settingSyncLocks[key] = true;
+  try {
+    const remote = await fetchRemoteSetting<T>(key);
+    if (remote !== null && remote !== undefined) {
+      const local = getLocal();
+      if (JSON.stringify(local) !== JSON.stringify(remote)) {
+        localStorage.setItem(localStorageKey, JSON.stringify(remote));
+        window.dispatchEvent(new Event('storage'));
+      }
+    } else {
+      pushSettingToDatabase(key, getLocal());
+    }
+  } catch (err) {
+    console.warn(`Neon Database setting sync deferred for "${key}":`, err);
+  } finally {
+    settingSyncLocks[key] = false;
+  }
 }
 
 export function deleteDokanProduct(id: string) {
