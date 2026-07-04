@@ -527,10 +527,10 @@ export default function CartDrawer({
 
                           <div className="flex justify-between items-center">
                             <span className="text-xs font-black text-slate-900">
-                              Shs {activePrice.toLocaleString()}
+                              Shs {(activePrice ?? 0).toLocaleString()}
                             </span>
                             <span className="text-[10px] text-slate-400">
-                              Subtotal: Shs {(activePrice * item.quantity).toLocaleString()}
+                              Subtotal: Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}
                             </span>
                           </div>
 
@@ -573,7 +573,7 @@ export default function CartDrawer({
                       {subtotal > 150000 ? (
                         <strong>🎉 Congratulations! You unlocked FREE shipping inside Kampala!</strong>
                       ) : (
-                        <span>Add <strong>Shs {(150000 - subtotal).toLocaleString()}</strong> more to enjoy FREE delivery!</span>
+                        <span>Add <strong>Shs {(150000 - (subtotal ?? 0)).toLocaleString()}</strong> more to enjoy FREE delivery!</span>
                       )}
                     </span>
                   </div>
@@ -931,7 +931,7 @@ export default function CartDrawer({
                   type="submit"
                   className="w-2/3 bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md"
                 >
-                  Confirm Order &bull; Shs {total.toLocaleString()}
+                  Confirm Order &bull; Shs {(total ?? 0).toLocaleString()}
                 </button>
               </div>
             </form>
@@ -1317,7 +1317,7 @@ export default function CartDrawer({
                 </div>
                 <div className="border-t border-slate-200 my-2 pt-2 flex justify-between font-black text-slate-900">
                   <span>Grand Total Paid:</span>
-                  <span>Shs {total.toLocaleString()}</span>
+                  <span>Shs {(total ?? 0).toLocaleString()}</span>
                 </div>
               </div>
 
@@ -1344,7 +1344,7 @@ export default function CartDrawer({
             <div className="space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between font-semibold">
                 <span>Items Subtotal:</span>
-                <span className="text-slate-900 font-bold">Shs {subtotal.toLocaleString()}</span>
+                <span className="text-slate-900 font-bold">Shs {(subtotal ?? 0).toLocaleString()}</span>
               </div>
               
               <div className="bg-slate-100/55 p-2.5 rounded-xl border border-slate-200/50 space-y-1">
@@ -1356,7 +1356,7 @@ export default function CartDrawer({
                     )}
                   </span>
                   <span className="text-slate-900 font-black">
-                    Shs {deliveryFee.toLocaleString()}
+                    Shs {(deliveryFee ?? 0).toLocaleString()}
                   </span>
                 </div>
                 <div className="flex justify-between text-[9px] text-slate-500">
@@ -1372,7 +1372,7 @@ export default function CartDrawer({
               <div className="flex justify-between items-baseline">
                 <span className="font-extrabold text-sm text-slate-800">Total Price:</span>
                 <span className="text-lg font-black text-[#f68b1e]">
-                  Shs {total.toLocaleString()}
+                  Shs {(total ?? 0).toLocaleString()}
                 </span>
               </div>
             </div>

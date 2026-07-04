@@ -115,7 +115,7 @@ const VendorSparkline: React.FC<{ vendor: DokanVendor }> = ({ vendor }) => {
       <div className="flex-1 min-w-0">
         <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Velocity (30d)</p>
         <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 mt-0.5 truncate">
-          Shs {avg30d.toLocaleString()}/day
+          Shs {(avg30d !== undefined && avg30d !== null && !isNaN(avg30d)) ? avg30d.toLocaleString() : 0}/day
         </p>
         <span className={`text-[8.5px] font-black flex items-center gap-0.5 mt-0.5 ${
           trendPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
@@ -129,10 +129,13 @@ const VendorSparkline: React.FC<{ vendor: DokanVendor }> = ({ vendor }) => {
             <Tooltip
               content={({ active, payload }) => {
                 if (active && payload && payload.length) {
+                  const firstPayload = payload[0];
+                  const dayVal = firstPayload.payload?.day ?? '';
+                  const val = firstPayload.value !== undefined && firstPayload.value !== null ? Number(firstPayload.value) : 0;
                   return (
                     <div className="bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-1.5 py-0.5 rounded text-[8px] font-black shadow-lg border border-slate-800 dark:border-slate-200">
-                      <p className="font-mono">{payload[0].payload.day}</p>
-                      <p className="text-orange-400 dark:text-orange-600 font-extrabold">Shs {payload[0].value?.toLocaleString()}</p>
+                      <p className="font-mono">{dayVal}</p>
+                      <p className="text-orange-400 dark:text-orange-600 font-extrabold">Shs {val.toLocaleString()}</p>
                     </div>
                   );
                 }

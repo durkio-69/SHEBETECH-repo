@@ -111,15 +111,16 @@ export default function AccountModal({
     setActiveTab('login');
   };
 
-  const formatPrice = (priceInUgx: number) => {
+  const formatPrice = (priceInUgx: number | undefined | null) => {
+    const val = typeof priceInUgx === 'number' && !isNaN(priceInUgx) ? priceInUgx : 0;
     if (currency === 'USD') {
-      return `$${(priceInUgx / 3700).toFixed(2)}`;
+      return `$${(val / 3700).toFixed(2)}`;
     } else if (currency === 'EUR') {
-      return `€${(priceInUgx / 4000).toFixed(2)}`;
+      return `€${(val / 4000).toFixed(2)}`;
     } else if (currency === 'KES') {
-      return `KSh ${Math.round(priceInUgx / 28).toLocaleString()}`;
+      return `KSh ${Math.round(val / 28).toLocaleString()}`;
     } else {
-      return `Shs ${priceInUgx.toLocaleString()}`;
+      return `Shs ${val.toLocaleString()}`;
     }
   };
 

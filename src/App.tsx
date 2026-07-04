@@ -189,18 +189,19 @@ export default function App() {
   }, []);
 
   // Currency utility converter
-  const formatPrice = (priceInUgx: number) => {
+  const formatPrice = (priceInUgx: number | undefined | null) => {
+    const val = typeof priceInUgx === 'number' && !isNaN(priceInUgx) ? priceInUgx : 0;
     if (currency === 'USD') {
-      const converted = priceInUgx / 3700;
+      const converted = val / 3700;
       return `$${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else if (currency === 'EUR') {
-      const converted = priceInUgx / 4000;
+      const converted = val / 4000;
       return `€${converted.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
     } else if (currency === 'KES') {
-      const converted = priceInUgx / 28;
+      const converted = val / 28;
       return `KSh ${Math.round(converted).toLocaleString()}`;
     } else {
-      return `Shs ${priceInUgx.toLocaleString()}`;
+      return `Shs ${val.toLocaleString()}`;
     }
   };
 
