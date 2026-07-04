@@ -109,6 +109,38 @@ async function initDb() {
       );
     `);
 
+    // Check if vendors table is empty and seed if necessary
+    const vendorCheck = await client.query("SELECT COUNT(*) FROM olimart_vendors");
+    const vendorCount = parseInt(vendorCheck.rows[0].count, 10);
+    if (vendorCount === 0) {
+      console.log("🌱 Seeding olimart_vendors table with initial data...");
+      await client.query(`
+        INSERT INTO olimart_vendors (
+          id, name, owner_name, email, phone, location, category, status, balance, total_sales, payment_details
+        ) VALUES 
+        ('v1', 'Mukwano Industries Online', 'Emmanuel Mukwano', 'sales@mukwano.co.ug', '0772 900100', 'Kampala Central', 'supermarket', 'approved', 850000, 1000000, 'Standard Chartered Bank - A/C 0102003004'),
+        ('v2', 'Tecno Official Outlet Kampala', 'Justin Chen', 'kampala@tecno-mobile.com', '0702 456789', 'Kampala Plaza', 'phones', 'approved', 2380000, 2800000, 'MTN Mobile Money - 0772123456'),
+        ('v3', 'Ssebaggala Mobiles Ltd', 'Moses Ssebaggala', 'sseba.mobiles@gmail.com', '0772 555666', 'Wandegeya', 'phones', 'pending', 0, 0, 'Airtel Money - 0702555666')
+      `);
+      console.log("🌱 olimart_vendors seeded successfully.");
+    }
+
+    // Check if riders table is empty and seed if necessary
+    const riderCheck = await client.query("SELECT COUNT(*) FROM olimart_riders");
+    const riderCount = parseInt(riderCheck.rows[0].count, 10);
+    if (riderCount === 0) {
+      console.log("🌱 Seeding olimart_riders table with initial data...");
+      await client.query(`
+        INSERT INTO olimart_riders (
+          id, name, phone, email, id_card, driving_permit, picture_url, motorcycle_plate, location, completed_deliveries, earnings, transport_means, helmet_or_hub, status
+        ) VALUES 
+        ('r1', 'Sula Boda Boda Mukono [DKN-RDR-719]', '0772 123456', 'sula.boda@gmail.com', 'DKN-RDR-719', 'DP-MUK-9921', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=60', 'UFA 450Y', 'Mukono Town', 12, 84000, 'boda', 'HELMET-771', 'approved'),
+        ('r2', 'Ronald Express Kampala [DKN-RDR-114]', '0701 987654', 'ronald.express@gmail.com', 'DKN-RDR-114', 'DP-KLA-1104', 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=60', 'UEG 112Z', 'Kampala Central', 45, 320000, 'boda', 'HELMET-102', 'approved'),
+        ('r3', 'Patrick Wakiso Courier [DKN-RDR-889]', '0755 456789', 'patrick.wakiso@gmail.com', 'DKN-RDR-889', 'DP-WAK-5523', 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=120&auto=format&fit=crop&q=60', 'UEX 889A', 'Wakiso Center', 8, 45500, 'van', '', 'approved')
+      `);
+      console.log("🌱 olimart_riders seeded successfully.");
+    }
+
     console.log("🏁 Neon PostgreSQL database tables verified/created successfully.");
     client.release();
   } catch (err) {

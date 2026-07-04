@@ -72,6 +72,89 @@ import { Product } from '../types';
 import { getDokanNotifications, saveDokanNotifications, emitEventDrivenNotifications, DokanNotification } from '../lib/notificationStore';
 import { RELATIONAL_TABLES, DBTable, DBColumn } from '../lib/databaseSchema';
 
+// Generate realistic sales velocity data for the last 30 days
+const generateVendorSparklineData = (vendor: DokanVendor) => {
+  const seed = vendor.id === 'v1' ? 7 : vendor.id === 'v2' ? 13 : 19;
+  const avg = (vendor.totalSales || 500000) / 30;
+  
+  const data = [];
+  for (let i = 29; i >= 0; i--) {
+    const date = new Date();
+    date.setDate(date.getDate() - i);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    
+    // Create a realistic-looking variation
+    const wave = Math.sin((30 - i) * 0.5 + seed) * 0.4;
+    const noise = Math.cos((30 - i) * 1.3 + seed * 2) * 0.25;
+    const trend = (30 - i) * 0.01; // slight upward trend
+    
+    const value = Math.max(0, Math.round(avg * (1 + wave + noise + trend)));
+    
+    data.push({
+      day: dateStr,
+      sales: value
+    });
+  }
+  return data;
+};
+
+// Inline Sparkline Chart Component for approved vendors
+const VendorSparkline: React.FC<{ vendor: DokanVendor }> = ({ vendor }) => {
+  const data = React.useMemo(() => generateVendorSparklineData(vendor), [vendor]);
+  
+  const total30d = data.reduce((sum, item) => sum + item.sales, 0);
+  const avg30d = Math.round(total30d / 30);
+  
+  // Find trend %: compare first 5 days avg with last 5 days avg
+  const first5Avg = data.slice(0, 5).reduce((sum, item) => sum + item.sales, 0) / 5 || 1;
+  const last5Avg = data.slice(25, 30).reduce((sum, item) => sum + item.sales, 0) / 5;
+  const trendPercent = Math.round(((last5Avg - first5Avg) / first5Avg) * 100);
+  
+  return (
+    <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl border border-slate-150 dark:border-slate-800/60 max-w-sm w-full sm:w-60 shrink-0">
+      <div className="flex-1 min-w-0">
+        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Velocity (30d)</p>
+        <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 mt-0.5 truncate">
+          Shs {avg30d.toLocaleString()}/day
+        </p>
+        <span className={`text-[8.5px] font-black flex items-center gap-0.5 mt-0.5 ${
+          trendPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
+        }`}>
+          {trendPercent >= 0 ? '📈' : '📉'} {trendPercent >= 0 ? '+' : ''}{trendPercent}%
+        </span>
+      </div>
+      <div className="w-24 h-8 select-none">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={data} margin={{ top: 2, right: 2, left: 2, bottom: 2 }}>
+            <Tooltip
+              content={({ active, payload }) => {
+                if (active && payload && payload.length) {
+                  return (
+                    <div className="bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-1.5 py-0.5 rounded text-[8px] font-black shadow-lg border border-slate-800 dark:border-slate-200">
+                      <p className="font-mono">{payload[0].payload.day}</p>
+                      <p className="text-orange-400 dark:text-orange-600 font-extrabold">Shs {payload[0].value?.toLocaleString()}</p>
+                    </div>
+                  );
+                }
+                return null;
+              }}
+              cursor={{ stroke: '#f97316', strokeWidth: 1, strokeDasharray: '3 3' }}
+            />
+            <Line
+              type="monotone"
+              dataKey="sales"
+              stroke={trendPercent >= 0 ? '#10b981' : '#ef4444'}
+              strokeWidth={1.5}
+              dot={false}
+              activeDot={{ r: 2.5, strokeWidth: 0, fill: '#f97316' }}
+            />
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
 interface AdminAppProps {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
@@ -964,7 +1047,11 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 </div>
               </div>
 
-                <div className="flex gap-2">
+              {v.status === 'approved' && (
+                <VendorSparkline vendor={v} />
+              )}
+
+              <div className="flex gap-2">
                   {v.status === 'pending' && (
                     <>
                       <button
