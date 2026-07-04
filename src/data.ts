@@ -1,3 +1,5 @@
+import { pool } from 'pg'
+export const pool = new pool ({ connectionString: process.env.DATABASE_URL)}
 import { Product, Category, PromoBanner } from './types';
 
 export const CATEGORIES: Category[] = [
