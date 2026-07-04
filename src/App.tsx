@@ -26,13 +26,16 @@ import DeliveryApp from './components/DeliveryApp';
 import AdminApp from './components/AdminApp';
 import { Product, CartItem } from './types';
 import { CATEGORIES, PRODUCTS } from './data';
+import { syncProductsWithDatabase, saveDokanProducts } from './lib/dokanStore';
 import { CheckCircle2, Home, User, ShoppingCart, Info, X, Briefcase, MapPin, Key, Laptop, Star, ArrowLeft } from 'lucide-react';
 
 export default function App() {
   // Global platform app state: customer, vendor, delivery, admin
   const [activeApp, setActiveApp] = useState<'customer' | 'vendor' | 'delivery' | 'admin'>('customer');
 
-  // Dynamic Products List state (Dokan Pro synchronized)
+  // Dynamic Products List state (Dokan Pro synchronized), backed by Neon Postgres.
+  // Local storage stays as the instant/synchronous source for first paint;
+  // the effect below reconciles it against the database in the background.
   const [products, setProducts] = useState<Product[]>(() => {
     try {
       const saved = localStorage.getItem('olimart_dynamic_products');
@@ -42,11 +45,26 @@ export default function App() {
     }
   });
 
+  // Persist product changes to both localStorage and the Neon database.
   useEffect(() => {
     try {
       localStorage.setItem('olimart_dynamic_products', JSON.stringify(products));
     } catch {}
+    saveDokanProducts(products);
   }, [products]);
+
+  // On first mount, pull in whatever is already in the database (e.g. from
+  // another device/session) and merge it with what's stored locally.
+  useEffect(() => {
+    let cancelled = false;
+    syncProductsWithDatabase().then((merged) => {
+      if (!cancelled && merged && merged.length > 0) {
+        setProducts(merged);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Shopping Cart state
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -720,4 +738,3 @@ export default function App() {
     </div>
   );
 }
-
