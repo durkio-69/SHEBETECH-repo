@@ -115,7 +115,7 @@ export default function HeroCarousel({
             <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 rounded-lg mb-2">
               <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1">
                 <Store size={11} className="text-[#f68b1e]" />
-                <span>OliMart Categories</span>
+                <span>Olimart Categories</span>
               </span>
             </div>
             
@@ -137,7 +137,7 @@ export default function HeroCarousel({
                 fashion: {
                   title: "Men & Women Wardrobes",
                   brands: ["Kiyembe Tailors", "Adidas Sports", "Nike Footwear", "Zara Styles"],
-                  subcats: ["Slim-Fit Mens Shirts", "Sneakers & Canvas", "Leather Luxury Wallets", "Trending Sports Wear"]
+                  subcats: ["Slim-Fit Men's Shirts", "Sneakers & Canvas", "Leather Luxury Wallets", "Trending Sports Wear"]
                 },
                 home: {
                   title: "Modern Home & Office Essentials",
@@ -411,7 +411,7 @@ export default function HeroCarousel({
           {[
             { id: 'all', label: 'Official Stores', icon: <Award className="w-5 h-5 text-[#f68b1e]" />, badge: '100% Brand' },
             { id: 'phones', label: 'Phones & Tablets', icon: <Smartphone className="w-5 h-5 text-[#f68b1e]" />, badge: 'Best Price' },
-            { id: 'electronics', label: 'Tv & Audio', icon: <Tv className="w-5 h-5 text-[#f68b1e]" />, badge: 'Warranty' },
+            { id: 'electronics', label: 'TV & Audio', icon: <Tv className="w-5 h-5 text-[#f68b1e]" />, badge: 'Warranty' },
             { id: 'supermarket', label: 'Supermarket', icon: <ShoppingBag className="w-5 h-5 text-[#f68b1e]" />, badge: 'Daily Stock' },
             { id: 'all', label: 'MoMo Deals', icon: <Zap className="w-5 h-5 text-red-500 fill-red-500 animate-bounce" />, badge: 'Extra 10% Off' },
             { id: 'all', label: 'Free Delivery', icon: <Gift className="w-5 h-5 text-emerald-500" />, badge: 'Kampala Only' }
