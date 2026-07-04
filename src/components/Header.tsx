@@ -162,14 +162,6 @@ export default function Header({
 
             <span className="opacity-40">|</span>
 
-            {/* Option for selling */}
-            <a href="#sell-section" className="font-bold uppercase hover:underline transition-all flex items-center gap-1">
-              <Sparkles size={11} />
-              <span>Sell on OliMart</span>
-            </a>
-
-            <span className="opacity-40">|</span>
-
             {/* Watchlist Dropdown */}
             <div className="relative">
               <button 
