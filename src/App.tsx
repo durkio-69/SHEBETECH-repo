@@ -20,12 +20,13 @@ import AccountModal from './components/AccountModal';
 import DealsPage from './components/DealsPage';
 import AmazonShowcase from './components/AmazonShowcase';
 import RecentSearchesSection from './components/RecentSearchesSection';
+import AmazonCategoryHub from './components/AmazonCategoryHub';
 import VendorApp from './components/VendorApp';
 import DeliveryApp from './components/DeliveryApp';
 import AdminApp from './components/AdminApp';
 import { Product, CartItem } from './types';
 import { CATEGORIES, PRODUCTS } from './data';
-import { CheckCircle2, Home, User, ShoppingCart, Info, X, Briefcase, MapPin, Key, Laptop, Star } from 'lucide-react';
+import { CheckCircle2, Home, User, ShoppingCart, Info, X, Briefcase, MapPin, Key, Laptop, Star, ArrowLeft } from 'lucide-react';
 
 export default function App() {
   // Global platform app state: customer, vendor, delivery, admin
@@ -66,6 +67,26 @@ export default function App() {
   
   // Dark mode integration
   const [isDarkMode, setIsDarkMode] = useState(false);
+
+  // Flexible Font Size accessibility state
+  const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xl'>(() => {
+    try {
+      const saved = localStorage.getItem('olimart_fontSize');
+      return (saved as 'normal' | 'large' | 'xl') || 'normal';
+    } catch {
+      return 'normal';
+    }
+  });
+
+  useEffect(() => {
+    try {
+      const rootHtml = document.documentElement;
+      if (fontSize === 'normal') rootHtml.style.fontSize = '100%';
+      else if (fontSize === 'large') rootHtml.style.fontSize = '115%';
+      else if (fontSize === 'xl') rootHtml.style.fontSize = '130%';
+      localStorage.setItem('olimart_fontSize', fontSize);
+    } catch {}
+  }, [fontSize]);
 
   // Custom Promotion Alert box state
   const [activePromotion, setActivePromotion] = useState<{ title: string; desc: string } | null>(null);
@@ -335,6 +356,8 @@ export default function App() {
         selectedSpecialTab={selectedSpecialTab}
         setSelectedSpecialTab={setSelectedSpecialTab}
         onAccountClick={() => setIsAccountOpen(true)}
+        fontSize={fontSize}
+        setFontSize={setFontSize}
       />
 
 
@@ -371,43 +394,36 @@ export default function App() {
           />
         ) : (
           <div className="space-y-4">
-            {/* 2. Hero Section: promo banner carousel + deal of the day */}
-            <HeroCarousel 
-              onAddToCart={handleAddToCart} 
-              selectedCategory={selectedCategory}
-              onSelectCategory={setSelectedCategory}
-            />
-
-            {/* Jumia Circles Banner (Requirement 1 & 5) */}
-            <JumiaCirclesBanner
-              onCategorySelect={setSelectedCategory}
-              onSpecialTabSelect={setSelectedSpecialTab}
-              onShowPromotion={(title, desc) => setActivePromotion({ title, desc })}
-              currentCategory={selectedCategory}
-            />
-
-            {/* 3. Browse Trending Slide Section (replacing Categories list) */}
-            <CategoryGrid
-              selectedCategory={selectedCategory}
-              onSelectCategory={(catId) => {
-                setSelectedCategory(catId);
-                // Scroll down to the catalog to feel responsive
-                const catalog = document.getElementById('shop-catalog-section');
-                if (catalog) {
-                  catalog.scrollIntoView({ behavior: 'smooth' });
-                }
-              }}
-              onProductClick={handleProductClick}
-              onAddToCart={handleAddToCart}
-              watchlist={watchlist}
-              onToggleWatchlist={handleToggleWatchlist}
-              formatPrice={formatPrice}
-            />
-
-            {/* Show FlashSales & Catalog Grid ONLY when a category is selected or user searches */}
+            {/* Conditional Rendering: Landing Page (Categories Only) VS Brand New Products Page */}
             {(selectedCategory !== 'all' || searchQuery !== '') ? (
-              <>
-                {/* Jumia Horizontal Category Products Shelf (Requirement 3) */}
+              <div className="space-y-6" id="brand-new-products-page">
+                {/* 1. Products Page Navigation & Brand Header */}
+                <div className="max-w-7xl mx-auto px-4 py-3.5 mt-2 flex flex-wrap items-center justify-between bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-sm gap-4">
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => {
+                        setSelectedCategory('all');
+                        setSearchQuery('');
+                      }}
+                      className="px-4 py-2 bg-[#f68b1e] hover:bg-[#e07510] text-white font-black rounded-2xl text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-md active:scale-95"
+                    >
+                      <ArrowLeft size={14} />
+                      <span>Back to Departments</span>
+                    </button>
+                    <span className="text-slate-300">|</span>
+                    <span className="text-xs font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider">
+                      {selectedCategory !== 'all' 
+                        ? `${CATEGORIES.find(c => c.id === selectedCategory)?.name || selectedCategory} Department` 
+                        : `Results for: "${searchQuery}"`}
+                    </span>
+                  </div>
+                  
+                  <div className="text-xs font-bold text-slate-400">
+                    {products.filter(p => selectedCategory === 'all' || p.category === selectedCategory).length} items matching your criteria
+                  </div>
+                </div>
+
+                {/* 2. Jumia Horizontal Category Products Shelf */}
                 {selectedCategory !== 'all' && (
                   <div 
                     id="jumia-horizontal-category-products" 
@@ -493,7 +509,7 @@ export default function App() {
                   </div>
                 )}
 
-                {/* 4. Limited Hot Flash Sales banner */}
+                {/* 3. Limited Hot Flash Sales banner */}
                 <FlashSales 
                   onAddToCart={handleAddToCart}
                   onProductClick={handleProductClick}
@@ -502,7 +518,7 @@ export default function App() {
                   formatPrice={formatPrice}
                 />
 
-                {/* 5. Main Interactive Search & Filter Catalog */}
+                {/* 4. Main Interactive Search & Filter Catalog */}
                 <ProductSection
                   onAddToCart={handleAddToCart}
                   selectedCategory={selectedCategory}
@@ -518,16 +534,33 @@ export default function App() {
                   formatPrice={formatPrice}
                   products={products}
                 />
-              </>
+              </div>
             ) : (
-              /* High-fidelity Amazon copy showcase (Hot Deals + Best Sellers in original Amazon grid displays) */
-              <AmazonShowcase
-                products={products}
-                onProductClick={handleProductClick}
-                onAddToCart={handleAddToCart}
-                onSpecialTabSelect={setSelectedSpecialTab}
-                formatPrice={formatPrice}
-              />
+              /* Landing Page Layout (Pure Category Hub - No specific product listings directly displayed) */
+              <div className="space-y-4" id="amazon-landing-page">
+                {/* Hero Section */}
+                <HeroCarousel 
+                  onAddToCart={handleAddToCart} 
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                />
+
+                {/* Circles category indicators */}
+                <JumiaCirclesBanner
+                  onCategorySelect={setSelectedCategory}
+                  onSpecialTabSelect={setSelectedSpecialTab}
+                  onShowPromotion={(title, desc) => setActivePromotion({ title, desc })}
+                  currentCategory={selectedCategory}
+                />
+
+                {/* High Fidelity Department Hub Bento (Very many categories displayed like Amazon.com) */}
+                <AmazonCategoryHub
+                  categories={CATEGORIES}
+                  products={products}
+                  onSelectCategory={setSelectedCategory}
+                  fontSizeModifier={fontSize}
+                />
+              </div>
             )}
 
             {/* Recent Searched & Personalized Related Feed Section (Requirement 2) */}

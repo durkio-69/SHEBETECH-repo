@@ -21,7 +21,8 @@ import {
   Smartphone,
   Tv,
   Shirt,
-  Home
+  Home,
+  Type
 } from 'lucide-react';
 import { CATEGORIES, UGANDA_DISTRICTS, PRODUCTS } from '../data';
 import { Product } from '../types';
@@ -50,6 +51,8 @@ interface HeaderProps {
   selectedSpecialTab: 'all' | 'todays-deal' | 'flash-sales' | 'discount';
   setSelectedSpecialTab: (tab: 'all' | 'todays-deal' | 'flash-sales' | 'discount') => void;
   onAccountClick: () => void;
+  fontSize: 'normal' | 'large' | 'xl';
+  setFontSize: (size: 'normal' | 'large' | 'xl') => void;
 }
 
 export default function Header({
@@ -73,13 +76,16 @@ export default function Header({
   formatPrice,
   selectedSpecialTab,
   setSelectedSpecialTab,
-  onAccountClick
+  onAccountClick,
+  fontSize,
+  setFontSize
 }: HeaderProps) {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isFontSizeOpen, setIsFontSizeOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -262,6 +268,49 @@ export default function Header({
                       }`}
                     >
                       {lang.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <span className="opacity-40">|</span>
+
+            {/* Font Size Selector */}
+            <div className="relative">
+              <button 
+                onClick={() => { 
+                  setIsFontSizeOpen(!isFontSizeOpen);
+                  setIsLanguageOpen(false); 
+                  setIsCurrencyOpen(false); 
+                  setIsWatchlistOpen(false);
+                }}
+                className="flex items-center gap-1 hover:opacity-90 font-bold uppercase transition-colors cursor-pointer text-white"
+                title="Adjust application font sizing for viewer comfort"
+              >
+                <Type size={12} />
+                <span>Text: <strong className="underline">{fontSize === 'normal' ? 'Normal' : fontSize === 'large' ? 'Large' : 'XL'}</strong></span>
+                <ChevronDown size={10} />
+              </button>
+
+              {isFontSizeOpen && (
+                <div className="absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
+                  {[
+                    { code: 'normal', name: 'Aa Normal (100%)' },
+                    { code: 'large', name: 'Aa Large (115%)' },
+                    { code: 'xl', name: 'Aa Extra Large (130%)' }
+                  ].map(item => (
+                    <button
+                      key={item.code}
+                      onClick={() => {
+                        setFontSize(item.code as 'normal' | 'large' | 'xl');
+                        setIsFontSizeOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 hover:text-orange-600 font-bold transition-colors ${
+                        fontSize === item.code ? 'bg-orange-50 text-orange-600 font-black' : 'text-slate-700'
+                      }`}
+                    >
+                      {item.name}
                     </button>
                   ))}
                 </div>

@@ -774,7 +774,7 @@ function ProductCard({
     >
       <div>
         {/* Image Container with high quality presentation */}
-        <div className="relative bg-slate-50 dark:bg-slate-950/20 rounded-lg p-2 overflow-hidden mb-2.5 flex items-center justify-center h-32 sm:h-44 group/image">
+        <div className="relative bg-slate-50 dark:bg-slate-950/20 rounded-2xl p-4 overflow-hidden mb-3.5 flex items-center justify-center h-52 sm:h-72 md:h-80 group/image">
           {product.discountBadge && (
             <span className="absolute top-1.5 left-1.5 bg-red-600 text-white font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-sm shadow-xs z-10 uppercase tracking-wide">
               {product.discountBadge}

@@ -297,7 +297,7 @@ export default function ProductPage({
         
         {/* Left Column: Image & Badges (Lg: 5/12 grid) */}
         <div className="lg:col-span-5 space-y-6">
-          <div className="relative bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 rounded-3xl p-6 sm:p-12 flex items-center justify-center overflow-hidden aspect-square group">
+          <div className="relative bg-slate-50 dark:bg-slate-950/50 border border-slate-100 dark:border-slate-800/50 rounded-3xl p-6 sm:p-12 flex items-center justify-center overflow-hidden aspect-square group min-h-[350px] sm:min-h-[480px]">
             
             {product.discountBadge && (
               <span className="absolute top-4 left-4 bg-red-600 text-white font-black text-sm px-4 py-1.5 rounded-xl shadow-md z-10 uppercase tracking-wider animate-pulse">
@@ -321,7 +321,7 @@ export default function ProductPage({
             <img 
               src={product.image} 
               alt={product.title} 
-              className="max-h-72 sm:max-h-80 object-contain rounded-2xl group-hover:scale-105 transition-transform duration-300"
+              className="max-h-80 sm:max-h-[420px] object-contain rounded-2xl group-hover:scale-105 transition-transform duration-300"
               referrerPolicy="no-referrer"
             />
           </div>
