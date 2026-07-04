@@ -176,6 +176,35 @@ async function initDb() {
       );
     `);
 
+    // Dokan Pro feature parity: vendor coupons, refund requests, and
+    // per-vendor shipping zones are also id-keyed JSON documents.
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_coupons (
+        id VARCHAR(100) PRIMARY KEY,
+        status VARCHAR(50),
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_refunds (
+        id VARCHAR(100) PRIMARY KEY,
+        status VARCHAR(50),
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_shipping_zones (
+        id VARCHAR(100) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // Generic key-value store for small singleton settings that aren't
     // arrays of id-keyed records: brand list, tag list, admin commission
     // settings, etc. One row per logical key, whole value replaced on save.
@@ -574,6 +603,22 @@ async function startServer() {
   registerJsonEntityRoutes({
     routeName: "notifications",
     table: "olimart_notifications",
+  });
+  registerJsonEntityRoutes({
+    routeName: "coupons",
+    table: "olimart_coupons",
+    extraColumn: "status",
+    extraValue: (c) => c.status || null,
+  });
+  registerJsonEntityRoutes({
+    routeName: "refunds",
+    table: "olimart_refunds",
+    extraColumn: "status",
+    extraValue: (r) => r.status || null,
+  });
+  registerJsonEntityRoutes({
+    routeName: "shippingzones",
+    table: "olimart_shipping_zones",
   });
 
   // ==========================================
