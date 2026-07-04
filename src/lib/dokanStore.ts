@@ -101,6 +101,7 @@ const DEFAULT_ADMIN_SETTINGS: AdminCommissionSettings = {
 };
 
 export function getAdminSettings(): AdminCommissionSettings {
+  setTimeout(() => { syncKvWithDatabase('admin_settings', 'olimart_admin_settings').catch(() => {}); }, 100);
   const saved = localStorage.getItem('olimart_admin_settings');
   if (saved) {
     try {
@@ -114,6 +115,7 @@ export function getAdminSettings(): AdminCommissionSettings {
 
 export function saveAdminSettings(settings: AdminCommissionSettings) {
   localStorage.setItem('olimart_admin_settings', JSON.stringify(settings));
+  saveKvToDatabase('admin_settings', settings);
 }
 
 // Bulky product verification
@@ -434,6 +436,7 @@ export function saveDokanVendors(vendors: DokanVendor[]) {
 }
 
 export function getDokanWithdrawals(): WithdrawalRequest[] {
+  setTimeout(() => { syncWithdrawalsWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_withdrawals');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_withdrawals', JSON.stringify(INITIAL_WITHDRAWALS));
@@ -442,9 +445,15 @@ export function getDokanWithdrawals(): WithdrawalRequest[] {
 
 export function saveDokanWithdrawals(withdrawals: WithdrawalRequest[]) {
   localStorage.setItem('dokan_withdrawals', JSON.stringify(withdrawals));
+  fetch("/api/db/withdrawals/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(withdrawals)
+  }).catch(err => console.warn("Failed to sync withdrawals on save:", err));
 }
 
 export function getDokanOrders(): DokanOrder[] {
+  setTimeout(() => { syncOrdersWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_orders');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_orders', JSON.stringify(INITIAL_ORDERS));
@@ -453,9 +462,15 @@ export function getDokanOrders(): DokanOrder[] {
 
 export function saveDokanOrders(orders: DokanOrder[]) {
   localStorage.setItem('dokan_orders', JSON.stringify(orders));
+  fetch("/api/db/orders/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(orders)
+  }).catch(err => console.warn("Failed to sync orders on save:", err));
 }
 
 export function getDokanComments(): CustomerComment[] {
+  setTimeout(() => { syncCommentsWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_comments');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_comments', JSON.stringify(INITIAL_COMMENTS));
@@ -464,9 +479,15 @@ export function getDokanComments(): CustomerComment[] {
 
 export function saveDokanComments(comments: CustomerComment[]) {
   localStorage.setItem('dokan_comments', JSON.stringify(comments));
+  fetch("/api/db/comments/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(comments)
+  }).catch(err => console.warn("Failed to sync comments on save:", err));
 }
 
 export function getDokanCategories(): DokanCategory[] {
+  setTimeout(() => { syncKvWithDatabase('categories', 'dokan_categories').catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_categories');
   if (saved) return JSON.parse(saved);
   const defCats = [
@@ -484,9 +505,11 @@ export function getDokanCategories(): DokanCategory[] {
 
 export function saveDokanCategories(cats: DokanCategory[]) {
   localStorage.setItem('dokan_categories', JSON.stringify(cats));
+  saveKvToDatabase('categories', cats);
 }
 
 export function getDokanBrands(): string[] {
+  setTimeout(() => { syncKvWithDatabase('brands', 'dokan_brands').catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_brands');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_brands', JSON.stringify(INITIAL_BRANDS));
@@ -495,9 +518,11 @@ export function getDokanBrands(): string[] {
 
 export function saveDokanBrands(brands: string[]) {
   localStorage.setItem('dokan_brands', JSON.stringify(brands));
+  saveKvToDatabase('brands', brands);
 }
 
 export function getDokanTags(): string[] {
+  setTimeout(() => { syncKvWithDatabase('tags', 'dokan_tags').catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_tags');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_tags', JSON.stringify(INITIAL_TAGS));
@@ -506,6 +531,7 @@ export function getDokanTags(): string[] {
 
 export function saveDokanTags(tags: string[]) {
   localStorage.setItem('dokan_tags', JSON.stringify(tags));
+  saveKvToDatabase('tags', tags);
 }
 
 export interface DokanRider {
@@ -674,6 +700,240 @@ export async function syncVendorsWithDatabase() {
   }
 }
 
+let isSyncingOrders = false;
+export async function syncOrdersWithDatabase() {
+  if (isSyncingOrders) return;
+  isSyncingOrders = true;
+  try {
+    const res = await fetch("/api/db/orders");
+    if (res.ok) {
+      const serverOrders = await res.json();
+      if (serverOrders && serverOrders.length > 0) {
+        const localOrders = getDokanOrders();
+        const serverMap = new Map(serverOrders.map((o: any) => [o.id, o]));
+        const merged = [...localOrders];
+        let changed = false;
+
+        merged.forEach((lo, index) => {
+          const so = serverMap.get(lo.id);
+          if (so) {
+            const updated = Object.assign({}, lo, so) as DokanOrder;
+            if (JSON.stringify(lo) !== JSON.stringify(updated)) {
+              merged[index] = updated;
+              changed = true;
+            }
+          }
+        });
+
+        const localIds = new Set(localOrders.map(o => o.id));
+        serverOrders.forEach((so: any) => {
+          if (!localIds.has(so.id)) {
+            merged.push(so);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('dokan_orders', JSON.stringify(merged));
+          window.dispatchEvent(new Event('storage'));
+        }
+
+        const serverIds = new Set(serverOrders.map((o: any) => o.id));
+        const localOnly = localOrders.filter(lo => !serverIds.has(lo.id));
+        if (localOnly.length > 0) {
+          await fetch("/api/db/orders/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(localOnly)
+          });
+        }
+      } else {
+        const localOrders = getDokanOrders();
+        await fetch("/api/db/orders/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localOrders)
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Neon Database order sync connection deferred:", err);
+  } finally {
+    isSyncingOrders = false;
+  }
+}
+
+let isSyncingWithdrawals = false;
+export async function syncWithdrawalsWithDatabase() {
+  if (isSyncingWithdrawals) return;
+  isSyncingWithdrawals = true;
+  try {
+    const res = await fetch("/api/db/withdrawals");
+    if (res.ok) {
+      const serverWithdrawals = await res.json();
+      if (serverWithdrawals && serverWithdrawals.length > 0) {
+        const localWithdrawals = getDokanWithdrawals();
+        const serverMap = new Map(serverWithdrawals.map((w: any) => [w.id, w]));
+        const merged = [...localWithdrawals];
+        let changed = false;
+
+        merged.forEach((lw, index) => {
+          const sw = serverMap.get(lw.id);
+          if (sw) {
+            const updated = Object.assign({}, lw, sw) as WithdrawalRequest;
+            if (JSON.stringify(lw) !== JSON.stringify(updated)) {
+              merged[index] = updated;
+              changed = true;
+            }
+          }
+        });
+
+        const localIds = new Set(localWithdrawals.map(w => w.id));
+        serverWithdrawals.forEach((sw: any) => {
+          if (!localIds.has(sw.id)) {
+            merged.push(sw);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('dokan_withdrawals', JSON.stringify(merged));
+          window.dispatchEvent(new Event('storage'));
+        }
+
+        const serverIds = new Set(serverWithdrawals.map((w: any) => w.id));
+        const localOnly = localWithdrawals.filter(lw => !serverIds.has(lw.id));
+        if (localOnly.length > 0) {
+          await fetch("/api/db/withdrawals/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(localOnly)
+          });
+        }
+      } else {
+        const localWithdrawals = getDokanWithdrawals();
+        await fetch("/api/db/withdrawals/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localWithdrawals)
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Neon Database withdrawal sync connection deferred:", err);
+  } finally {
+    isSyncingWithdrawals = false;
+  }
+}
+
+let isSyncingComments = false;
+export async function syncCommentsWithDatabase() {
+  if (isSyncingComments) return;
+  isSyncingComments = true;
+  try {
+    const res = await fetch("/api/db/comments");
+    if (res.ok) {
+      const serverComments = await res.json();
+      if (serverComments && serverComments.length > 0) {
+        const localComments = getDokanComments();
+        const serverMap = new Map(serverComments.map((c: any) => [c.id, c]));
+        const merged = [...localComments];
+        let changed = false;
+
+        merged.forEach((lc, index) => {
+          const sc = serverMap.get(lc.id);
+          if (sc) {
+            const updated = Object.assign({}, lc, sc) as CustomerComment;
+            if (JSON.stringify(lc) !== JSON.stringify(updated)) {
+              merged[index] = updated;
+              changed = true;
+            }
+          }
+        });
+
+        const localIds = new Set(localComments.map(c => c.id));
+        serverComments.forEach((sc: any) => {
+          if (!localIds.has(sc.id)) {
+            merged.push(sc);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('dokan_comments', JSON.stringify(merged));
+          window.dispatchEvent(new Event('storage'));
+        }
+
+        const serverIds = new Set(serverComments.map((c: any) => c.id));
+        const localOnly = localComments.filter(lc => !serverIds.has(lc.id));
+        if (localOnly.length > 0) {
+          await fetch("/api/db/comments/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(localOnly)
+          });
+        }
+      } else {
+        const localComments = getDokanComments();
+        await fetch("/api/db/comments/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localComments)
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Neon Database comment sync connection deferred:", err);
+  } finally {
+    isSyncingComments = false;
+  }
+}
+
+// Generic key-value sync: used for smaller shared blobs (categories, brands,
+// tags, admin commission settings) that don't need per-record merge logic —
+// last write wins, since these are edited from a single admin panel.
+const kvSyncInFlight = new Set<string>();
+export async function syncKvWithDatabase(key: string, localStorageKey: string) {
+  if (kvSyncInFlight.has(key)) return;
+  kvSyncInFlight.add(key);
+  try {
+    const res = await fetch(`/api/db/kv/${key}`);
+    if (res.ok) {
+      const { value } = await res.json();
+      if (value !== undefined && value !== null) {
+        const localRaw = localStorage.getItem(localStorageKey);
+        const serverRaw = JSON.stringify(value);
+        if (localRaw !== serverRaw) {
+          localStorage.setItem(localStorageKey, serverRaw);
+          window.dispatchEvent(new Event('storage'));
+        }
+      }
+    } else if (res.status === 404) {
+      // Nothing saved server-side yet — push whatever we have locally.
+      const localRaw = localStorage.getItem(localStorageKey);
+      if (localRaw) {
+        await fetch(`/api/db/kv/${key}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ value: JSON.parse(localRaw) })
+        });
+      }
+    }
+  } catch (err) {
+    console.warn(`Neon Database kv sync (${key}) connection deferred:`, err);
+  } finally {
+    kvSyncInFlight.delete(key);
+  }
+}
+
+export function saveKvToDatabase(key: string, value: unknown) {
+  fetch(`/api/db/kv/${key}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ value })
+  }).catch(err => console.warn(`Failed to sync kv (${key}) on save:`, err));
+}
+
 let isSyncingRiders = false;
 export async function syncRidersWithDatabase() {
   if (isSyncingRiders) return;
@@ -738,4 +998,3 @@ export async function syncRidersWithDatabase() {
     isSyncingRiders = false;
   }
 }
-
