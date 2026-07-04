@@ -35,6 +35,57 @@ export interface WithdrawalRequest {
   createdAt: string;
 }
 
+// Dokan Pro: vendor-issued discount coupons, redeemable at checkout.
+export interface DokanCoupon {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  code: string; // e.g. "WELCOME10" — stored/matched uppercase
+  type: 'percentage' | 'fixed';
+  value: number; // 10 (=10%) for percentage, or a flat Shs amount for fixed
+  minOrderAmount: number; // minimum cart subtotal (for this vendor's items) to qualify
+  maxDiscount?: number; // cap for percentage coupons, in Shs
+  usageLimit: number; // 0 = unlimited
+  usedCount: number;
+  status: 'active' | 'disabled' | 'expired';
+  expiryDate: string; // ISO date
+  createdAt: string;
+}
+
+// Dokan Pro: customer refund requests, distinct from vendor withdrawal payouts.
+export interface DokanRefundRequest {
+  id: string;
+  orderId: string;
+  customerName: string;
+  customerPhone?: string;
+  vendorName: string;
+  amount: number;
+  reason: string;
+  status: 'pending' | 'vendor_approved' | 'vendor_rejected' | 'admin_approved' | 'admin_rejected' | 'refunded';
+  vendorNote?: string;
+  adminNote?: string;
+  createdAt: string;
+  resolvedAt?: string;
+}
+
+// Dokan Pro: per-vendor shipping zones overriding the platform default
+// distance-based delivery fee for districts the vendor configures.
+export interface DokanShippingZone {
+  id: string;
+  vendorId: string;
+  vendorName: string;
+  zoneName: string;
+  districts: string[]; // e.g. ["Kampala Central", "Wakiso Center"]
+  rateType: 'flat' | 'per_km';
+  flatFee?: number; // used when rateType === 'flat'
+  perKmRate?: number; // used when rateType === 'per_km'
+  minFee?: number; // floor fee for per_km zones
+  freeShippingThreshold?: number; // order subtotal (for this vendor) above which delivery is free
+  estimatedDays: number;
+  active: boolean;
+  createdAt: string;
+}
+
 export interface DokanOrder {
   id: string;
   customerName: string;
@@ -452,6 +503,201 @@ export function saveDokanWithdrawals(withdrawals: WithdrawalRequest[]) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(withdrawals)
   }).catch(err => console.warn("Failed to sync withdrawals on save:", err));
+}
+
+// ==========================================
+// Coupons (Dokan Pro: vendor discount codes)
+// ==========================================
+export function getDokanCoupons(): DokanCoupon[] {
+  setTimeout(() => { syncCouponsWithDatabase().catch(() => {}); }, 100);
+  const saved = localStorage.getItem('dokan_coupons');
+  if (saved) return JSON.parse(saved);
+  localStorage.setItem('dokan_coupons', JSON.stringify([]));
+  return [];
+}
+
+export function saveDokanCoupons(coupons: DokanCoupon[]) {
+  localStorage.setItem('dokan_coupons', JSON.stringify(coupons));
+  fetch("/api/db/coupons/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(coupons)
+  }).catch(err => console.warn("Failed to sync coupons on save:", err));
+  window.dispatchEvent(new Event('storage'));
+}
+
+export async function syncCouponsWithDatabase() {
+  return genericSyncWithDatabase<DokanCoupon>({
+    key: "coupons",
+    apiPath: "/api/db/coupons",
+    localStorageKey: "dokan_coupons",
+    getLocal: getDokanCoupons,
+  });
+}
+
+// Validates a coupon code against the vendors present in a cart.
+// Only items sold by the coupon's issuing vendor are discounted, matching
+// Dokan Pro's per-vendor coupon scoping (a coupon from Vendor A never
+// discounts Vendor B's items in a multi-vendor cart).
+export function validateCoupon(
+  code: string,
+  cartItems: CartItem[]
+): { valid: boolean; message: string; coupon?: DokanCoupon; discount: number; eligibleSubtotal: number } {
+  const coupons = getDokanCoupons();
+  const match = coupons.find(c => c.code.toUpperCase() === code.trim().toUpperCase());
+
+  if (!match) {
+    return { valid: false, message: 'Coupon code not found.', discount: 0, eligibleSubtotal: 0 };
+  }
+  if (match.status === 'disabled') {
+    return { valid: false, message: 'This coupon is no longer active.', discount: 0, eligibleSubtotal: 0 };
+  }
+  if (match.status === 'expired' || new Date(match.expiryDate).getTime() < Date.now()) {
+    return { valid: false, message: 'This coupon has expired.', discount: 0, eligibleSubtotal: 0 };
+  }
+  if (match.usageLimit > 0 && match.usedCount >= match.usageLimit) {
+    return { valid: false, message: 'This coupon has reached its usage limit.', discount: 0, eligibleSubtotal: 0 };
+  }
+
+  const eligibleItems = cartItems.filter(item =>
+    (item.selectedVendor || '').toLowerCase() === match.vendorName.toLowerCase()
+  );
+  const eligibleSubtotal = eligibleItems.reduce((acc, item) => {
+    const price = item.customPrice !== undefined ? item.customPrice : item.product.price;
+    return acc + price * item.quantity;
+  }, 0);
+
+  if (eligibleItems.length === 0) {
+    return { valid: false, message: `This code only applies to items from ${match.vendorName}.`, discount: 0, eligibleSubtotal: 0 };
+  }
+  if (eligibleSubtotal < match.minOrderAmount) {
+    return {
+      valid: false,
+      message: `Add Shs ${(match.minOrderAmount - eligibleSubtotal).toLocaleString()} more from ${match.vendorName} to use this code.`,
+      discount: 0,
+      eligibleSubtotal
+    };
+  }
+
+  let discount = match.type === 'percentage'
+    ? Math.round(eligibleSubtotal * (match.value / 100))
+    : match.value;
+  if (match.type === 'percentage' && match.maxDiscount) {
+    discount = Math.min(discount, match.maxDiscount);
+  }
+  discount = Math.min(discount, eligibleSubtotal);
+
+  return {
+    valid: true,
+    message: `Coupon applied! Shs ${discount.toLocaleString()} off ${match.vendorName} items.`,
+    coupon: match,
+    discount,
+    eligibleSubtotal
+  };
+}
+
+// Marks a coupon as used (increments its counter) once an order is placed.
+export function redeemCoupon(couponId: string) {
+  const coupons = getDokanCoupons();
+  const idx = coupons.findIndex(c => c.id === couponId);
+  if (idx !== -1) {
+    coupons[idx].usedCount += 1;
+    saveDokanCoupons(coupons);
+  }
+}
+
+// ==========================================
+// Refund Requests (Dokan Pro: distinct from vendor withdrawal payouts)
+// ==========================================
+export function getDokanRefunds(): DokanRefundRequest[] {
+  setTimeout(() => { syncRefundsWithDatabase().catch(() => {}); }, 100);
+  const saved = localStorage.getItem('dokan_refunds');
+  if (saved) return JSON.parse(saved);
+  localStorage.setItem('dokan_refunds', JSON.stringify([]));
+  return [];
+}
+
+export function saveDokanRefunds(refunds: DokanRefundRequest[]) {
+  localStorage.setItem('dokan_refunds', JSON.stringify(refunds));
+  fetch("/api/db/refunds/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(refunds)
+  }).catch(err => console.warn("Failed to sync refunds on save:", err));
+  window.dispatchEvent(new Event('storage'));
+}
+
+export async function syncRefundsWithDatabase() {
+  return genericSyncWithDatabase<DokanRefundRequest>({
+    key: "refunds",
+    apiPath: "/api/db/refunds",
+    localStorageKey: "dokan_refunds",
+    getLocal: getDokanRefunds,
+  });
+}
+
+// ==========================================
+// Shipping Zones (Dokan Pro: per-vendor delivery rate overrides)
+// ==========================================
+export function getDokanShippingZones(): DokanShippingZone[] {
+  setTimeout(() => { syncShippingZonesWithDatabase().catch(() => {}); }, 100);
+  const saved = localStorage.getItem('dokan_shipping_zones');
+  if (saved) return JSON.parse(saved);
+  localStorage.setItem('dokan_shipping_zones', JSON.stringify([]));
+  return [];
+}
+
+export function saveDokanShippingZones(zones: DokanShippingZone[]) {
+  localStorage.setItem('dokan_shipping_zones', JSON.stringify(zones));
+  fetch("/api/db/shippingzones/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(zones)
+  }).catch(err => console.warn("Failed to sync shipping zones on save:", err));
+  window.dispatchEvent(new Event('storage'));
+}
+
+export async function syncShippingZonesWithDatabase() {
+  return genericSyncWithDatabase<DokanShippingZone>({
+    key: "shippingzones",
+    apiPath: "/api/db/shippingzones",
+    localStorageKey: "dokan_shipping_zones",
+    getLocal: getDokanShippingZones,
+  });
+}
+
+// Looks up whether a vendor has configured a shipping zone covering the
+// customer's district. Falls back to null so callers can use the platform
+// default distance-based fee (calculateDynamicDeliveryFee) when no
+// vendor-specific override exists — matching Dokan Pro's "vendor rate wins
+// if set, otherwise platform default" shipping resolution order.
+export function getVendorShippingOverride(
+  vendorName: string,
+  customerDistrict: string,
+  vendorSubtotal: number,
+  distanceKm: number
+): { fee: number; zoneName: string; estimatedDays: number } | null {
+  const zones = getDokanShippingZones();
+  const match = zones.find(z =>
+    z.active &&
+    z.vendorName.toLowerCase() === vendorName.toLowerCase() &&
+    z.districts.some(d => d.toLowerCase() === customerDistrict.toLowerCase() || customerDistrict.toLowerCase().includes(d.toLowerCase()))
+  );
+  if (!match) return null;
+
+  if (match.freeShippingThreshold && vendorSubtotal >= match.freeShippingThreshold) {
+    return { fee: 0, zoneName: match.zoneName, estimatedDays: match.estimatedDays };
+  }
+
+  let fee = match.rateType === 'flat'
+    ? (match.flatFee ?? 0)
+    : Math.round((match.perKmRate ?? 0) * distanceKm);
+
+  if (match.rateType === 'per_km' && match.minFee) {
+    fee = Math.max(fee, match.minFee);
+  }
+
+  return { fee, zoneName: match.zoneName, estimatedDays: match.estimatedDays };
 }
 
 export function getDokanOrders(): DokanOrder[] {
