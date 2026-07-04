@@ -33,7 +33,7 @@ export default function VendorHighlight() {
               <Store size={10} /> Partner with us
             </span>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white">
-              Grow Your Business — Sell on OliMart Uganda!
+              Grow Your Business — Sell on Olimart Uganda!
             </h2>
             <p className="text-sm sm:text-base text-orange-50/90 font-medium max-w-lg leading-relaxed">
               Reach over 500,000+ active buyers across Kampala, Entebbe, Wakiso, Jinja, and beyond. Register your shop today and start selling in under 5 minutes.
@@ -98,7 +98,7 @@ export default function VendorHighlight() {
                     <Store size={24} />
                   </div>
                   <h3 className="font-black text-slate-900 text-lg">Seller Registration</h3>
-                  <p className="text-xs text-slate-400">Submit details to setup your shop on OliMart</p>
+                  <p className="text-xs text-slate-400">Submit details to set up your shop on Olimart</p>
                 </div>
 
                 <div className="space-y-1">
@@ -162,7 +162,7 @@ export default function VendorHighlight() {
                   <h3 className="font-black text-slate-900 text-lg">Congratulations!</h3>
                   <p className="text-xs text-slate-600 font-bold">Your store <span className="text-orange-600">"{formData.storeName}"</span> is pre-registered!</p>
                   <p className="text-xs text-slate-400 font-medium px-4 leading-normal">
-                    We have sent a confirmation packet to <strong className="text-slate-800">{formData.phone}</strong>. A dedicated OliMart agent will call you to complete catalog upload.
+                    We have sent a confirmation packet to <strong className="text-slate-800">{formData.phone}</strong>. A dedicated Olimart agent will call you to complete catalog upload.
                   </p>
                 </div>
                 <div className="pt-2">
