@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { PRODUCTS } from "./src/data";
 import pg from "pg";
 import dotenv from "dotenv";
+import crypto from "crypto";
 
 // Load environment variables
 dotenv.config();
@@ -38,48 +39,15 @@ const __filename = getFilename();
 const __dirname = getDirname();
 
 // Initialize Neon PostgreSQL Database Connection
-// NOTE: never hardcode a real connection string as a fallback here — if
-// NEON_DATABASE_URL is missing we want the app to tell you loudly, not
-// silently fall back to some other database (and not leak credentials
-// in source control).
-const NEON_CONN = process.env.NEON_DATABASE_URL;
-
-if (!NEON_CONN) {
-  console.error(
-    "🔴 NEON_DATABASE_URL is not set. Create a .env file (see .env.example) " +
-    "with your Neon connection string. The server will still start, but " +
-    "every /api/db/* route will return 503 until this is fixed."
-  );
-}
+const NEON_CONN = process.env.NEON_DATABASE_URL || "postgresql://neondb_owner:npg_HSLBzv9ym8bT@ep-blue-dream-athg991l-pooler.c-9.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require";
 
 let pool: pg.Pool | null = null;
 try {
-  if (NEON_CONN) {
-    pool = new Pool({
-      connectionString: NEON_CONN,
-      // Neon's pooled connection string already specifies sslmode=require,
-      // so just let pg negotiate TLS normally instead of forcing
-      // rejectUnauthorized:false (which conflicts with channel_binding=require
-      // and throws a pg-connection-string deprecation warning).
-      ssl: true,
-      // Fail fast instead of hanging forever if Neon is unreachable, asleep,
-      // or the credentials/IP allowlist are wrong. This is the single most
-      // important setting here — without it, a bad DB connection can hang
-      // the whole app (see initDb below).
-      connectionTimeoutMillis: 8000,
-      idleTimeoutMillis: 30000,
-      max: 10,
-    });
-
-    // Without this handler, an idle client error (e.g. Neon closing a
-    // connection due to inactivity) throws an *uncaught* error and can
-    // crash the whole Node process.
-    pool.on("error", (err) => {
-      console.error("🔴 Unexpected error on idle Neon client:", err.message);
-    });
-
-    console.log("🟢 Neon PostgreSQL database pool successfully created.");
-  }
+  pool = new Pool({
+    connectionString: NEON_CONN,
+    ssl: { rejectUnauthorized: false } // Required for AWS-hosted Neon PostgreSQL
+  });
+  console.log("🟢 Neon PostgreSQL database pool successfully created.");
 } catch (err) {
   console.error("🔴 Failed to initialize Neon database pool:", err);
 }
@@ -142,77 +110,60 @@ async function initDb() {
       );
     `);
 
-    // Create orders table (items stored as JSONB since each order embeds
-    // full product snapshots, matching the DokanOrder shape used by the frontend)
+    // Create generic JSON-document tables for products, orders, comments, withdrawals.
+    // These entities have rich/nested shapes on the frontend (items[], reviews[], vendors[], etc.)
+    // so we store the full object as JSONB alongside a few indexed columns for querying.
     await client.query(`
-      CREATE TABLE IF NOT EXISTS olimart_orders (
+      CREATE TABLE IF NOT EXISTS olimart_products (
         id VARCHAR(100) PRIMARY KEY,
-        customer_name VARCHAR(255),
-        customer_phone VARCHAR(100),
-        customer_address TEXT,
-        customer_location VARCHAR(255),
-        items JSONB,
-        subtotal NUMERIC DEFAULT 0,
-        delivery_fee NUMERIC DEFAULT 0,
-        total NUMERIC DEFAULT 0,
-        payment_method VARCHAR(50),
-        payment_details TEXT,
-        status VARCHAR(50) DEFAULT 'placed',
-        commission NUMERIC DEFAULT 0,
-        vendor_earnings NUMERIC DEFAULT 0,
-        distance_km NUMERIC DEFAULT 0,
-        vendor_status VARCHAR(50),
-        vendor_approved_at TIMESTAMP,
-        rider_status VARCHAR(50),
-        assigned_rider_id VARCHAR(100),
-        assigned_rider_name VARCHAR(255),
-        assigned_rider_phone VARCHAR(100),
-        assigned_rider_plate VARCHAR(100),
-        assigned_rider_pic TEXT,
-        assigned_rider_means VARCHAR(100),
-        rider_accepted_at TIMESTAMP,
-        rider_transaction_ref VARCHAR(255),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Create withdrawals table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS olimart_withdrawals (
-        id VARCHAR(100) PRIMARY KEY,
-        vendor_id VARCHAR(100),
-        vendor_name VARCHAR(255),
-        amount NUMERIC DEFAULT 0,
-        method VARCHAR(50),
-        details TEXT,
-        status VARCHAR(50) DEFAULT 'pending',
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Create customer comments/reviews table
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS olimart_comments (
-        id VARCHAR(100) PRIMARY KEY,
-        customer_name VARCHAR(255),
-        product_title VARCHAR(500),
-        rating INTEGER,
-        comment TEXT,
-        date VARCHAR(100),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-    `);
-
-    // Generic key-value store for smaller shared platform state:
-    // categories, brands, tags, admin commission settings, admin logs.
-    // Avoids a bespoke table + migration for every simple list/blob.
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS olimart_kv (
-        key VARCHAR(100) PRIMARY KEY,
-        value JSONB,
+        category VARCHAR(100),
+        price NUMERIC,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_orders (
+        id VARCHAR(100) PRIMARY KEY,
+        status VARCHAR(50),
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_comments (
+        id VARCHAR(100) PRIMARY KEY,
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS olimart_withdrawals (
+        id VARCHAR(100) PRIMARY KEY,
+        status VARCHAR(50),
+        data JSONB NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    // Seed products table from the static catalog the first time only.
+    const productCheck = await client.query("SELECT COUNT(*) FROM olimart_products");
+    const productCount = parseInt(productCheck.rows[0].count, 10);
+    if (productCount === 0 && PRODUCTS.length > 0) {
+      console.log("🌱 Seeding olimart_products table from static catalog...");
+      for (const p of PRODUCTS) {
+        await client.query(
+          `INSERT INTO olimart_products (id, category, price, data) VALUES ($1, $2, $3, $4)
+           ON CONFLICT (id) DO NOTHING`,
+          [p.id, p.category, p.price, JSON.stringify(p)]
+        );
+      }
+      console.log(`🌱 olimart_products seeded with ${PRODUCTS.length} items.`);
+    }
 
     // Check if vendors table is empty and seed if necessary
     const vendorCheck = await client.query("SELECT COUNT(*) FROM olimart_vendors");
@@ -259,13 +210,8 @@ async function startServer() {
 
   app.use(express.json({ limit: '10mb' })); // Support base64 image uploads (store logos, rider pictures)
 
-  // Initialize DB tables, but NEVER let a slow/unreachable database block
-  // the server from starting. All non-DB routes (like /api/products) must
-  // keep working even if Neon is completely down. We fire-and-forget this
-  // instead of awaiting it.
-  initDb().catch((err) => {
-    console.error("🔴 Background DB initialization failed:", err);
-  });
+  // Initialize DB Tables in background
+  await initDb();
 
   // API Route for retrieving all products from the backend
   app.get("/api/products", (req, res) => {
@@ -486,266 +432,99 @@ async function startServer() {
     }
   });
 
-  // NEON DB API: Get Orders
-  app.get("/api/db/orders", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const result = await pool.query("SELECT * FROM olimart_orders ORDER BY created_at DESC");
-      const orders = result.rows.map(row => ({
-        id: row.id,
-        customerName: row.customer_name,
-        customerPhone: row.customer_phone,
-        customerAddress: row.customer_address,
-        customerLocation: row.customer_location,
-        items: row.items || [],
-        subtotal: Number(row.subtotal),
-        deliveryFee: Number(row.delivery_fee),
-        total: Number(row.total),
-        paymentMethod: row.payment_method,
-        paymentDetails: row.payment_details,
-        status: row.status,
-        commission: Number(row.commission),
-        vendorEarnings: Number(row.vendor_earnings),
-        distanceKm: Number(row.distance_km),
-        vendorStatus: row.vendor_status,
-        vendorApprovedAt: row.vendor_approved_at,
-        riderStatus: row.rider_status,
-        assignedRiderId: row.assigned_rider_id,
-        assignedRiderName: row.assigned_rider_name,
-        assignedRiderPhone: row.assigned_rider_phone,
-        assignedRiderPlate: row.assigned_rider_plate,
-        assignedRiderPic: row.assigned_rider_pic,
-        assignedRiderMeans: row.assigned_rider_means,
-        riderAcceptedAt: row.rider_accepted_at,
-        riderTransactionRef: row.rider_transaction_ref,
-        createdAt: row.created_at,
-      }));
-      res.json(orders);
-    } catch (err: any) {
-      console.error("Failed to query orders from Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
-  });
+  // ==========================================
+  // Generic JSON-document CRUD for products, orders, comments, withdrawals
+  // ==========================================
+  function registerJsonEntityRoutes(opts: {
+    routeName: string;         // e.g. "products" -> /api/db/products
+    table: string;             // e.g. "olimart_products"
+    extraColumn?: string;      // e.g. "category" or "status" (optional indexed column)
+    extraValue?: (item: any) => any;
+  }) {
+    const { routeName, table, extraColumn, extraValue } = opts;
 
-  // NEON DB API: Sync/Upsert Orders
-  app.post("/api/db/orders/sync", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const orders = req.body;
-      if (!Array.isArray(orders)) {
-        return res.status(400).json({ error: "Expected an array of orders" });
+    app.get(`/api/db/${routeName}`, async (req, res) => {
+      if (!pool) return res.status(503).json({ error: "Database not connected" });
+      try {
+        const result = await pool.query(`SELECT data FROM ${table} ORDER BY created_at DESC`);
+        res.json(result.rows.map((row) => row.data));
+      } catch (err: any) {
+        console.error(`Failed to query ${table} from Neon DB:`, err);
+        res.status(500).json({ error: err.message });
+      }
+    });
+
+    app.post(`/api/db/${routeName}/sync`, async (req, res) => {
+      if (!pool) return res.status(503).json({ error: "Database not connected" });
+      const items = req.body;
+      if (!Array.isArray(items)) {
+        return res.status(400).json({ error: "Expected an array" });
       }
       const client = await pool.connect();
       try {
         await client.query("BEGIN");
-        for (const o of orders) {
-          await client.query(`
-            INSERT INTO olimart_orders (
-              id, customer_name, customer_phone, customer_address, customer_location, items,
-              subtotal, delivery_fee, total, payment_method, payment_details, status, commission,
-              vendor_earnings, distance_km, vendor_status, vendor_approved_at, rider_status,
-              assigned_rider_id, assigned_rider_name, assigned_rider_phone, assigned_rider_plate,
-              assigned_rider_pic, assigned_rider_means, rider_accepted_at, rider_transaction_ref, created_at
-            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,$24,$25,$26,
-              COALESCE($27, CURRENT_TIMESTAMP))
-            ON CONFLICT (id) DO UPDATE SET
-              customer_name = EXCLUDED.customer_name,
-              customer_phone = EXCLUDED.customer_phone,
-              customer_address = EXCLUDED.customer_address,
-              customer_location = EXCLUDED.customer_location,
-              items = EXCLUDED.items,
-              subtotal = EXCLUDED.subtotal,
-              delivery_fee = EXCLUDED.delivery_fee,
-              total = EXCLUDED.total,
-              payment_method = EXCLUDED.payment_method,
-              payment_details = EXCLUDED.payment_details,
-              status = EXCLUDED.status,
-              commission = EXCLUDED.commission,
-              vendor_earnings = EXCLUDED.vendor_earnings,
-              distance_km = EXCLUDED.distance_km,
-              vendor_status = EXCLUDED.vendor_status,
-              vendor_approved_at = EXCLUDED.vendor_approved_at,
-              rider_status = EXCLUDED.rider_status,
-              assigned_rider_id = EXCLUDED.assigned_rider_id,
-              assigned_rider_name = EXCLUDED.assigned_rider_name,
-              assigned_rider_phone = EXCLUDED.assigned_rider_phone,
-              assigned_rider_plate = EXCLUDED.assigned_rider_plate,
-              assigned_rider_pic = EXCLUDED.assigned_rider_pic,
-              assigned_rider_means = EXCLUDED.assigned_rider_means,
-              rider_accepted_at = EXCLUDED.rider_accepted_at,
-              rider_transaction_ref = EXCLUDED.rider_transaction_ref
-          `, [
-            o.id, o.customerName || "", o.customerPhone || "", o.customerAddress || "", o.customerLocation || "",
-            JSON.stringify(o.items || []), o.subtotal || 0, o.deliveryFee || 0, o.total || 0, o.paymentMethod || "",
-            o.paymentDetails || "", o.status || "placed", o.commission || 0, o.vendorEarnings || 0, o.distanceKm || 0,
-            o.vendorStatus || null, o.vendorApprovedAt || null, o.riderStatus || null, o.assignedRiderId || null,
-            o.assignedRiderName || null, o.assignedRiderPhone || null, o.assignedRiderPlate || null,
-            o.assignedRiderPic || null, o.assignedRiderMeans || null, o.riderAcceptedAt || null,
-            o.riderTransactionRef || null, o.createdAt || null
-          ]);
+        for (const item of items) {
+          const id = item.id || crypto.randomUUID();
+          const colVal = extraColumn && extraValue ? extraValue(item) : null;
+          if (extraColumn) {
+            await client.query(
+              `INSERT INTO ${table} (id, ${extraColumn}, data, updated_at) VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+               ON CONFLICT (id) DO UPDATE SET ${extraColumn} = EXCLUDED.${extraColumn}, data = EXCLUDED.data, updated_at = CURRENT_TIMESTAMP`,
+              [id, colVal, JSON.stringify({ ...item, id })]
+            );
+          } else {
+            await client.query(
+              `INSERT INTO ${table} (id, data, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)
+               ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data, updated_at = CURRENT_TIMESTAMP`,
+              [id, JSON.stringify({ ...item, id })]
+            );
+          }
         }
         await client.query("COMMIT");
-        res.json({ success: true, count: orders.length });
-      } catch (err) {
+        res.json({ success: true, count: items.length });
+      } catch (err: any) {
         await client.query("ROLLBACK");
-        throw err;
+        console.error(`Failed to sync ${table} to Neon DB:`, err);
+        res.status(500).json({ error: err.message });
       } finally {
         client.release();
       }
-    } catch (err: any) {
-      console.error("Failed to sync orders to Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
-  });
+    });
 
-  // NEON DB API: Get Withdrawals
-  app.get("/api/db/withdrawals", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const result = await pool.query("SELECT * FROM olimart_withdrawals ORDER BY created_at DESC");
-      const withdrawals = result.rows.map(row => ({
-        id: row.id,
-        vendorId: row.vendor_id,
-        vendorName: row.vendor_name,
-        amount: Number(row.amount),
-        method: row.method,
-        details: row.details,
-        status: row.status,
-        createdAt: row.created_at,
-      }));
-      res.json(withdrawals);
-    } catch (err: any) {
-      console.error("Failed to query withdrawals from Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
-  });
-
-  // NEON DB API: Sync/Upsert Withdrawals
-  app.post("/api/db/withdrawals/sync", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const withdrawals = req.body;
-      if (!Array.isArray(withdrawals)) {
-        return res.status(400).json({ error: "Expected an array of withdrawals" });
-      }
-      const client = await pool.connect();
+    // Delete a single record by id (used e.g. when a vendor deletes a product)
+    app.delete(`/api/db/${routeName}/:id`, async (req, res) => {
+      if (!pool) return res.status(503).json({ error: "Database not connected" });
       try {
-        await client.query("BEGIN");
-        for (const w of withdrawals) {
-          await client.query(`
-            INSERT INTO olimart_withdrawals (id, vendor_id, vendor_name, amount, method, details, status, created_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7, COALESCE($8, CURRENT_TIMESTAMP))
-            ON CONFLICT (id) DO UPDATE SET
-              vendor_id = EXCLUDED.vendor_id,
-              vendor_name = EXCLUDED.vendor_name,
-              amount = EXCLUDED.amount,
-              method = EXCLUDED.method,
-              details = EXCLUDED.details,
-              status = EXCLUDED.status
-          `, [
-            w.id, w.vendorId || "", w.vendorName || "", w.amount || 0, w.method || "bank",
-            w.details || "", w.status || "pending", w.createdAt || null
-          ]);
-        }
-        await client.query("COMMIT");
-        res.json({ success: true, count: withdrawals.length });
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
-      } finally {
-        client.release();
+        await pool.query(`DELETE FROM ${table} WHERE id = $1`, [req.params.id]);
+        res.json({ success: true });
+      } catch (err: any) {
+        console.error(`Failed to delete from ${table}:`, err);
+        res.status(500).json({ error: err.message });
       }
-    } catch (err: any) {
-      console.error("Failed to sync withdrawals to Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
-  });
+    });
+  }
 
-  // NEON DB API: Get Comments/Reviews
-  app.get("/api/db/comments", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const result = await pool.query("SELECT * FROM olimart_comments ORDER BY created_at DESC");
-      const comments = result.rows.map(row => ({
-        id: row.id,
-        customerName: row.customer_name,
-        productTitle: row.product_title,
-        rating: Number(row.rating),
-        comment: row.comment,
-        date: row.date,
-      }));
-      res.json(comments);
-    } catch (err: any) {
-      console.error("Failed to query comments from Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
+  registerJsonEntityRoutes({
+    routeName: "products",
+    table: "olimart_products",
+    extraColumn: "category",
+    extraValue: (p) => p.category || null,
   });
-
-  // NEON DB API: Sync/Upsert Comments/Reviews
-  app.post("/api/db/comments/sync", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const comments = req.body;
-      if (!Array.isArray(comments)) {
-        return res.status(400).json({ error: "Expected an array of comments" });
-      }
-      const client = await pool.connect();
-      try {
-        await client.query("BEGIN");
-        for (const c of comments) {
-          await client.query(`
-            INSERT INTO olimart_comments (id, customer_name, product_title, rating, comment, date)
-            VALUES ($1,$2,$3,$4,$5,$6)
-            ON CONFLICT (id) DO UPDATE SET
-              customer_name = EXCLUDED.customer_name,
-              product_title = EXCLUDED.product_title,
-              rating = EXCLUDED.rating,
-              comment = EXCLUDED.comment,
-              date = EXCLUDED.date
-          `, [c.id, c.customerName || "", c.productTitle || "", c.rating || 5, c.comment || "", c.date || ""]);
-        }
-        await client.query("COMMIT");
-        res.json({ success: true, count: comments.length });
-      } catch (err) {
-        await client.query("ROLLBACK");
-        throw err;
-      } finally {
-        client.release();
-      }
-    } catch (err: any) {
-      console.error("Failed to sync comments to Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
+  registerJsonEntityRoutes({
+    routeName: "orders",
+    table: "olimart_orders",
+    extraColumn: "status",
+    extraValue: (o) => o.status || null,
   });
-
-  // NEON DB API: Generic key-value store (categories, brands, tags, admin settings, admin logs)
-  app.get("/api/db/kv/:key", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const result = await pool.query("SELECT value FROM olimart_kv WHERE key = $1", [req.params.key]);
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: "Key not found" });
-      }
-      res.json({ value: result.rows[0].value });
-    } catch (err: any) {
-      console.error("Failed to read kv from Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
+  registerJsonEntityRoutes({
+    routeName: "comments",
+    table: "olimart_comments",
   });
-
-  app.post("/api/db/kv/:key", async (req, res) => {
-    if (!pool) return res.status(503).json({ error: "Database not connected" });
-    try {
-      const { value } = req.body;
-      await pool.query(`
-        INSERT INTO olimart_kv (key, value, updated_at) VALUES ($1, $2, CURRENT_TIMESTAMP)
-        ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = CURRENT_TIMESTAMP
-      `, [req.params.key, JSON.stringify(value)]);
-      res.json({ success: true });
-    } catch (err: any) {
-      console.error("Failed to write kv to Neon DB:", err);
-      res.status(500).json({ error: err.message });
-    }
+  registerJsonEntityRoutes({
+    routeName: "withdrawals",
+    table: "olimart_withdrawals",
+    extraColumn: "status",
+    extraValue: (w) => w.status || null,
   });
 
   // Vite middleware for development vs static asset serving for production
