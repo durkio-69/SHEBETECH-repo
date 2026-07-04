@@ -98,7 +98,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [prodCategory, setProdCategory] = useState('');
   const [prodBrand, setProdBrand] = useState('Tecno');
   const [prodImage, setProdImage] = useState('');
-  const [prodTags, setProdTags] = useState('Dokan Pro, Verified');
+  const [prodTags, setProdTags] = useState('Best Seller, Verified');
   const [prodType, setProdType] = useState<'light' | 'bulky'>('light');
 
   // Withdrawal form states
@@ -179,11 +179,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       saveDokanVendors(updated);
       setAllVendors(updated);
       setCurrentVendor(newVendor);
-      alert(`🎉 Dokan Pro Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
+      alert(`🎉 Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
     } 
     else if (regRole === 'delivery') {
       if (!riderName || !riderPhone || !riderIdCard) {
-        alert("Error: Full Name, Phone Number, and National ID Card are compulsory!");
+        alert("Please fill in your Full Name, Phone Number, and National ID Card — these fields are required.");
         return;
       }
       const uniqueRdrId = `DKN-RDR-${Math.floor(100 + Math.random() * 900)}`;
@@ -222,7 +222,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
         accessLink: `https://olimart-courier.ug/dashboard/${newRider.id}`
       });
 
-      alert(`🏍️ Dokan Delivery Partner Registered successfully!\n\n` +
+      alert(`🏍️ Delivery Partner Registered Successfully!\n\n` +
             `• System Auto-Generated Rider ID: ${uniqueRdrId}\n` +
             `• Onboarding Status: AWAITING ADMIN APPROVAL\n\n` +
             `💬 Simulated Notification Dispatched: An SMS, WhatsApp message, and Email have been simulated with a secure link to access your Courier Dashboard once the Super Admin approves your application.`);
@@ -471,10 +471,10 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           <div className="md:col-span-5 space-y-6">
             <div className="space-y-2">
               <span className="bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                WordPress WooCommerce Integration
+                Olimart Seller Program
               </span>
               <h2 className="font-sans text-xl font-black text-slate-900 tracking-tight">
-                Dokan Pro Multi-Vendor Portal
+                Multi-Vendor Seller Portal
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed">
                 Launch your digital store on Uganda's fastest Boda Boda commerce network. Keep <strong>85%</strong> of every sale, with zero listing fees.
@@ -482,7 +482,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             </div>
 
             <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-              <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Dokan Core Guarantees</h4>
+              <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Seller Guarantees</h4>
               <ul className="space-y-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
@@ -566,7 +566,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
                   <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
-                    WooCommerce Dokan Seller Account
+                    Olimart Seller Account
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -663,7 +663,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   type="submit"
                   className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
                 >
-                  Register Store & Generate Dokan Unique ID
+                  Register Store & Generate Seller ID
                 </button>
               </form>
             )}
@@ -673,7 +673,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
                   <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
-                    Dokan Express Courier Registration
+                    Olimart Express Courier Registration
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1001,14 +1001,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
               </span>
               <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
-                DOKAN REGISTRATION ID: #{currentVendor.id}
+                SELLER ID: #{currentVendor.id}
               </p>
             </div>
             <h2 className="font-sans text-lg font-black text-slate-900 dark:text-slate-100">
-              Welcome to Dokan, <span className="text-orange-600">{currentVendor.name}</span>!
+              Welcome to Olimart, <span className="text-orange-600">{currentVendor.name}</span>!
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-              Your store onboarding information has been saved into our local WooCommerce cache. The Olimart Super Admin is currently evaluating your credentials, landmark, and tax compliance.
+              Your store onboarding information has been saved. The Olimart Super Admin is currently evaluating your credentials, landmark, and tax compliance.
             </p>
           </div>
 
@@ -1212,7 +1212,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           <div className="space-y-1 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
               <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
-                <CheckCircle size={10} /> Dokan Pro Partner
+                <CheckCircle size={10} /> Verified Partner
               </span>
               <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
             </div>
@@ -1278,7 +1278,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             activeTab === 'wallet' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Dokan Wallet & Withdrawals
+          Wallet & Withdrawals
         </button>
       </div>
 
@@ -1311,7 +1311,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <DollarSign size={16} />
                 </div>
               </div>
-              <p className="text-[9px] text-slate-400">After Dokan platform fees</p>
+              <p className="text-[9px] text-slate-400">After Olimart platform fees</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
@@ -1345,7 +1345,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           {/* Sales Analysis Chart simulation */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 text-left">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 mb-4">
-              Weekly Dokan Pro Sales Performance Analysis
+              Weekly Sales Performance Analysis
             </h3>
             
             {/* Visual Bar representation */}
@@ -1747,7 +1747,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       {activeTab === 'orders' && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 text-left">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-            <ListOrdered size={16} className="text-orange-600" /> Dokan Multi-Vendor Order Queue ({myOrders.length})
+            <ListOrdered size={16} className="text-orange-600" /> Store Order Queue ({myOrders.length})
           </h3>
 
           {myOrders.length === 0 ? (
