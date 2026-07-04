@@ -160,6 +160,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setWithdrawals(getDokanWithdrawals());
     setOrders(getDokanOrders());
     setRiders(getDokanRiders());
+    setCoupons(getDokanCoupons());
+    setShippingZones(getDokanShippingZones());
+    setRefunds(getDokanRefunds());
 
     // Try auto logging-in as the first approved vendor "Tecno Official Outlet Kampala"
     const autoLog = vList.find(v => v.id === 'v2');
@@ -176,6 +179,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       setWithdrawals(getDokanWithdrawals());
       setOrders(getDokanOrders());
       setRiders(getDokanRiders());
+      setCoupons(getDokanCoupons());
+      setShippingZones(getDokanShippingZones());
+      setRefunds(getDokanRefunds());
       
       if (currentVendor) {
         const refreshed = vList.find(v => v.id === currentVendor.id);
@@ -516,7 +522,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           {/* Quick Info */}
           <div className="md:col-span-5 space-y-6">
             <div className="space-y-2">
-              <span className="bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+              <span className="bg-orange-100 text-orange-800 text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded">
                 Olimart Seller Program
               </span>
               <h2 className="font-sans text-xl font-black text-slate-900 tracking-tight">
@@ -528,7 +534,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             </div>
 
             <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-              <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Seller Guarantees</h4>
+              <h4 className="text-3xs font-black uppercase text-slate-400 tracking-wider">Seller Guarantees</h4>
               <ul className="space-y-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
@@ -547,7 +553,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
 
             {/* Quick Login Switcher */}
             <div className="space-y-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
-              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Or Switch Active Vendor Profiles:</p>
+              <p className="text-3xs font-black uppercase text-slate-500 tracking-wider">Or Switch Active Vendor Profiles:</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {allVendors.map(v => (
                   <button
@@ -557,7 +563,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   >
                     <div>
                       <p className="text-slate-800 dark:text-slate-100">{v.name}</p>
-                      <p className="text-[9px] text-slate-400">Status: {v.status.toUpperCase()}</p>
+                      <p className="text-3xs text-slate-400">Status: {v.status.toUpperCase()}</p>
                     </div>
                     <ArrowUpRight size={14} className="text-slate-400" />
                   </button>
@@ -575,7 +581,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('vendor')}
-                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'vendor'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -586,7 +592,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('delivery')}
-                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'delivery'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -597,7 +603,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('customer')}
-                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'customer'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -611,7 +617,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'vendor' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
+                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
                     Olimart Seller Account
                   </span>
                 </div>
@@ -718,7 +724,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'delivery' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
                     Olimart Express Courier Registration
                   </span>
                 </div>
@@ -960,7 +966,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'customer' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
                     Customer Account Creation
                   </span>
                 </div>
@@ -1046,7 +1052,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
               </span>
-              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
+              <p className="text-3xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
                 SELLER ID: #{currentVendor.id}
               </p>
             </div>
@@ -1059,7 +1065,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           </div>
 
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center space-y-1.5 shadow-sm w-full md:w-auto">
-            <p className="text-[10px] font-black uppercase text-slate-400">Evaluate Sandbox Approval</p>
+            <p className="text-3xs font-black uppercase text-slate-400">Evaluate Sandbox Approval</p>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -1074,7 +1080,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   setCurrentVendor({ ...currentVendor, status: 'approved' });
                   alert("Sandbox Mode: Approved instantly! Welcome to the seller command center!");
                 }}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
               >
                 Instant Self-Approve
               </button>
@@ -1082,7 +1088,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 onClick={() => {
                   setCurrentVendor(null);
                 }}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-3xs font-bold px-3 py-1.5 rounded-lg cursor-pointer"
               >
                 Change Store
               </button>
@@ -1106,7 +1112,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-black text-slate-800 dark:text-slate-100">Profile Saved</p>
-                <p className="text-[10px] text-slate-400">Onboarding successful</p>
+                <p className="text-3xs text-slate-400">Onboarding successful</p>
               </div>
             </div>
 
@@ -1117,7 +1123,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-black text-orange-600">Pending Review</p>
-                <p className="text-[10px] text-slate-400">Verification in progress</p>
+                <p className="text-3xs text-slate-400">Verification in progress</p>
               </div>
             </div>
 
@@ -1128,7 +1134,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-500">Super Admin Handshake</p>
-                <p className="text-[10px] text-slate-400">Tax & landmark validation</p>
+                <p className="text-3xs text-slate-400">Tax & landmark validation</p>
               </div>
             </div>
 
@@ -1139,7 +1145,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-500">Store Live</p>
-                <p className="text-[10px] text-slate-400">Sell on Olimart Uganda</p>
+                <p className="text-3xs text-slate-400">Sell on Olimart Uganda</p>
               </div>
             </div>
           </div>
@@ -1164,15 +1170,15 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Store Analytics</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-[10px] font-bold text-slate-400">TOTAL SALES</p>
+                <p className="text-3xs font-bold text-slate-400">TOTAL SALES</p>
                 <p className="text-lg font-black text-slate-800">Shs 4,250,000</p>
               </div>
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-[10px] font-bold text-slate-400">NET EARNINGS (85%)</p>
+                <p className="text-3xs font-bold text-slate-400">NET EARNINGS (85%)</p>
                 <p className="text-lg font-black text-slate-800">Shs 3,612,500</p>
               </div>
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-[10px] font-bold text-slate-400">COMMISSION CHARGED (15%)</p>
+                <p className="text-3xs font-bold text-slate-400">COMMISSION CHARGED (15%)</p>
                 <p className="text-lg font-black text-slate-800">Shs 637,500</p>
               </div>
             </div>
@@ -1197,6 +1203,105 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const myProducts = products.filter(p => 
     p.vendors && p.vendors.some(v => v.id === currentVendor.id)
   );
+
+  // Dokan Pro marketing tools scoped to this vendor
+  const myCoupons = coupons.filter(c => c.vendorId === currentVendor.id);
+  const myShippingZones = shippingZones.filter(z => z.vendorId === currentVendor.id);
+  const myRefunds = refunds.filter(r => r.vendorName === currentVendor.name);
+
+  const handleCreateCoupon = () => {
+    if (!couponCode.trim() || !couponValue || Number(couponValue) <= 0) {
+      alert('Enter a coupon code and a value greater than 0.');
+      return;
+    }
+    const newCoupon: DokanCoupon = {
+      id: `cpn-${Date.now()}`,
+      vendorId: currentVendor.id,
+      vendorName: currentVendor.name,
+      code: couponCode.trim().toUpperCase(),
+      type: couponType,
+      value: Number(couponValue),
+      minOrderAmount: Number(couponMinOrder) || 0,
+      maxDiscount: couponMaxDiscount ? Number(couponMaxDiscount) : undefined,
+      usageLimit: Number(couponUsageLimit) || 0,
+      usedCount: 0,
+      status: 'active',
+      expiryDate: couponExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+      createdAt: new Date().toISOString()
+    };
+    const list = [newCoupon, ...getDokanCoupons()];
+    saveDokanCoupons(list);
+    setCoupons(list);
+    setCouponCode(''); setCouponValue(''); setCouponMinOrder('0'); setCouponMaxDiscount(''); setCouponUsageLimit('0'); setCouponExpiry('');
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleToggleMyCoupon = (id: string) => {
+    const list = getDokanCoupons();
+    const idx = list.findIndex(c => c.id === id);
+    if (idx === -1) return;
+    list[idx].status = list[idx].status === 'disabled' ? 'active' : 'disabled';
+    saveDokanCoupons(list);
+    setCoupons(list);
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleCreateShippingZone = () => {
+    if (!zoneName.trim() || !zoneDistricts.trim()) {
+      alert('Give the zone a name and at least one district.');
+      return;
+    }
+    const newZone: DokanShippingZone = {
+      id: `zone-${Date.now()}`,
+      vendorId: currentVendor.id,
+      vendorName: currentVendor.name,
+      zoneName: zoneName.trim(),
+      districts: zoneDistricts.split(',').map(d => d.trim()).filter(Boolean),
+      rateType: zoneRateType,
+      flatFee: zoneRateType === 'flat' ? Number(zoneFlatFee) || 0 : undefined,
+      perKmRate: zoneRateType === 'per_km' ? Number(zonePerKmRate) || 0 : undefined,
+      minFee: zoneMinFee ? Number(zoneMinFee) : undefined,
+      freeShippingThreshold: zoneFreeThreshold ? Number(zoneFreeThreshold) : undefined,
+      estimatedDays: Number(zoneEstimatedDays) || 1,
+      active: true,
+      createdAt: new Date().toISOString()
+    };
+    const list = [newZone, ...getDokanShippingZones()];
+    saveDokanShippingZones(list);
+    setShippingZones(list);
+    setZoneName(''); setZoneDistricts(''); setZoneFlatFee(''); setZonePerKmRate(''); setZoneMinFee(''); setZoneFreeThreshold(''); setZoneEstimatedDays('1');
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  const handleToggleZone = (id: string) => {
+    const list = getDokanShippingZones();
+    const idx = list.findIndex(z => z.id === id);
+    if (idx === -1) return;
+    list[idx].active = !list[idx].active;
+    saveDokanShippingZones(list);
+    setShippingZones(list);
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Vendor reviews a refund request first; final clearance happens with admin.
+  const handleVendorDecideRefund = (id: string, decision: 'vendor_approved' | 'vendor_rejected', note: string) => {
+    const list = getDokanRefunds();
+    const idx = list.findIndex(r => r.id === id);
+    if (idx === -1) return;
+    list[idx].status = decision;
+    list[idx].vendorNote = note;
+    saveDokanRefunds(list);
+    setRefunds(list);
+    emitEventDrivenNotifications('refund_vendor_decision', {
+      orderId: list[idx].orderId,
+      customerName: list[idx].customerName,
+      customerPhone: list[idx].customerPhone,
+      vendorName: list[idx].vendorName,
+      decision,
+      amount: list[idx].amount
+    });
+    window.dispatchEvent(new Event('storage'));
+  };
 
   const filteredProducts = myProducts.filter(p => {
     if (stockFilter === 'low') {
@@ -1230,7 +1335,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 {currentVendor.name.charAt(0)}
               </div>
             )}
-            <label className="absolute -bottom-1 -right-1 bg-slate-900/80 hover:bg-slate-900 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs border border-white">
+            <label className="absolute -bottom-1 -right-1 bg-slate-900/80 hover:bg-slate-900 text-white text-4xs font-black uppercase px-1.5 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs border border-white">
               LOGO
               <input
                 type="file"
@@ -1257,7 +1362,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           
           <div className="space-y-1 text-center sm:text-left">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+              <span className="bg-orange-800 text-3xs font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
                 <CheckCircle size={10} /> Verified Partner
               </span>
               <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
@@ -1326,6 +1431,30 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
         >
           Wallet & Withdrawals
         </button>
+        <button
+          onClick={() => setActiveTab('coupons')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
+            activeTab === 'coupons' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span className="flex items-center gap-1"><Ticket size={13} /> Coupons ({myCoupons.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('shipping')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
+            activeTab === 'shipping' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span className="flex items-center gap-1"><Truck size={13} /> Shipping Zones ({myShippingZones.length})</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('refunds')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
+            activeTab === 'refunds' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <span className="flex items-center gap-1"><RotateCcw size={13} /> Refunds ({myRefunds.filter(r => r.status === 'pending').length})</span>
+        </button>
       </div>
 
       {/* TAB 1: OVERVIEW */}
@@ -1335,7 +1464,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Sales (Gross)</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Total Sales (Gross)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-slate-900 dark:text-slate-100">
                   {formatPrice(totalMySales)}
@@ -1344,11 +1473,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <TrendingUp size={16} />
                 </div>
               </div>
-              <p className="text-[9px] text-slate-400">100% of orders booked online</p>
+              <p className="text-3xs text-slate-400">100% of orders booked online</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Earnings (85%)</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Net Earnings (85%)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-emerald-600">
                   {formatPrice(netEarnings)}
@@ -1357,11 +1486,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <DollarSign size={16} />
                 </div>
               </div>
-              <p className="text-[9px] text-slate-400">After Olimart platform fees</p>
+              <p className="text-3xs text-slate-400">After Olimart platform fees</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Commission Charged (15%)</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Commission Charged (15%)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-rose-600">
                   {formatPrice(totalCommissionPaid)}
@@ -1370,11 +1499,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <Tag size={16} />
                 </div>
               </div>
-              <p className="text-[9px] text-slate-400">Flat commission tier applied</p>
+              <p className="text-3xs text-slate-400">Flat commission tier applied</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Withdrawable Balance</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Withdrawable Balance</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-orange-600">
                   {formatPrice(currentVendor.balance)}
@@ -1383,7 +1512,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <Store size={16} />
                 </div>
               </div>
-              <p className="text-[9px] text-slate-400">Withdrawn: {formatPrice(netEarnings - currentVendor.balance)}</p>
+              <p className="text-3xs text-slate-400">Withdrawn: {formatPrice(netEarnings - currentVendor.balance)}</p>
             </div>
 
           </div>
@@ -1527,7 +1656,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <option value="light">🪶 Light (Comm: {activeAdminSettings.lightCommission}%, Boda: {activeAdminSettings.lightTransportRate} Shs/km)</option>
                   <option value="bulky">📦 Bulky (Comm: {activeAdminSettings.bulkyCommission}%, Boda: {activeAdminSettings.bulkyTransportRate} Shs/km)</option>
                 </select>
-                <p className="text-[9px] text-slate-400">Controls checkout boda shipping tariffs & seller commissions.</p>
+                <p className="text-3xs text-slate-400">Controls checkout boda shipping tariffs & seller commissions.</p>
               </div>
 
               <div className="space-y-1">
@@ -1565,7 +1694,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     <button
                       type="button"
                       onClick={() => setProdImage('')}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-0.5 text-[8px]"
+                      className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-0.5 text-4xs"
                     >
                       ✕
                     </button>
@@ -1605,7 +1734,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 <button
                   type="button"
                   onClick={() => setStockFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-3xs font-black uppercase tracking-wider transition-all border cursor-pointer ${
                     stockFilter === 'all'
                       ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900'
                       : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
@@ -1616,14 +1745,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 <button
                   type="button"
                   onClick={() => setStockFilter('low')}
-                  className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border flex items-center gap-1 cursor-pointer ${
+                  className={`px-3 py-1.5 rounded-xl text-3xs font-black uppercase tracking-wider transition-all border flex items-center gap-1 cursor-pointer ${
                     stockFilter === 'low'
                       ? 'bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:text-slate-950'
                       : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400'
                   }`}
                 >
                   <span>⚠️ Low Stock Alerts</span>
-                  <span className="bg-amber-700 dark:bg-amber-600 text-white text-[9px] font-bold px-1.5 py-0.2 rounded-full">
+                  <span className="bg-amber-700 dark:bg-amber-600 text-white text-3xs font-bold px-1.5 py-0.2 rounded-full">
                     {myProducts.filter(p => {
                       const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
                       const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
@@ -1660,9 +1789,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                         <div className="flex-1 space-y-1">
                           <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
                           <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-[10px] text-slate-400 capitalize">Category: {p.category}</span>
+                            <span className="text-3xs text-slate-400 capitalize">Category: {p.category}</span>
                             <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded border ${
+                            <span className={`text-3xs font-black uppercase px-1.5 py-0.2 rounded border ${
                               isItemBulky(p)
                                 ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/25 dark:text-amber-300 dark:border-amber-900/40'
                                 : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/25 dark:text-indigo-300 dark:border-indigo-900/40'
@@ -1675,28 +1804,28 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                           {isTrending && isLowStock && (
                             <div>
                               {isOut ? (
-                                <span className="inline-flex bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <span className="inline-flex bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                                   ❌ TRENDING & OUT OF STOCK
                                 </span>
                               ) : isCriticalStock ? (
-                                <span className="inline-flex bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
+                                <span className="inline-flex bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
                                   🔥 CRITICAL STOCK: {stock} left! (High Demand)
                                 </span>
                               ) : (
-                                <span className="inline-flex bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-[9px] font-black px-1.5 py-0.5 rounded flex items-center gap-1">
+                                <span className="inline-flex bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
                                   📈 LOW STOCK: {stock} left (High Demand)
                                 </span>
                               )}
                             </div>
                           )}
                           {!isTrending && (
-                            <div className="text-[9px] font-bold text-slate-500 flex items-center gap-1">
+                            <div className="text-3xs font-bold text-slate-500 flex items-center gap-1">
                               <span>Stock: {stock} units</span>
                               <span className="text-slate-400 font-normal">(Standard Demand)</span>
                             </div>
                           )}
                           {isTrending && !isLowStock && (
-                            <div className="text-[9px] font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                            <div className="text-3xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
                               <span>🔥 Trending High</span>
                               <span className="text-slate-300 dark:text-slate-700 font-normal">|</span>
                               <span>Stock: {stock} (Healthy)</span>
@@ -1708,7 +1837,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       {/* Editing and detail controls */}
                       <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between gap-2">
                         {editingProdId === p.id ? (
-                          <div className="space-y-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg w-full text-[10px]">
+                          <div className="space-y-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg w-full text-3xs">
                             <div className="grid grid-cols-2 gap-2">
                               <div className="space-y-0.5">
                                 <label className="text-slate-500 block">Price (Shs)</label>
@@ -1717,7 +1846,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                   value={editingPrice}
                                   onChange={(e) => setEditingPrice(e.target.value)}
                                   placeholder={p.price.toString()}
-                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
+                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
                                 />
                               </div>
                               <div className="space-y-0.5">
@@ -1727,7 +1856,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                   value={editingStock}
                                   onChange={(e) => setEditingStock(e.target.value)}
                                   placeholder={stock.toString()}
-                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
+                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
                                 />
                               </div>
                             </div>
@@ -1736,7 +1865,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                               <select
                                 value={editingDemand ? 'trending' : 'standard'}
                                 onChange={(e) => setEditingDemand(e.target.value === 'trending')}
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded px-1 py-1 text-[11px] focus:outline-none bg-white dark:bg-slate-900 dark:text-white font-bold"
+                                className="w-full border border-slate-200 dark:border-slate-700 rounded px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white font-bold"
                               >
                                 <option value="trending">🔥 Trending High</option>
                                 <option value="standard">📊 Standard</option>
@@ -1746,14 +1875,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                               <button
                                 type="button"
                                 onClick={() => handleUpdateProductPrice(p.id)}
-                                className="bg-emerald-600 text-white font-black text-[9px] px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-emerald-500 cursor-pointer"
+                                className="bg-emerald-600 text-white font-black text-3xs px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-emerald-500 cursor-pointer"
                               >
                                 <Check size={10} /> Save
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setEditingProdId(null)}
-                                className="bg-slate-300 text-slate-800 font-black text-[9px] px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-slate-400 cursor-pointer"
+                                className="bg-slate-300 text-slate-800 font-black text-3xs px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-slate-400 cursor-pointer"
                               >
                                 <X size={10} /> Cancel
                               </button>
@@ -1772,7 +1901,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                 setEditingStock(stock.toString());
                                 setEditingDemand(isTrending);
                               }}
-                              className="text-[10px] bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 font-black border border-orange-200/50 dark:border-orange-900/50 px-2 py-1 rounded-lg hover:bg-orange-100/50 dark:hover:bg-orange-900/40 cursor-pointer flex items-center gap-1"
+                              className="text-3xs bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 font-black border border-orange-200/50 dark:border-orange-900/50 px-2 py-1 rounded-lg hover:bg-orange-100/50 dark:hover:bg-orange-900/40 cursor-pointer flex items-center gap-1"
                             >
                               Edit Stock & Price
                             </button>
@@ -1807,7 +1936,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900 dark:text-slate-100">{o.id}</span>
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                      <span className={`text-3xs font-black uppercase px-2 py-0.5 rounded ${
                         o.status === 'placed' 
                           ? 'bg-blue-100 text-blue-800' 
                           : o.status === 'dispatched' 
@@ -1820,7 +1949,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       </span>
                     </div>
 
-                    <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1">
+                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400 space-y-1">
                       <p>📍 Deliver to: <span className="text-slate-850 dark:text-slate-200">{o.customerName} - {o.customerAddress} ({o.customerLocation})</span></p>
                       <p>📞 Phone: <span className="font-mono text-slate-850 dark:text-slate-200">{o.customerPhone}</span></p>
                     </div>
@@ -1828,7 +1957,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     {/* Items from this seller */}
                     <div className="pl-3 border-l-2 border-orange-500 space-y-1 mt-2">
                       {o.items.map((it, idx) => (
-                        <div key={idx} className="text-[11px] text-slate-700 dark:text-slate-300 font-bold flex gap-2">
+                        <div key={idx} className="text-xs text-slate-700 dark:text-slate-300 font-bold flex gap-2">
                           <span className="text-orange-600">[{it.quantity}x]</span>
                           <span>{it.product.title}</span>
                         </div>
@@ -1836,9 +1965,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     </div>
 
                     {o.assignedRider && (
-                      <div className="mt-2 p-2 bg-indigo-50/55 dark:bg-indigo-950/25 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-[10px] text-indigo-700 dark:text-indigo-400 font-black flex items-center gap-1">
+                      <div className="mt-2 p-2 bg-indigo-50/55 dark:bg-indigo-950/25 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-3xs text-indigo-700 dark:text-indigo-400 font-black flex items-center gap-1">
                         <span>🏍️ Dispatch Logistics Rider:</span>
-                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-[9px] font-mono">
+                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-3xs font-mono">
                           {o.assignedRider}
                         </span>
                       </div>
@@ -1852,7 +1981,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                             <p className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                               <span>🏍️ Assign Nearest Delivery Agent</span>
                             </p>
-                            <p className="text-[10px] text-slate-500">
+                            <p className="text-3xs text-slate-500">
                               Displaying verified couriers. Nearest options highlighted based on customer coordinates ({o.customerLocation}).
                             </p>
                           </div>
@@ -1884,17 +2013,17 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                 <div className="space-y-1">
                                   <div className="flex items-center gap-2 flex-wrap">
                                     <span className="text-xs font-black text-slate-800 dark:text-slate-100">{rider.name}</span>
-                                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-[9px] px-1.5 py-0.5 rounded uppercase">
+                                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-3xs px-1.5 py-0.5 rounded uppercase">
                                       {rider.transportMeans} • {rider.motorcyclePlate}
                                     </span>
                                     {isNear && (
-                                      <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-[9px] font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
+                                      <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-3xs font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
                                         📍 Nearest (Within Area)
                                       </span>
                                     )}
                                   </div>
 
-                                  <p className="text-[10px] text-slate-500 flex items-center gap-1">
+                                  <p className="text-3xs text-slate-500 flex items-center gap-1">
                                     <span>Primary Location:</span> 
                                     <span className="font-bold text-slate-700 dark:text-slate-300">{rider.location}</span>
                                     <span>• Ph:</span>
@@ -1906,7 +2035,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                     {(rider.trustBadges || ['Safe Driver', 'Punctual']).map((badge) => (
                                       <span 
                                         key={badge} 
-                                        className="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/50 text-[8px] font-black px-1.5 py-0.5 rounded-md"
+                                        className="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/50 text-4xs font-black px-1.5 py-0.5 rounded-md"
                                       >
                                         ⭐ {badge}
                                       </span>
@@ -1916,9 +2045,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                   {/* Reviews Expander */}
                                   {rider.reviews && rider.reviews.length > 0 && (
                                     <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                                      <p className="text-[9px] uppercase font-black tracking-wider text-indigo-500">Customer Feedback ({avgRating} ⭐):</p>
+                                      <p className="text-3xs uppercase font-black tracking-wider text-indigo-500">Customer Feedback ({avgRating} ⭐):</p>
                                       {rider.reviews.map(rev => (
-                                        <div key={rev.id} className="text-[9px] text-slate-500 dark:text-slate-400 italic">
+                                        <div key={rev.id} className="text-3xs text-slate-500 dark:text-slate-400 italic">
                                           "{rev.comment}" — <span className="font-bold">{rev.customerName}</span>
                                         </div>
                                       ))}
@@ -1932,7 +2061,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                     setAssigningRiderOrderId(null);
                                     alert(`Order Assigned! 🏍️ Dispatch notice sent to courier driver "${rider.name}".`);
                                   }}
-                                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-2 rounded-xl shrink-0 cursor-pointer text-center"
+                                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase tracking-wider px-3.5 py-2 rounded-xl shrink-0 cursor-pointer text-center"
                                 >
                                   Assign & Dispatch
                                 </button>
@@ -1954,7 +2083,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                         <div className="flex gap-2">
                           <button
                             onClick={() => handleVendorDecision(o.id, 'approved')}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
                           >
                             ✔️ Approve Order
                           </button>
@@ -1964,14 +2093,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                                 handleVendorDecision(o.id, 'rejected');
                               }
                             }}
-                            className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
+                            className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
                           >
                             ❌ Reject
                           </button>
                         </div>
                       ) : (
                         <div className="text-right space-y-1.5">
-                          <span className={`inline-block text-[10px] font-black uppercase px-2.5 py-1 rounded-md ${
+                          <span className={`inline-block text-3xs font-black uppercase px-2.5 py-1 rounded-md ${
                             o.vendorStatus === 'approved' 
                               ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
                               : 'bg-rose-100 text-rose-800 border border-rose-300'
@@ -1980,7 +2109,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                           </span>
 
                           {o.vendorStatus === 'approved' && (
-                            <div className="text-[10px] font-bold text-slate-500">
+                            <div className="text-3xs font-bold text-slate-500">
                               {o.status === 'placed' && (
                                 <span className="text-orange-600 animate-pulse block">
                                   ⌛ Awaiting Super Admin Rider Assignment...
@@ -2007,19 +2136,19 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       )}
                       
                       {o.status === 'dispatched' && (
-                        <span className="text-[10px] text-amber-600 font-extrabold flex items-center gap-1 animate-pulse">
+                        <span className="text-3xs text-amber-600 font-extrabold flex items-center gap-1 animate-pulse">
                           ⌛ Handed over to Courier dispatch
                         </span>
                       )}
 
                       {o.status === 'transit' && (
-                        <span className="text-[10px] text-purple-600 font-extrabold flex items-center gap-1">
+                        <span className="text-3xs text-purple-600 font-extrabold flex items-center gap-1">
                           🏍️ Rider In Transit
                         </span>
                       )}
 
                       {o.status === 'delivered' && (
-                        <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
+                        <span className="text-3xs text-emerald-600 font-extrabold flex items-center gap-1">
                           ✅ Delivered and Cleared
                         </span>
                       )}
@@ -2042,7 +2171,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <Send size={16} className="text-orange-600" /> Request Withdrawal
             </h3>
 
-            <div className="bg-orange-50 dark:bg-slate-900/60 p-3 rounded-xl border border-orange-200/50 text-[11px] font-bold text-orange-800 dark:text-orange-400">
+            <div className="bg-orange-50 dark:bg-slate-900/60 p-3 rounded-xl border border-orange-200/50 text-xs font-bold text-orange-800 dark:text-orange-400">
               ⚡ Available withrawable funds are automatically held securely in Olimart central platforms accounts escrow. Once approved, funds are wired immediately.
             </div>
 
@@ -2118,13 +2247,13 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       <p className="text-xs font-black text-slate-900 dark:text-slate-100">
                         {formatPrice(w.amount)}
                       </p>
-                      <p className="text-[10px] text-slate-400 font-mono">
+                      <p className="text-3xs text-slate-400 font-mono">
                         via {w.method.toUpperCase()} &bull; {w.details}
                       </p>
-                      <p className="text-[9px] text-slate-400">Requested: {new Date(w.createdAt).toLocaleDateString()}</p>
+                      <p className="text-3xs text-slate-400">Requested: {new Date(w.createdAt).toLocaleDateString()}</p>
                     </div>
 
-                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${
+                    <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${
                       w.status === 'approved' 
                         ? 'bg-emerald-100 text-emerald-800' 
                         : w.status === 'pending'
@@ -2139,6 +2268,157 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             )}
           </div>
 
+        </div>
+      )}
+
+      {/* TAB: COUPONS (Dokan Pro) */}
+      {activeTab === 'coupons' && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
+          <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <Ticket size={16} className="text-orange-600" /> Create Discount Coupon
+            </h3>
+            <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())} placeholder="Coupon code e.g. WELCOME10" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 uppercase" />
+            <div className="flex gap-2">
+              <select value={couponType} onChange={e => setCouponType(e.target.value as 'percentage' | 'fixed')} className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200">
+                <option value="percentage">% Percentage</option>
+                <option value="fixed">Fixed Shs amount</option>
+              </select>
+              <input type="number" value={couponValue} onChange={e => setCouponValue(e.target.value)} placeholder="Value" className="w-28 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            </div>
+            <div className="flex gap-2">
+              <input type="number" value={couponMinOrder} onChange={e => setCouponMinOrder(e.target.value)} placeholder="Min order (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+              <input type="number" value={couponMaxDiscount} onChange={e => setCouponMaxDiscount(e.target.value)} placeholder="Max discount (Shs, optional)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            </div>
+            <div className="flex gap-2">
+              <input type="number" value={couponUsageLimit} onChange={e => setCouponUsageLimit(e.target.value)} placeholder="Usage limit (0 = unlimited)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+              <input type="date" value={couponExpiry ? couponExpiry.substring(0, 10) : ''} onChange={e => setCouponExpiry(new Date(e.target.value).toISOString())} className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            </div>
+            <button onClick={handleCreateCoupon} className="w-full bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase py-2.5 rounded-xl cursor-pointer">
+              Create Coupon
+            </button>
+          </div>
+
+          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">My Coupons</h3>
+            {myCoupons.length === 0 ? (
+              <div className="py-10 text-center text-slate-400 text-xs">No coupons yet. Create one to attract buyers.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {myCoupons.map(c => (
+                  <div key={c.id} className="py-3 flex justify-between items-center gap-3">
+                    <div>
+                      <p className="text-xs font-black font-mono text-orange-600">{c.code}</p>
+                      <p className="text-3xs text-slate-500 font-semibold">
+                        {c.type === 'percentage' ? `${c.value}% off` : `Shs ${c.value.toLocaleString()} off`} &bull; used {c.usedCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${c.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{c.status}</span>
+                      <button onClick={() => handleToggleMyCoupon(c.id)} className="text-3xs font-black uppercase px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer">
+                        {c.status === 'disabled' ? 'Enable' : 'Disable'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: SHIPPING ZONES (Dokan Pro) */}
+      {activeTab === 'shipping' && (
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
+          <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <Truck size={16} className="text-orange-600" /> Create Shipping Zone
+            </h3>
+            <input type="text" value={zoneName} onChange={e => setZoneName(e.target.value)} placeholder="Zone name e.g. Kampala Metro" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            <input type="text" value={zoneDistricts} onChange={e => setZoneDistricts(e.target.value)} placeholder="Districts, comma separated" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            <select value={zoneRateType} onChange={e => setZoneRateType(e.target.value as 'flat' | 'per_km')} className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200">
+              <option value="flat">Flat fee</option>
+              <option value="per_km">Per kilometer</option>
+            </select>
+            {zoneRateType === 'flat' ? (
+              <input type="number" value={zoneFlatFee} onChange={e => setZoneFlatFee(e.target.value)} placeholder="Flat fee (Shs)" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            ) : (
+              <div className="flex gap-2">
+                <input type="number" value={zonePerKmRate} onChange={e => setZonePerKmRate(e.target.value)} placeholder="Rate per km (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+                <input type="number" value={zoneMinFee} onChange={e => setZoneMinFee(e.target.value)} placeholder="Min fee (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+              </div>
+            )}
+            <div className="flex gap-2">
+              <input type="number" value={zoneFreeThreshold} onChange={e => setZoneFreeThreshold(e.target.value)} placeholder="Free delivery above (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+              <input type="number" value={zoneEstimatedDays} onChange={e => setZoneEstimatedDays(e.target.value)} placeholder="Est. days" className="w-24 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
+            </div>
+            <button onClick={handleCreateShippingZone} className="w-full bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase py-2.5 rounded-xl cursor-pointer">
+              Create Zone
+            </button>
+          </div>
+
+          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">My Shipping Zones</h3>
+            {myShippingZones.length === 0 ? (
+              <div className="py-10 text-center text-slate-400 text-xs">No custom zones yet — the platform default rate applies everywhere.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {myShippingZones.map(z => (
+                  <div key={z.id} className="py-3 flex justify-between items-center gap-3">
+                    <div>
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">{z.zoneName}</p>
+                      <p className="text-3xs text-slate-500 font-semibold">
+                        {z.districts.join(', ')} &bull; {z.rateType === 'flat' ? `Shs ${z.flatFee?.toLocaleString()} flat` : `Shs ${z.perKmRate?.toLocaleString()}/km`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${z.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{z.active ? 'active' : 'off'}</span>
+                      <button onClick={() => handleToggleZone(z.id)} className="text-3xs font-black uppercase px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer">
+                        {z.active ? 'Turn off' : 'Turn on'}
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB: REFUND REQUESTS (Dokan Pro) */}
+      {activeTab === 'refunds' && (
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3 text-left">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+            <RotateCcw size={16} className="text-orange-600" /> Customer Refund Requests
+          </h3>
+          {myRefunds.length === 0 ? (
+            <div className="py-10 text-center text-slate-400 text-xs">No refund requests for your store.</div>
+          ) : (
+            <div className="divide-y divide-slate-100 dark:divide-slate-800">
+              {myRefunds.map(r => (
+                <div key={r.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                  <div className="space-y-1">
+                    <p className="text-xs font-black text-slate-900 dark:text-slate-100">
+                      Order <span className="text-orange-600">{r.orderId}</span> &bull; {r.customerName}
+                    </p>
+                    <p className="text-sm font-black text-rose-600 font-mono">{formatPrice(r.amount)}</p>
+                    <p className="text-3xs text-slate-500 italic">Reason: {r.reason}</p>
+                    <span className="text-3xs font-black uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-600">{r.status}</span>
+                  </div>
+                  {r.status === 'pending' && (
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => handleVendorDecideRefund(r.id, 'vendor_approved', 'Approved by vendor')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer">
+                        <Check size={12} /> Approve
+                      </button>
+                      <button onClick={() => handleVendorDecideRefund(r.id, 'vendor_rejected', 'Rejected by vendor')} className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer">
+                        <X size={12} /> Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

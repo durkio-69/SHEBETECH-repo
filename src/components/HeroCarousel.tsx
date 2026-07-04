@@ -113,7 +113,7 @@ export default function HeroCarousel({
         <div className="hidden lg:flex flex-col bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-100 dark:border-slate-800 p-2 justify-between relative group/sidebar">
           <div className="space-y-0.5">
             <div className="px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 rounded-lg mb-2">
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-3xs font-extrabold uppercase tracking-widest text-slate-500 dark:text-slate-400 flex items-center gap-1">
                 <Store size={11} className="text-[#f68b1e]" />
                 <span>Olimart Categories</span>
               </span>
@@ -179,20 +179,20 @@ export default function HeroCarousel({
 
                   {/* FLYOUT HOVER SUBMENU mega-panel (Exactly like Jumia) */}
                   <div className="absolute left-[100%] top-0 ml-2.5 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl p-4 hidden group-hover/menuitem:block z-50 animate-in fade-in slide-in-from-left-2 duration-150">
-                    <p className="text-[10px] font-black text-[#f68b1e] uppercase tracking-wider mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
+                    <p className="text-3xs font-black text-[#f68b1e] uppercase tracking-wider mb-2 pb-1 border-b border-slate-100 dark:border-slate-800">
                       {menuInfo.title}
                     </p>
                     
                     <div className="space-y-3">
                       {/* Sub-item categories */}
                       <div className="space-y-1">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Trending Subcategories</p>
+                        <p className="text-4xs font-black text-slate-400 uppercase tracking-widest">Trending Subcategories</p>
                         <div className="space-y-0.5">
                           {menuInfo.subcats.map((sc, sidx) => (
                             <button
                               key={sidx}
                               onClick={() => handleCategoryClick(cat.id)}
-                              className="w-full text-left text-[11px] font-bold text-slate-700 dark:text-slate-300 hover:text-[#f68b1e] py-0.5"
+                              className="w-full text-left text-xs font-bold text-slate-700 dark:text-slate-300 hover:text-[#f68b1e] py-0.5"
                             >
                               &bull; {sc}
                             </button>
@@ -202,12 +202,12 @@ export default function HeroCarousel({
 
                       {/* Famous Brands */}
                       <div className="space-y-1">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Official Store Brands</p>
+                        <p className="text-4xs font-black text-slate-400 uppercase tracking-widest">Official Store Brands</p>
                         <div className="flex flex-wrap gap-1 pt-1">
                           {menuInfo.brands.map((br, bidx) => (
                             <span 
                               key={bidx}
-                              className="text-[9px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-bold"
+                              className="text-3xs bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded font-bold"
                             >
                               {br}
                             </span>
@@ -218,7 +218,7 @@ export default function HeroCarousel({
                     
                     <button
                       onClick={() => handleCategoryClick(cat.id)}
-                      className="mt-3.5 w-full bg-[#f68b1e]/10 hover:bg-[#f68b1e] hover:text-white text-[#f68b1e] py-1 text-[10px] font-black uppercase tracking-wider rounded-md text-center transition-all"
+                      className="mt-3.5 w-full bg-[#f68b1e]/10 hover:bg-[#f68b1e] hover:text-white text-[#f68b1e] py-1 text-3xs font-black uppercase tracking-wider rounded-md text-center transition-all"
                     >
                       Shop Department &rarr;
                     </button>
@@ -247,8 +247,8 @@ export default function HeroCarousel({
           </div>
 
           <div className="bg-[#f68b1e]/5 rounded-lg p-3 text-center border border-[#f68b1e]/10">
-            <p className="text-[10px] font-black text-[#f68b1e] uppercase tracking-wider">Fast Shipping</p>
-            <p className="text-[9px] text-slate-500 font-medium">To Kampala & beyond</p>
+            <p className="text-3xs font-black text-[#f68b1e] uppercase tracking-wider">Fast Shipping</p>
+            <p className="text-3xs text-slate-500 font-medium">To Kampala & beyond</p>
           </div>
         </div>
 
@@ -262,7 +262,7 @@ export default function HeroCarousel({
               }`}
             >
               <div className="text-white max-w-sm z-20 space-y-3.5">
-                <span className={`inline-block text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full ${banner.accentColor}`}>
+                <span className={`inline-block text-3xs font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-full ${banner.accentColor}`}>
                   Kampala Shopping Fest
                 </span>
                 <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-none text-white">
@@ -327,10 +327,10 @@ export default function HeroCarousel({
 
           <div className="relative z-10">
             <div className="flex justify-between items-center mb-3">
-              <span className="bg-red-600 text-white text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1 animate-pulse">
+              <span className="bg-red-600 text-white text-3xs font-black uppercase tracking-widest px-2.5 py-1 rounded-full flex items-center gap-1 animate-pulse">
                 <Zap size={9} fill="white" /> Deal of the Day
               </span>
-              <div className="flex items-center gap-1 text-[10px] font-black text-slate-950">
+              <div className="flex items-center gap-1 text-3xs font-black text-slate-950">
                 <Timer size={12} />
                 <span>Ends In:</span>
               </div>
@@ -340,15 +340,15 @@ export default function HeroCarousel({
             <div className="grid grid-cols-3 gap-1.5 text-center mb-4">
               <div className="bg-slate-950 text-white rounded-lg py-1.5 px-1 shadow-xs">
                 <span className="block text-sm font-black">{String(timeLeft.hours).padStart(2, '0')}</span>
-                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Hrs</span>
+                <span className="text-4xs uppercase tracking-wider text-slate-400 font-bold">Hrs</span>
               </div>
               <div className="bg-slate-950 text-white rounded-lg py-1.5 px-1 shadow-xs">
                 <span className="block text-sm font-black">{String(timeLeft.minutes).padStart(2, '0')}</span>
-                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Mins</span>
+                <span className="text-4xs uppercase tracking-wider text-slate-400 font-bold">Mins</span>
               </div>
               <div className="bg-slate-950 text-white rounded-lg py-1.5 px-1 shadow-xs">
                 <span className="block text-sm font-black text-[#f68b1e]">{String(timeLeft.seconds).padStart(2, '0')}</span>
-                <span className="text-[8px] uppercase tracking-wider text-slate-400 font-bold">Secs</span>
+                <span className="text-4xs uppercase tracking-wider text-slate-400 font-bold">Secs</span>
               </div>
             </div>
 
@@ -361,15 +361,15 @@ export default function HeroCarousel({
                   className="w-full h-16 object-contain rounded"
                   referrerPolicy="no-referrer"
                 />
-                <span className="absolute -top-2 -left-2 bg-red-600 text-white text-[8px] font-black px-1 py-0.5 rounded">
+                <span className="absolute -top-2 -left-2 bg-red-600 text-white text-4xs font-black px-1 py-0.5 rounded">
                   {dealProduct.discountBadge}
                 </span>
               </div>
               <div className="flex-1 min-w-0 space-y-0.5">
-                <span className="text-[9px] font-black text-slate-400 uppercase tracking-wide">
+                <span className="text-3xs font-black text-slate-400 uppercase tracking-wide">
                   {dealProduct.brand}
                 </span>
-                <h3 className="font-extrabold text-[11px] text-slate-950 line-clamp-2 leading-tight">
+                <h3 className="font-extrabold text-xs text-slate-950 line-clamp-2 leading-tight">
                   {dealProduct.title}
                 </h3>
                 
@@ -379,7 +379,7 @@ export default function HeroCarousel({
                     Shs {dealProduct.price.toLocaleString()}
                   </span>
                   {dealProduct.originalPrice && (
-                    <span className="text-[9px] line-through text-slate-400">
+                    <span className="text-3xs line-through text-slate-400">
                       Shs {dealProduct.originalPrice.toLocaleString()}
                     </span>
                   )}
@@ -397,7 +397,7 @@ export default function HeroCarousel({
               <span>Claim Offer</span>
               <ArrowRight size={13} />
             </button>
-            <p className="text-[9px] text-center text-slate-900/80 font-black mt-1.5 uppercase tracking-wide">
+            <p className="text-3xs text-center text-slate-900/80 font-black mt-1.5 uppercase tracking-wide">
               ⚡ Cash on delivery in Uganda
             </p>
           </div>
@@ -424,12 +424,12 @@ export default function HeroCarousel({
               <div className="w-12 h-12 rounded-full bg-slate-50 dark:bg-slate-800 flex items-center justify-center border border-slate-100 dark:border-slate-700 group-hover:bg-[#f68b1e]/10 group-hover:border-[#f68b1e]/30 transition-all duration-200 shadow-xs relative">
                 {item.icon}
                 {item.badge && (
-                  <span className="absolute -top-1.5 -right-1 bg-slate-900 text-white text-[7px] font-black px-1 py-0.5 rounded-xs scale-90 sm:scale-100">
+                  <span className="absolute -top-1.5 -right-1 bg-slate-900 text-white text-4xs font-black px-1 py-0.5 rounded-xs scale-90 sm:scale-100">
                     {item.badge}
                   </span>
                 )}
               </div>
-              <span className="text-[11px] font-black text-slate-800 dark:text-slate-200 group-hover:text-[#f68b1e] mt-2 transition-colors">
+              <span className="text-xs font-black text-slate-800 dark:text-slate-200 group-hover:text-[#f68b1e] mt-2 transition-colors">
                 {item.label}
               </span>
             </button>

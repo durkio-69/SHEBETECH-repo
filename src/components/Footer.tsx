@@ -106,19 +106,19 @@ export default function Footer() {
           <div className="space-y-3">
             <h4 className="text-xs font-black uppercase tracking-wider text-white">Payments Accepted</h4>
             <div className="flex flex-wrap gap-2">
-              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-[8px] font-black tracking-wider text-slate-300 transition-colors">
+              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-4xs font-black tracking-wider text-slate-300 transition-colors">
                 <span className="w-2 h-2 rounded-full bg-yellow-400 mb-0.5" />
                 MTN
               </div>
-              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-[8px] font-black tracking-wider text-slate-300 transition-colors">
+              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-4xs font-black tracking-wider text-slate-300 transition-colors">
                 <span className="w-2 h-2 rounded-full bg-red-600 mb-0.5" />
                 AIRTEL
               </div>
-              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-[8px] font-black tracking-wider text-slate-300 transition-colors">
+              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-4xs font-black tracking-wider text-slate-300 transition-colors">
                 <CreditCard size={11} className="text-orange-500 mb-0.5" />
                 VISA
               </div>
-              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-[8px] font-black tracking-wider text-slate-300 transition-colors">
+              <div className="w-16 h-8 bg-white/5 hover:bg-white/10 rounded border border-white/10 flex flex-col items-center justify-center text-4xs font-black tracking-wider text-slate-300 transition-colors">
                 <Coins size={11} className="text-yellow-500 mb-0.5" />
                 CASH
               </div>
@@ -169,7 +169,7 @@ export default function Footer() {
           ) : (
             <div className="bg-orange-950/40 border border-orange-800/60 p-3 rounded-xl text-xs space-y-1">
               <p className="text-orange-400 font-bold">🎉 Welcome to the Olimart Family!</p>
-              <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
+              <p className="text-3xs text-slate-300 font-medium leading-relaxed">
                 Check your inbox! We've sent coupon code <strong className="text-yellow-400">MARTUG10</strong> for an immediate Shs 10,000 discount.
               </p>
             </div>

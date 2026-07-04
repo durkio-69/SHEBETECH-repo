@@ -207,10 +207,10 @@ export default function AccountModal({
                   <div>
                     <h3 className="font-extrabold text-sm text-trust-text-primary dark:text-slate-100 flex items-center gap-1.5">
                       {currentUser.name}
-                      <span className="bg-trust-cta text-trust-text-primary text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
+                      <span className="bg-trust-cta text-trust-text-primary text-4xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
                     </h3>
                     <p className="text-xs text-trust-text-secondary font-medium">{currentUser.email}</p>
-                    <p className="text-[10px] text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
+                    <p className="text-3xs text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
                   </div>
                 </div>
                 <button
@@ -225,10 +225,10 @@ export default function AccountModal({
               {/* Active Workspace / Role Switcher Inside Account Modal (as requested by user) */}
               <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-3">
                 <div className="flex items-center justify-between">
-                  <h4 className="text-[11px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
                     Switch Active Workspace Portal
                   </h4>
-                  <span className="text-[9px] bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
+                  <span className="text-3xs bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
                     Secure Switch
                   </span>
                 </div>
@@ -264,7 +264,7 @@ export default function AccountModal({
                           }`}>
                             {role.label}
                           </p>
-                          <p className="text-[9px] text-trust-text-secondary dark:text-slate-500 font-medium">
+                          <p className="text-3xs text-trust-text-secondary dark:text-slate-500 font-medium">
                             {role.desc}
                           </p>
                         </div>
@@ -302,7 +302,7 @@ export default function AccountModal({
                     <div className="text-center py-8 bg-slate-50 dark:bg-slate-950/20 rounded-2xl">
                       <Package size={32} className="mx-auto text-slate-300 mb-2" />
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No recent orders yet</p>
-                      <p className="text-[10px] text-slate-400 mt-0.5">Start exploring our incredible products!</p>
+                      <p className="text-3xs text-slate-400 mt-0.5">Start exploring our incredible products!</p>
                     </div>
                   ) : (
                     currentUser.orders.map((ord) => (
@@ -310,7 +310,7 @@ export default function AccountModal({
                         key={ord.id}
                         className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-[#f68b1e]/30 transition-all bg-slate-50/50 dark:bg-slate-950/10 space-y-2.5"
                       >
-                        <div className="flex justify-between items-center text-[11px] font-bold">
+                        <div className="flex justify-between items-center text-xs font-bold">
                           <span className="text-slate-400">Order ID: <strong className="text-slate-800 dark:text-slate-100 font-extrabold">{ord.id}</strong></span>
                           <span className="text-slate-400">{ord.date}</span>
                         </div>
@@ -319,7 +319,7 @@ export default function AccountModal({
                             <p className="text-xs font-black text-slate-800 dark:text-slate-200 line-clamp-1">{ord.item}</p>
                             <p className="text-xs font-black text-red-600">{formatPrice(ord.total)}</p>
                           </div>
-                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          <span className={`text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                             ord.status === 'Delivered' 
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
                               : 'bg-yellow-50 text-yellow-600 border border-yellow-200 animate-pulse'
@@ -330,7 +330,7 @@ export default function AccountModal({
 
                         {/* Elegant Visual Progress Tracker Timeline Component */}
                         <div className="py-2.5 px-1 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                          <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 mb-2">
+                          <div className="text-3xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 mb-2">
                             Order Journey Timeline
                           </div>
                           <div className="flex items-center justify-between relative px-2">
@@ -363,7 +363,7 @@ export default function AccountModal({
                                   >
                                     <Icon size={12} className={isCurrent ? 'animate-pulse' : ''} />
                                   </div>
-                                  <span className={`text-[8px] font-black tracking-tight mt-1.5 transition-colors ${
+                                  <span className={`text-4xs font-black tracking-tight mt-1.5 transition-colors ${
                                     isCurrent 
                                       ? 'text-[#f68b1e]' 
                                       : isCompleted 
@@ -379,14 +379,14 @@ export default function AccountModal({
                         </div>
                         
                         {ord.status === 'In Transit' && (
-                          <div className="flex items-center gap-1.5 bg-[#f68b1e]/10 p-2 rounded-lg border border-[#f68b1e]/20 text-[10px] text-slate-700 dark:text-slate-300 font-medium">
+                          <div className="flex items-center gap-1.5 bg-[#f68b1e]/10 p-2 rounded-lg border border-[#f68b1e]/20 text-3xs text-slate-700 dark:text-slate-300 font-medium">
                             <Truck size={12} className="text-[#f68b1e]" />
                             <span>Dispatch Note: Cleared through Kampala, arriving in your district shortly.</span>
                           </div>
                         )}
 
                         <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-slate-800/80">
-                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                          <span className="text-3xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
                             <CheckCircle size={11} className="text-emerald-500" />
                             Ready to ship
                           </span>
@@ -395,7 +395,7 @@ export default function AccountModal({
                               handleReorder(ord.item, ord.total);
                               onClose();
                             }}
-                            className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
+                            className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
                           >
                             Re-order Item
                           </button>
@@ -411,10 +411,10 @@ export default function AccountModal({
                 <div className="space-y-4">
                   <div className="p-4 rounded-2xl bg-yellow-400/10 border border-yellow-400 text-slate-900 dark:text-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider block">Olimart wallet balance</span>
+                      <span className="text-3xs font-black text-amber-700 uppercase tracking-wider block">Olimart wallet balance</span>
                       <span className="text-xl font-black text-[#f68b1e]">{formatPrice(currentUser.balance)}</span>
                     </div>
-                    <div className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <div className="bg-yellow-400 text-slate-950 text-3xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
                       MTN MoMo Active
                     </div>
                   </div>
@@ -425,7 +425,7 @@ export default function AccountModal({
                       <Gift size={24} className="text-red-500 flex-shrink-0" />
                       <div className="text-xs">
                         <p className="font-extrabold text-red-700 dark:text-red-400">Coupon Code: <span className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-red-100 text-slate-800 font-black">KAMPALAMOMO</span></p>
-                        <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Applies Shs 15,000 instant saving when you complete payment via MTN Mobile Money!</p>
+                        <p className="text-3xs text-slate-500 font-semibold mt-0.5">Applies Shs 15,000 instant saving when you complete payment via MTN Mobile Money!</p>
                       </div>
                     </div>
                   </div>
@@ -433,7 +433,7 @@ export default function AccountModal({
               )}
 
               {/* Prompt Help */}
-              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 font-semibold">
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 font-semibold">
                 <AlertCircle size={14} className="text-[#f68b1e]" />
                 <span>Need assistance? Call toll-free <strong>0200 804 020</strong> to chat with Kampala customer care.</span>
               </div>
@@ -468,7 +468,7 @@ export default function AccountModal({
               {activeTab === 'login' && (
                 <form onSubmit={handleLogin} className="space-y-4 pt-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -483,7 +483,7 @@ export default function AccountModal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Password</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -499,7 +499,7 @@ export default function AccountModal({
 
                   {/* PORTAL ACCESS SELECTION ON LOGIN (As requested by user) */}
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                    <label className="text-3xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
                       Choose Your Destination Workspace Portal
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -525,8 +525,8 @@ export default function AccountModal({
                           >
                             <div className="mt-0.5">{role.icon}</div>
                             <div>
-                              <p className="text-[10px] font-black uppercase tracking-wider">{role.label}</p>
-                              <p className="text-[8px] text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
+                              <p className="text-3xs font-black uppercase tracking-wider">{role.label}</p>
+                              <p className="text-4xs text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
                             </div>
                           </button>
                         );
@@ -534,7 +534,7 @@ export default function AccountModal({
                     </div>
                   </div>
 
-                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                  <div className="flex justify-between items-center text-3xs font-bold text-slate-500">
                     <label className="flex items-center gap-1 cursor-pointer">
                       <input type="checkbox" className="rounded text-amber-500 focus:ring-0" defaultChecked />
                       <span>Remember Me</span>
@@ -542,7 +542,7 @@ export default function AccountModal({
                     <button 
                       type="button" 
                       onClick={() => onShowToast("Reset password instruction sent to email!")}
-                      className="hover:text-trust-link hover:underline text-[10px]"
+                      className="hover:text-trust-link hover:underline text-3xs"
                     >
                       Forgot Password?
                     </button>
@@ -562,7 +562,7 @@ export default function AccountModal({
               {activeTab === 'register' && (
                 <form onSubmit={handleRegister} className="space-y-3.5 pt-2">
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Name</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Full Name</label>
                     <div className="relative">
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -577,7 +577,7 @@ export default function AccountModal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -592,7 +592,7 @@ export default function AccountModal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">WhatsApp / Phone Number</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">WhatsApp / Phone Number</label>
                     <div className="relative">
                       <PhoneCall className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -607,7 +607,7 @@ export default function AccountModal({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Password</label>
+                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -623,7 +623,7 @@ export default function AccountModal({
 
                   {/* PORTAL ACCESS SELECTION ON SIGN UP (As requested by user) */}
                   <div className="space-y-1.5 pt-1">
-                    <label className="text-[10px] font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
+                    <label className="text-3xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
                       Choose Your Destination Workspace Portal
                     </label>
                     <div className="grid grid-cols-2 gap-2">
@@ -649,8 +649,8 @@ export default function AccountModal({
                           >
                             <div className="mt-0.5">{role.icon}</div>
                             <div>
-                              <p className="text-[10px] font-black uppercase tracking-wider">{role.label}</p>
-                              <p className="text-[8px] text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
+                              <p className="text-3xs font-black uppercase tracking-wider">{role.label}</p>
+                              <p className="text-4xs text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
                             </div>
                           </button>
                         );
@@ -669,7 +669,7 @@ export default function AccountModal({
               )}
 
               {/* Trust disclaimer */}
-              <div className="text-[9px] text-slate-400 text-center font-semibold border-t border-slate-100 dark:border-slate-800 pt-3">
+              <div className="text-3xs text-slate-400 text-center font-semibold border-t border-slate-100 dark:border-slate-800 pt-3">
                 🔒 Protected by Olimart SafePay & End-to-End SSL encryption.
               </div>
             </div>

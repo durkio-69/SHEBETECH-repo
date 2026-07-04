@@ -80,11 +80,11 @@ export default function FlashSales({
               <h2 className="text-sm sm:text-base font-black uppercase tracking-wider text-white">
                 MoMo Flash Sales
               </h2>
-              <span className="bg-yellow-400 text-slate-900 text-[8px] font-black px-1.5 py-0.5 rounded-xs uppercase tracking-wide animate-pulse">
+              <span className="bg-yellow-400 text-slate-900 text-4xs font-black px-1.5 py-0.5 rounded-xs uppercase tracking-wide animate-pulse">
                 Live Now
               </span>
             </div>
-            <p className="text-[10px] text-red-100 font-medium">
+            <p className="text-3xs text-red-100 font-medium">
               Limited items, pay with MTN MoMo or Airtel Money for discounts!
             </p>
           </div>
@@ -95,7 +95,7 @@ export default function FlashSales({
           {/* Ticking Countdown Timer */}
           <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-lg border border-white/10">
             <Clock size={12} className="text-white" />
-            <span className="text-[9px] font-bold text-red-100 uppercase tracking-wide">Ends In:</span>
+            <span className="text-3xs font-bold text-red-100 uppercase tracking-wide">Ends In:</span>
             <div className="flex items-center gap-0.5 font-mono font-black text-xs text-yellow-300">
               <span>{String(timeLeft.hours).padStart(2, '0')}</span>:
               <span>{String(timeLeft.minutes).padStart(2, '0')}</span>:
@@ -139,12 +139,12 @@ export default function FlashSales({
               >
                 {/* Image Area */}
                 <div className="relative mb-2.5 bg-slate-50 dark:bg-slate-700/50 rounded-lg p-2 overflow-hidden flex items-center justify-center h-32">
-                  <span className="absolute top-1.5 left-1.5 bg-[#e61601] text-white font-black text-[9px] px-1.5 py-0.5 rounded-sm z-10 shadow-xs">
+                  <span className="absolute top-1.5 left-1.5 bg-[#e61601] text-white font-black text-3xs px-1.5 py-0.5 rounded-sm z-10 shadow-xs">
                     {product.discountBadge}
                   </span>
                   
                   {product.isOfficial && (
-                    <span className="absolute top-1.5 right-1.5 bg-blue-600 text-white font-bold text-[7px] uppercase tracking-wider px-1.5 py-0.5 rounded-xs z-10">
+                    <span className="absolute top-1.5 right-1.5 bg-blue-600 text-white font-bold text-4xs uppercase tracking-wider px-1.5 py-0.5 rounded-xs z-10">
                       Official
                     </span>
                   )}
@@ -188,12 +188,12 @@ export default function FlashSales({
 
                 {/* Info and price */}
                 <div className="space-y-1">
-                  <p className="text-[8px] font-black text-slate-400 uppercase tracking-wide">
+                  <p className="text-4xs font-black text-slate-400 uppercase tracking-wide">
                     {product.brand}
                   </p>
                   <h3 
                     onClick={() => onProductClick(product)}
-                    className="font-bold text-[11px] text-slate-800 dark:text-slate-200 line-clamp-2 h-7 leading-tight hover:text-[#f68b1e] transition-colors cursor-pointer"
+                    className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-2 h-7 leading-tight hover:text-[#f68b1e] transition-colors cursor-pointer"
                   >
                     {product.title}
                   </h3>
@@ -201,8 +201,8 @@ export default function FlashSales({
                   {/* Rating indicator */}
                   <div className="flex items-center gap-1">
                     <Star size={10} fill="#eab308" stroke="none" />
-                    <span className="text-[9px] font-black text-slate-700 dark:text-slate-300">{product.rating}</span>
-                    <span className="text-[9px] text-slate-400">({product.reviewsCount})</span>
+                    <span className="text-3xs font-black text-slate-700 dark:text-slate-300">{product.rating}</span>
+                    <span className="text-3xs text-slate-400">({product.reviewsCount})</span>
                   </div>
 
                   {/* Price info block */}
@@ -211,7 +211,7 @@ export default function FlashSales({
                       {formatPrice(product.price)}
                     </span>
                     {product.originalPrice && (
-                      <span className="text-[9px] line-through text-slate-400 font-bold">
+                      <span className="text-3xs line-through text-slate-400 font-bold">
                         {formatPrice(product.originalPrice)}
                       </span>
                     )}
@@ -219,7 +219,7 @@ export default function FlashSales({
 
                   {/* Stock progress ticker */}
                   <div className="space-y-1 pt-1">
-                    <div className="flex justify-between text-[8px] font-black text-slate-500">
+                    <div className="flex justify-between text-4xs font-black text-slate-500">
                       <span>Sold: {progress}%</span>
                       <span className={progress > 85 ? 'text-[#e61601] animate-pulse font-black' : ''}>
                         {progress > 85 ? 'Almost Out' : 'Selling Fast'}
@@ -237,7 +237,7 @@ export default function FlashSales({
                 {/* High contrast add to cart */}
                 <button
                   onClick={() => onAddToCart(product)}
-                  className="w-full bg-[#e61601] text-white hover:bg-[#c21000] py-2 rounded-lg text-[10px] font-black flex items-center justify-center gap-1 mt-2.5 transition-colors active:scale-95 cursor-pointer uppercase tracking-wider"
+                  className="w-full bg-[#e61601] text-white hover:bg-[#c21000] py-2 rounded-lg text-3xs font-black flex items-center justify-center gap-1 mt-2.5 transition-colors active:scale-95 cursor-pointer uppercase tracking-wider"
                 >
                   <ShoppingCart size={11} />
                   <span>Add to Cart</span>

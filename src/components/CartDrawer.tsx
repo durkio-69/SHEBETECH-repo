@@ -17,10 +17,11 @@ import {
   Wallet,
   Store,
   MapPin,
-  MessageSquare
+  MessageSquare,
+  RotateCcw
 } from 'lucide-react';
 import { CartItem } from '../types';
-import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky, calculateOrderCommissionAndEarnings, getAdminSettings, isItemBulky } from '../lib/dokanStore';
+import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky, calculateOrderCommissionAndEarnings, getAdminSettings, isItemBulky, validateCoupon, redeemCoupon, DokanCoupon, getDokanRefunds, saveDokanRefunds, DokanRefundRequest } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import Stepper, { OrderStatus } from './Stepper';
 
@@ -62,6 +63,12 @@ export default function CartDrawer({
   const [orderId, setOrderId] = useState('');
   const [cardOrAccountDetails, setCardOrAccountDetails] = useState('');
 
+  // Dokan Pro-style multi-vendor coupon redemption at checkout
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<DokanCoupon | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponMessage, setCouponMessage] = useState<{ text: string; ok: boolean } | null>(null);
+
   // Simulated live state tracker for stepper on success page
   const [currentOrderTrackStatus, setCurrentOrderTrackStatus] = useState<OrderStatus>('placed');
 
@@ -73,6 +80,8 @@ export default function CartDrawer({
   const [riderRating, setRiderRating] = useState<number>(5);
   const [riderComment, setRiderComment] = useState<string>('');
   const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundRequestSubmitted, setRefundRequestSubmitted] = useState(false);
 
   // Live Tracking and Communication states (Requirement 4)
   const [activeRecipient, setActiveRecipient] = useState<'vendor' | 'rider'>('vendor');
@@ -192,10 +201,58 @@ export default function CartDrawer({
   // Dynamic logistics calculator
   const deliveryInfo = calculateDynamicDeliveryFee(cartItems, selectedLocation);
   const deliveryFee = deliveryInfo.fee;
-  const total = subtotal + deliveryFee;
+  const total = Math.max(0, subtotal + deliveryFee - couponDiscount);
 
   const handleCheckoutStart = () => {
     setStep('details');
+  };
+
+  const handleApplyCoupon = () => {
+    if (!couponInput.trim()) return;
+    const result = validateCoupon(couponInput, cartItems);
+    if (result.valid && result.coupon) {
+      setAppliedCoupon(result.coupon);
+      setCouponDiscount(result.discount);
+      setCouponMessage({ text: result.message, ok: true });
+    } else {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setCouponMessage({ text: result.message, ok: false });
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponInput('');
+    setCouponMessage(null);
+  };
+
+  const handleRequestRefund = () => {
+    if (!refundReason.trim()) return;
+    const vendorName = cartItems[0]?.selectedVendor || 'Store';
+    const newRefund: DokanRefundRequest = {
+      id: `rfd-${Date.now()}`,
+      orderId,
+      customerName,
+      customerPhone: phoneNumber,
+      vendorName,
+      amount: total,
+      reason: refundReason.trim(),
+      status: 'pending',
+      createdAt: new Date().toISOString()
+    };
+    const list = [newRefund, ...getDokanRefunds()];
+    saveDokanRefunds(list);
+    emitEventDrivenNotifications('refund_requested', {
+      orderId,
+      customerName,
+      vendorName,
+      amount: total,
+      reason: refundReason.trim()
+    });
+    setRefundRequestSubmitted(true);
+    window.dispatchEvent(new Event('storage'));
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
@@ -227,10 +284,16 @@ export default function CartDrawer({
           commission,
           vendorEarnings,
           distanceKm: deliveryInfo.distanceKm,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
+          ...(appliedCoupon ? { couponCode: appliedCoupon.code, couponDiscount } : {})
         };
         dokanOrders.unshift(newDokanOrder);
         saveDokanOrders(dokanOrders);
+
+        // Mark the coupon as used now that the order is confirmed placed
+        if (appliedCoupon) {
+          redeemCoupon(appliedCoupon.id);
+        }
 
         // 2. Distribute funds to vendors' wallets
         const vendors = getDokanVendors();
@@ -446,6 +509,9 @@ export default function CartDrawer({
       setRiderRating(5);
       setRiderComment('');
       setFeedbackSubmitted(false);
+      setRefundReason('');
+      setRefundRequestSubmitted(false);
+      handleRemoveCoupon();
     }
     onClose();
   };
@@ -472,17 +538,54 @@ export default function CartDrawer({
                   className="w-12 h-12 object-contain rounded-lg bg-slate-50 border border-slate-100 p-1"
                   referrerPolicy="no-referrer"
                 />
-                <span className="absolute -top-1.5 -right-1.5 bg-slate-700 text-white text-[9px] font-black w-4 h-4 rounded-full flex items-center justify-center">
+                <span className="absolute -top-1.5 -right-1.5 bg-slate-700 text-white text-3xs font-black w-4 h-4 rounded-full flex items-center justify-center">
                   {item.quantity}
                 </span>
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-bold text-slate-800 line-clamp-2 leading-snug">{item.product.title}</p>
-                <p className="text-[10px] text-slate-400 font-semibold">Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}</p>
+                <p className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug">{item.product.title}</p>
+                <p className="text-3xs text-slate-400 font-semibold">Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}</p>
               </div>
             </div>
           );
         })}
+      </div>
+
+      <div className="pt-1">
+        {!appliedCoupon ? (
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={couponInput}
+              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+              placeholder="Have a coupon code?"
+              className="flex-1 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#f68b1e]/30 uppercase"
+            />
+            <button
+              onClick={handleApplyCoupon}
+              className="text-xs font-black uppercase px-3 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 shrink-0 cursor-pointer"
+            >
+              Apply
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
+            <span className="text-3xs font-black text-emerald-700 uppercase">
+              🎉 {appliedCoupon.code} applied &bull; -Shs {couponDiscount.toLocaleString()}
+            </span>
+            <button
+              onClick={handleRemoveCoupon}
+              className="text-3xs font-black uppercase text-slate-500 hover:text-rose-600 cursor-pointer"
+            >
+              Remove
+            </button>
+          </div>
+        )}
+        {couponMessage && (
+          <p className={`text-3xs font-bold mt-1.5 ${couponMessage.ok ? 'text-emerald-600' : 'text-rose-600'}`}>
+            {couponMessage.text}
+          </p>
+        )}
       </div>
 
       <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs text-slate-600">
@@ -494,12 +597,18 @@ export default function CartDrawer({
           <span className="flex items-center gap-1">
             Delivery Fee:
             {deliveryInfo.hasBulkyItem && (
-              <span className="bg-red-100 text-red-800 text-[8px] font-black px-1.5 rounded uppercase">Bulky</span>
+              <span className="bg-red-100 text-red-800 text-4xs font-black px-1.5 rounded uppercase">Bulky</span>
             )}
           </span>
           <span className="text-slate-900 font-bold">Shs {(deliveryFee ?? 0).toLocaleString()}</span>
         </div>
-        <div className="flex justify-between text-[9px] text-slate-400">
+        {couponDiscount > 0 && (
+          <div className="flex justify-between font-semibold text-emerald-600">
+            <span>Coupon Discount:</span>
+            <span className="font-bold">-Shs {couponDiscount.toLocaleString()}</span>
+          </div>
+        )}
+        <div className="flex justify-between text-3xs text-slate-400">
           <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
           <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
         </div>
@@ -510,7 +619,7 @@ export default function CartDrawer({
         </div>
       </div>
 
-      <div className="flex items-center justify-center gap-1.5 text-[9px] text-slate-400 font-semibold pt-1">
+      <div className="flex items-center justify-center gap-1.5 text-3xs text-slate-400 font-semibold pt-1">
         <ShieldCheck size={12} className="text-emerald-600" />
         <span>256-bit SSL Encrypted &bull; Buyer Protection Guarantee</span>
       </div>
@@ -559,7 +668,7 @@ export default function CartDrawer({
             )}
           </div>
           {isFullPageStep ? (
-            <div className="flex items-center gap-1.5 text-[10px] sm:text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
+            <div className="flex items-center gap-1.5 text-3xs sm:text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
               <ShieldCheck size={13} />
               <span className="hidden sm:inline">Secure checkout</span>
             </div>
@@ -606,7 +715,7 @@ export default function CartDrawer({
                           {item.selectedVariation && Object.entries(item.selectedVariation).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {Object.entries(item.selectedVariation).map(([vName, vVal]) => (
-                                <span key={vName} className="bg-orange-50 text-orange-700 border border-orange-100/50 px-1.5 py-0.5 rounded text-[9px] font-bold">
+                                <span key={vName} className="bg-orange-50 text-orange-700 border border-orange-100/50 px-1.5 py-0.5 rounded text-3xs font-bold">
                                   {vName}: {vVal}
                                 </span>
                               ))}
@@ -615,7 +724,7 @@ export default function CartDrawer({
 
                           {/* Selected Vendor */}
                           {item.selectedVendor && (
-                            <p className="text-[10px] text-slate-500 font-extrabold mt-0.5 flex items-center gap-1">
+                            <p className="text-3xs text-slate-500 font-extrabold mt-0.5 flex items-center gap-1">
                               🛒 Seller: <span className="text-orange-600 font-black">{item.selectedVendor}</span>
                             </p>
                           )}
@@ -624,7 +733,7 @@ export default function CartDrawer({
                             <span className="text-xs font-black text-slate-900">
                               Shs {(activePrice ?? 0).toLocaleString()}
                             </span>
-                            <span className="text-[10px] text-slate-400">
+                            <span className="text-3xs text-slate-400">
                               Subtotal: Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}
                             </span>
                           </div>
@@ -699,7 +808,7 @@ export default function CartDrawer({
                 <button
                   type="button"
                   onClick={() => setStep('cart')}
-                  className="text-[11px] font-bold text-slate-500 hover:text-orange-600 flex items-center gap-1 mb-1"
+                  className="text-xs font-bold text-slate-500 hover:text-orange-600 flex items-center gap-1 mb-1"
                 >
                   &larr; Back to cart
                 </button>
@@ -709,9 +818,9 @@ export default function CartDrawer({
           {step === 'details' && (
             <form onSubmit={handlePlaceOrder} className="space-y-4">
               <div className="space-y-1 bg-amber-50/40 p-3.5 rounded-xl border border-amber-200">
-                <div className="flex justify-between items-center text-[10px] font-bold text-amber-800 uppercase tracking-wide">
+                <div className="flex justify-between items-center text-3xs font-bold text-amber-800 uppercase tracking-wide">
                   <span>Shipment Address Verified</span>
-                  <span className="text-[9px] bg-amber-200 text-amber-900 px-1.5 rounded font-black uppercase">Fast Boda Boda Route</span>
+                  <span className="text-3xs bg-amber-200 text-amber-900 px-1.5 rounded font-black uppercase">Fast Boda Boda Route</span>
                 </div>
                 <p className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mt-1">
                   📍 District: <strong className="text-orange-600 underline font-black">{selectedLocation}</strong>
@@ -726,7 +835,7 @@ export default function CartDrawer({
                 </h3>
                 
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase">Receiver's Full Name</label>
+                  <label className="block text-3xs font-bold text-slate-400 uppercase">Receiver's Full Name</label>
                   <input
                     type="text"
                     required
@@ -738,7 +847,7 @@ export default function CartDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[9px] font-bold text-slate-400 uppercase font-mono">Detailed Landmark Address</label>
+                  <label className="block text-3xs font-bold text-slate-400 uppercase font-mono">Detailed Landmark Address</label>
                   <input
                     type="text"
                     required
@@ -772,9 +881,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          MTN Mobile Money <span className="bg-yellow-400 text-[8px] font-black px-1.5 py-0.2 rounded text-slate-950">MOMO</span>
+                          MTN Mobile Money <span className="bg-yellow-400 text-4xs font-black px-1.5 py-0.2 rounded text-slate-950">MOMO</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Secure PIN prompt confirmation</p>
+                        <p className="text-3xs text-slate-500">Secure PIN prompt confirmation</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-slate-900 font-extrabold text-xs">MTN</div>
@@ -794,9 +903,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Airtel Money <span className="bg-red-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white">AIRTEL</span>
+                          Airtel Money <span className="bg-red-600 text-4xs font-black px-1.5 py-0.2 rounded text-white">AIRTEL</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Instant mobile money secure push</p>
+                        <p className="text-3xs text-slate-500">Instant mobile money secure push</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-extrabold text-xs">Air</div>
@@ -816,9 +925,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          PayPal Express <span className="bg-blue-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white font-mono">PAYPAL</span>
+                          PayPal Express <span className="bg-blue-600 text-4xs font-black px-1.5 py-0.2 rounded text-white font-mono">PAYPAL</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Pay with PayPal balance or Credit card</p>
+                        <p className="text-3xs text-slate-500">Pay with PayPal balance or Credit card</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs">PP</div>
@@ -838,9 +947,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Stripe Elements <span className="bg-indigo-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white font-mono">STRIPE</span>
+                          Stripe Elements <span className="bg-indigo-600 text-4xs font-black px-1.5 py-0.2 rounded text-white font-mono">STRIPE</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Fast multi-currency checkout via Stripe card</p>
+                        <p className="text-3xs text-slate-500">Fast multi-currency checkout via Stripe card</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xs">S</div>
@@ -860,9 +969,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Mastercard SecureCode <span className="bg-orange-500 text-[8px] font-black px-1.5 py-0.2 rounded text-white">CARD</span>
+                          Mastercard SecureCode <span className="bg-orange-500 text-4xs font-black px-1.5 py-0.2 rounded text-white">CARD</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Direct debit or international credit card gateway</p>
+                        <p className="text-3xs text-slate-500">Direct debit or international credit card gateway</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-extrabold text-xs">
@@ -884,9 +993,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Direct Bank Transfer <span className="bg-sky-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white">E-BANK</span>
+                          Direct Bank Transfer <span className="bg-sky-600 text-4xs font-black px-1.5 py-0.2 rounded text-white">E-BANK</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">EFT, RTGS or bank app transfer confirmation</p>
+                        <p className="text-3xs text-slate-500">EFT, RTGS or bank app transfer confirmation</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white font-extrabold text-xs">Bank</div>
@@ -906,9 +1015,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Cash on Delivery <span className="bg-slate-200 text-[8px] font-black px-1.5 py-0.2 rounded text-slate-700">COD</span>
+                          Cash on Delivery <span className="bg-slate-200 text-4xs font-black px-1.5 py-0.2 rounded text-slate-700">COD</span>
                         </p>
-                        <p className="text-[10px] text-slate-500">Pay cash or mobile transfer on drop receipt</p>
+                        <p className="text-3xs text-slate-500">Pay cash or mobile transfer on drop receipt</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-extrabold text-xs">
@@ -921,7 +1030,7 @@ export default function CartDrawer({
               {/* Mobile phone for money prompt */}
               {(paymentMethod === 'momo' || paymentMethod === 'airtel') && (
                 <div className="space-y-1 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Smartphone size={12} className="text-orange-500" /> Mobile Money Number (Uganda)
                   </label>
                   <input
@@ -932,7 +1041,7 @@ export default function CartDrawer({
                     placeholder="e.g. 0772 123456 or 0702 123456"
                     className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
                   />
-                  <p className="text-[9px] text-slate-400 font-medium">
+                  <p className="text-3xs text-slate-400 font-medium">
                     * Make sure your phone is nearby. A USSD PIN approval request will launch on this line instantly.
                   </p>
                 </div>
@@ -941,7 +1050,7 @@ export default function CartDrawer({
               {/* PayPal details prompt */}
               {paymentMethod === 'paypal' && (
                 <div className="space-y-1 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Globe size={12} className="text-blue-400" /> PayPal Email Account
                   </label>
                   <input
@@ -952,7 +1061,7 @@ export default function CartDrawer({
                     placeholder="your-paypal-email@domain.com"
                     className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
                   />
-                  <p className="text-[9px] text-slate-400 font-medium">
+                  <p className="text-3xs text-slate-400 font-medium">
                     * You will be redirected to secure PayPal gateway to log in and approve the sandbox payment.
                   </p>
                 </div>
@@ -961,7 +1070,7 @@ export default function CartDrawer({
               {/* Stripe or Mastercard details prompt */}
               {(paymentMethod === 'stripe' || paymentMethod === 'mastercard') && (
                 <div className="space-y-2.5 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <CreditCard size={12} className="text-indigo-400" /> Credit / Debit Card Information
                   </label>
                   <div className="space-y-2">
@@ -991,7 +1100,7 @@ export default function CartDrawer({
                       />
                     </div>
                   </div>
-                  <p className="text-[9px] text-slate-400 font-medium">
+                  <p className="text-3xs text-slate-400 font-medium">
                     * Fully compliant SSL 256-bit encrypted card routing. Gateway funds are held in Olimart's Escrow.
                   </p>
                 </div>
@@ -1000,7 +1109,7 @@ export default function CartDrawer({
               {/* Bank Transfer details prompt */}
               {paymentMethod === 'bank' && (
                 <div className="space-y-2 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Wallet size={12} className="text-sky-400" /> Bank Transfer Coordination
                   </label>
                   <select 
@@ -1019,7 +1128,7 @@ export default function CartDrawer({
                     placeholder="Your Bank Account Holder Name"
                     className="w-full text-slate-850 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none text-slate-800"
                   />
-                  <p className="text-[9px] text-slate-400 font-medium leading-relaxed">
+                  <p className="text-3xs text-slate-400 font-medium leading-relaxed">
                     * After confirming, transfer funds to A/C 9030018872561 (Stanbic Kampala). Upload/keep proof receipt for clearance.
                   </p>
                 </div>
@@ -1059,7 +1168,7 @@ export default function CartDrawer({
                     : `Sending secure PIN confirmation prompt to Mobile Money line ${phoneNumber}...`}
                 </p>
               </div>
-              <p className="text-[10px] text-slate-400 font-medium italic animate-pulse">Please do not refresh or close this tab</p>
+              <p className="text-3xs text-slate-400 font-medium italic animate-pulse">Please do not refresh or close this tab</p>
             </div>
           )}
 
@@ -1080,13 +1189,13 @@ export default function CartDrawer({
               <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
-                    <span className="text-[9px] bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+                    <h4 className="text-3xs font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
+                    <span className="text-3xs bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
                       Status: {currentOrderTrackStatus === 'placed' ? 'Order Placed' : currentOrderTrackStatus === 'dispatched' ? 'Ready for Dispatch' : currentOrderTrackStatus === 'transit' ? 'In Transit' : 'Delivered'}
                     </span>
                   </div>
                   <Stepper currentStatus={currentOrderTrackStatus} />
-                  <p className="text-[9px] text-slate-400 mt-2 font-medium text-left">
+                  <p className="text-3xs text-slate-400 mt-2 font-medium text-left">
                     {currentOrderTrackStatus === 'placed' && '🕒 Seller is picking the items and preparing the package.'}
                     {currentOrderTrackStatus === 'dispatched' && '📦 Packaged securely. Boda dispatch is allocating a rider.'}
                     {currentOrderTrackStatus === 'transit' && '🏍️ Rider accepted! In transit with real-time location streaming.'}
@@ -1096,7 +1205,7 @@ export default function CartDrawer({
 
                 {/* Simulated Google Maps Platform Radar (Requirement 4) */}
                 <div className="bg-slate-100 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800 space-y-2 text-left">
-                  <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">
+                  <div className="flex justify-between items-center text-3xs font-extrabold text-slate-500 uppercase tracking-wider">
                     <span className="flex items-center gap-1">📍 Live GPS Radar (Google Maps Grounding)</span>
                     <span className="font-mono text-orange-600">Active Node</span>
                   </div>
@@ -1125,7 +1234,7 @@ export default function CartDrawer({
                       <div className="bg-orange-600 text-white p-1 rounded-full shadow-lg border border-white">
                         <Store size={10} />
                       </div>
-                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">Store Vendor</span>
+                      <span className="text-4xs font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">Store Vendor</span>
                     </div>
 
                     {/* Customer Icon Pin at (270, 30) */}
@@ -1133,7 +1242,7 @@ export default function CartDrawer({
                       <div className="bg-blue-600 text-white p-1 rounded-full shadow-lg border border-white">
                         <MapPin size={10} />
                       </div>
-                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">You</span>
+                      <span className="text-4xs font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">You</span>
                     </div>
 
                     {/* Animated Motorcycle Courier Pin */}
@@ -1151,7 +1260,7 @@ export default function CartDrawer({
                           <div className="bg-emerald-600 text-white p-1.5 rounded-full shadow-xl border-2 border-white animate-bounce">
                             <Truck size={12} className="text-white" />
                           </div>
-                          <span className="text-[7px] font-black bg-emerald-100 text-emerald-800 px-1 rounded border border-emerald-300">
+                          <span className="text-4xs font-black bg-emerald-100 text-emerald-800 px-1 rounded border border-emerald-300">
                             Rider ({riderMapProgress}%)
                           </span>
                         </div>
@@ -1160,22 +1269,22 @@ export default function CartDrawer({
                   </div>
 
                   {/* Rider HUD Statistics */}
-                  <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2 rounded-lg text-[8px] font-extrabold text-slate-500 uppercase">
+                  <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2 rounded-lg text-4xs font-extrabold text-slate-500 uppercase">
                     <div>
-                      <p className="text-[7px] text-slate-400">Velocity</p>
-                      <p className="text-[10px] text-slate-800 dark:text-slate-200 font-mono font-bold">
+                      <p className="text-4xs text-slate-400">Velocity</p>
+                      <p className="text-3xs text-slate-800 dark:text-slate-200 font-mono font-bold">
                         {currentOrderTrackStatus === 'transit' ? '32 km/h' : currentOrderTrackStatus === 'delivered' ? '0 km/h (Arrived)' : '0 km/h (Idle)'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-[7px] text-slate-400">Distance Remaining</p>
-                      <p className="text-[10px] text-orange-600 font-mono font-bold">
+                      <p className="text-4xs text-slate-400">Distance Remaining</p>
+                      <p className="text-3xs text-orange-600 font-mono font-bold">
                         {(deliveryInfo.distanceKm * (1 - riderMapProgress / 100)).toFixed(2)} km
                       </p>
                     </div>
                     <div>
-                      <p className="text-[7px] text-slate-400">ETA Estimate</p>
-                      <p className="text-[10px] text-emerald-600 font-mono font-bold">
+                      <p className="text-4xs text-slate-400">ETA Estimate</p>
+                      <p className="text-3xs text-emerald-600 font-mono font-bold">
                         {currentOrderTrackStatus === 'placed' && 'Prep...'}
                         {currentOrderTrackStatus === 'dispatched' && 'Allocating...'}
                         {currentOrderTrackStatus === 'transit' && `${Math.max(1, Math.round(5 * (1 - riderMapProgress / 100)))} mins`}
@@ -1188,11 +1297,11 @@ export default function CartDrawer({
                 {/* Live Chat Communication Hub (Requirement 4) */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-3.5 text-left">
                   <div className="flex justify-between items-center">
-                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                    <h5 className="text-3xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
                       <MessageSquare size={13} className="text-orange-600" /> Order Chat Center
                     </h5>
                     {/* Tab Switcher for recipient */}
-                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[8px] font-extrabold">
+                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-4xs font-extrabold">
                       <button
                         type="button"
                         onClick={() => setActiveRecipient('vendor')}
@@ -1211,7 +1320,7 @@ export default function CartDrawer({
                   </div>
 
                   {/* Message History Scroller */}
-                  <div className="h-32 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg space-y-2 text-[10px] border border-slate-150 dark:border-slate-900">
+                  <div className="h-32 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg space-y-2 text-3xs border border-slate-150 dark:border-slate-900">
                     {(activeRecipient === 'vendor' ? vendorMessages : riderMessages).map((m, idx) => (
                       <div 
                         key={idx} 
@@ -1226,7 +1335,7 @@ export default function CartDrawer({
                         >
                           <p>{m.text}</p>
                         </div>
-                        <span className="text-[7px] text-slate-400 mt-0.5 px-1">{m.timestamp}</span>
+                        <span className="text-4xs text-slate-400 mt-0.5 px-1">{m.timestamp}</span>
                       </div>
                     ))}
                   </div>
@@ -1238,11 +1347,11 @@ export default function CartDrawer({
                       value={chatText}
                       onChange={(e) => setChatText(e.target.value)}
                       placeholder={`Send text to ${activeRecipient === 'vendor' ? 'Vendor Store' : 'Delivery Rider'}...`}
-                      className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none font-bold"
+                      className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none font-bold"
                     />
                     <button
                       type="submit"
-                      className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-[9px] uppercase tracking-wider cursor-pointer"
+                      className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-3xs uppercase tracking-wider cursor-pointer"
                     >
                       Send
                     </button>
@@ -1251,12 +1360,42 @@ export default function CartDrawer({
 
                 {/* CUSTOMER TRUST BADGES AND REVIEWS FEEDBACK WIDGET */}
                 {currentOrderTrackStatus === 'delivered' && (
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-left space-y-3">
+                    <h5 className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                      <RotateCcw size={14} className="text-rose-500" /> Not happy with this order?
+                    </h5>
+                    {refundRequestSubmitted ? (
+                      <div className="py-3 text-center bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
+                        <p className="text-3xs font-black text-emerald-700 dark:text-emerald-400">✔️ Refund request sent to the vendor for review.</p>
+                      </div>
+                    ) : (
+                      <>
+                        <textarea
+                          value={refundReason}
+                          onChange={(e) => setRefundReason(e.target.value)}
+                          placeholder="Tell us what went wrong (e.g. item damaged, wrong item, not as described)..."
+                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 resize-none h-16"
+                        />
+                        <button
+                          onClick={handleRequestRefund}
+                          disabled={!refundReason.trim()}
+                          className="text-3xs font-black uppercase px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:bg-slate-300 text-white cursor-pointer disabled:cursor-not-allowed"
+                        >
+                          Request a Refund
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* CUSTOMER TRUST BADGES AND REVIEWS FEEDBACK WIDGET */}
+                {currentOrderTrackStatus === 'delivered' && (
                   <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-left space-y-4">
                     <div className="border-b border-slate-150 dark:border-slate-800 pb-2">
                       <h5 className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                         <Sparkles size={14} className="text-amber-500 animate-pulse" /> Award Customer Trust Badges
                       </h5>
-                      <p className="text-[10px] text-slate-500">
+                      <p className="text-3xs text-slate-500">
                         Praise the vendor store and delivery rider by choosing official badges and entering ratings. This updates the Admin ledger and profiles in real-time.
                       </p>
                     </div>
@@ -1264,13 +1403,13 @@ export default function CartDrawer({
                     {feedbackSubmitted ? (
                       <div className="py-4 text-center space-y-2 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
                         <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">✔️ Feedback Registered Successfully!</p>
-                        <p className="text-[10px] text-slate-500">Your badges and ratings are live in the central super admin and courier ledgers.</p>
+                        <p className="text-3xs text-slate-500">Your badges and ratings are live in the central super admin and courier ledgers.</p>
                       </div>
                     ) : (
                       <div className="space-y-4">
                         {/* 1. STORE BADGES AND REVIEW */}
                         <div className="space-y-2.5">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🏬 Rate Vendor Store</p>
+                          <p className="text-3xs font-black uppercase tracking-wider text-slate-500">🏬 Rate Vendor Store</p>
                           
                           {/* Stars Selector */}
                           <div className="flex items-center gap-1">
@@ -1284,12 +1423,12 @@ export default function CartDrawer({
                                 ★
                               </button>
                             ))}
-                            <span className="text-[10px] font-black text-slate-500 ml-1">({storeRating}/5 Stars)</span>
+                            <span className="text-3xs font-black text-slate-500 ml-1">({storeRating}/5 Stars)</span>
                           </div>
 
                           {/* Badges select */}
                           <div className="space-y-1">
-                            <p className="text-[9px] text-slate-400 font-bold">Select Trust Badges for Store:</p>
+                            <p className="text-3xs text-slate-400 font-bold">Select Trust Badges for Store:</p>
                             <div className="flex flex-wrap gap-1">
                               {['Authentic Products', 'Speedy Processing', 'Top Quality', 'Highly Recommended', 'Verified Business'].map((badge) => {
                                 const active = storeBadges.includes(badge);
@@ -1304,7 +1443,7 @@ export default function CartDrawer({
                                         setStoreBadges([...storeBadges, badge]);
                                       }
                                     }}
-                                    className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                                    className={`text-3xs font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
                                       active 
                                         ? 'bg-orange-600 text-white border-orange-600' 
                                         : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
@@ -1323,13 +1462,13 @@ export default function CartDrawer({
                             placeholder="Write store review comment..."
                             value={storeComment}
                             onChange={(e) => setStoreComment(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none"
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none"
                           />
                         </div>
 
                         {/* 2. RIDER BADGES AND REVIEW */}
                         <div className="space-y-2.5 border-t border-slate-150 dark:border-slate-800 pt-3">
-                          <p className="text-[10px] font-black uppercase tracking-wider text-slate-500">🏍️ Rate Logistics Delivery Rider</p>
+                          <p className="text-3xs font-black uppercase tracking-wider text-slate-500">🏍️ Rate Logistics Delivery Rider</p>
                           
                           {/* Stars Selector */}
                           <div className="flex items-center gap-1">
@@ -1343,12 +1482,12 @@ export default function CartDrawer({
                                 ★
                               </button>
                             ))}
-                            <span className="text-[10px] font-black text-slate-500 ml-1">({riderRating}/5 Stars)</span>
+                            <span className="text-3xs font-black text-slate-500 ml-1">({riderRating}/5 Stars)</span>
                           </div>
 
                           {/* Badges select */}
                           <div className="space-y-1">
-                            <p className="text-[9px] text-slate-400 font-bold">Select Trust Badges for Rider:</p>
+                            <p className="text-3xs text-slate-400 font-bold">Select Trust Badges for Rider:</p>
                             <div className="flex flex-wrap gap-1">
                               {['Safe Rider', 'Excellent Communication', 'Always Punctual', 'Rainproof Box', 'Polite & Friendly'].map((badge) => {
                                 const active = riderBadges.includes(badge);
@@ -1363,7 +1502,7 @@ export default function CartDrawer({
                                         setRiderBadges([...riderBadges, badge]);
                                       }
                                     }}
-                                    className={`text-[9px] font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
+                                    className={`text-3xs font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
                                       active 
                                         ? 'bg-indigo-600 text-white border-indigo-600' 
                                         : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
@@ -1382,7 +1521,7 @@ export default function CartDrawer({
                             placeholder="Write rider review comment..."
                             value={riderComment}
                             onChange={(e) => setRiderComment(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none"
+                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none"
                           />
                         </div>
 
@@ -1390,7 +1529,7 @@ export default function CartDrawer({
                         <button
                           type="button"
                           onClick={handleSubmitFeedback}
-                          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-wider py-2.5 rounded-xl cursor-pointer"
+                          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-3xs uppercase tracking-wider py-2.5 rounded-xl cursor-pointer"
                         >
                           Submit Trust Badges & Ratings
                         </button>
@@ -1428,7 +1567,7 @@ export default function CartDrawer({
                 </div>
               </div>
 
-              <div className="text-[10px] text-slate-400 font-medium leading-relaxed px-4">
+              <div className="text-3xs text-slate-400 font-medium leading-relaxed px-4">
                 ℹ️ A confirmation receipt SMS has been dispatched. Our local courier rider will phone you once they reach your landmark inside <strong>{selectedLocation}</strong>.
               </div>
 
@@ -1469,21 +1608,28 @@ export default function CartDrawer({
                   <span className="flex items-center gap-1">
                     🚚 Auto Courier Fee:
                     {deliveryInfo.hasBulkyItem && (
-                      <span className="bg-red-100 text-red-800 text-[8px] font-black px-1.5 rounded uppercase">Bulky Cargo</span>
+                      <span className="bg-red-100 text-red-800 text-4xs font-black px-1.5 rounded uppercase">Bulky Cargo</span>
                     )}
                   </span>
                   <span className="text-slate-900 font-black">
                     Shs {(deliveryFee ?? 0).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between text-[9px] text-slate-500">
+                <div className="flex justify-between text-3xs text-slate-500">
                   <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
                   <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
                 </div>
-                <div className="text-[9px] text-slate-400 font-medium">
+                <div className="text-3xs text-slate-400 font-medium">
                   Rate applied: {deliveryInfo.explanation}
                 </div>
               </div>
+
+              {couponDiscount > 0 && (
+                <div className="flex justify-between font-semibold text-emerald-600">
+                  <span>Coupon ({appliedCoupon?.code}):</span>
+                  <span className="font-bold">-Shs {couponDiscount.toLocaleString()}</span>
+                </div>
+              )}
 
               <div className="border-t border-slate-200 my-2" />
               <div className="flex justify-between items-baseline">
@@ -1503,7 +1649,7 @@ export default function CartDrawer({
                 <ArrowRight size={14} />
               </button>
               
-              <div className="flex justify-center items-center gap-1.5 text-[9px] text-slate-400 font-semibold">
+              <div className="flex justify-center items-center gap-1.5 text-3xs text-slate-400 font-semibold">
                 <ShieldCheck size={12} className="text-emerald-600" />
                 <span>Olimart Safe Checkout &bull; PayPal, Card, MoMo, Bank, COD</span>
               </div>

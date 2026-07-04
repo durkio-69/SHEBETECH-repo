@@ -86,7 +86,7 @@ export function addDokanNotification(notif: Omit<DokanNotification, 'id' | 'time
 
 // Emits beautiful event-driven alerts simultaneously across multiple channels (SMS, Email, WhatsApp)
 export function emitEventDrivenNotifications(
-  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'refund_requested' | 'refund_vendor_decision' | 'refund_admin_decision',
+  eventType: 'order_placed' | 'order_delivered' | 'withdrawal_request' | 'customer_comment' | 'rider_registration' | 'vendor_registration' | 'vendor_approved' | 'vendor_rejected' | 'rider_assigned' | 'rider_accepted' | 'rider_rejected' | 'rider_payout_submitted' | 'refund_requested' | 'refund_vendor_decision' | 'refund_admin_decision',
   data: any
 ) {
   if (eventType === 'order_placed') {

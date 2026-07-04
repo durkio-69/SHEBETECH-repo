@@ -56,11 +56,11 @@ export default function CategoryGrid({
       <div className="flex items-end justify-between mb-6">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="bg-[#f68b1e]/10 text-[#f68b1e] dark:bg-orange-950/40 dark:text-orange-400 font-extrabold text-[9px] uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
+            <span className="bg-[#f68b1e]/10 text-[#f68b1e] dark:bg-orange-950/40 dark:text-orange-400 font-extrabold text-3xs uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center gap-1">
               <Flame size={10} className="fill-orange-500 animate-pulse text-orange-600" />
               <span> Kampala Hot Trend</span>
             </span>
-            <span className="text-[10px] text-slate-400 font-bold uppercase">• Best Sellers</span>
+            <span className="text-3xs text-slate-400 font-bold uppercase">• Best Sellers</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 tracking-tight flex items-center gap-2">
             Trending Products in Uganda
@@ -105,12 +105,12 @@ export default function CategoryGrid({
               {/* Image & Floating Buttons */}
               <div className="relative mb-3 bg-slate-50 dark:bg-slate-950/40 rounded-xl p-3 flex items-center justify-center overflow-hidden aspect-square">
                 {/* Floating "Trending" Badge */}
-                <span className="absolute top-2 left-2 bg-gradient-to-r from-[#f68b1e] to-red-600 text-white font-black text-[9px] uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-xs z-10 flex items-center gap-0.5">
+                <span className="absolute top-2 left-2 bg-gradient-to-r from-[#f68b1e] to-red-600 text-white font-black text-3xs uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-xs z-10 flex items-center gap-0.5">
                   <TrendingUp size={8} /> Trending
                 </span>
 
                 {p.discountBadge && (
-                  <span className="absolute top-2 right-2 bg-red-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md z-10">
+                  <span className="absolute top-2 right-2 bg-red-600 text-white font-black text-3xs px-1.5 py-0.5 rounded-md z-10">
                     {p.discountBadge}
                   </span>
                 )}
@@ -156,9 +156,9 @@ export default function CategoryGrid({
               {/* Text Info */}
               <div className="space-y-1 text-left flex-1">
                 <div className="flex items-center justify-between">
-                  <span className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{p.brand}</span>
+                  <span className="text-3xs font-bold text-slate-400 uppercase tracking-wider">{p.brand}</span>
                   {p.isOfficial && (
-                    <span className="text-[7px] font-black text-blue-600 bg-blue-50 px-1 py-0.2 rounded-md flex items-center gap-0.5 uppercase tracking-wider">
+                    <span className="text-4xs font-black text-blue-600 bg-blue-50 px-1 py-0.2 rounded-md flex items-center gap-0.5 uppercase tracking-wider">
                       <CheckCircle2 size={6} fill="currentColor" className="text-white" /> Official
                     </span>
                   )}
@@ -166,7 +166,7 @@ export default function CategoryGrid({
 
                 <h3 
                   onClick={() => onProductClick(p)}
-                  className="font-bold text-[11px] sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 h-8 hover:text-[#f68b1e] transition-colors cursor-pointer leading-tight"
+                  className="font-bold text-xs sm:text-xs text-slate-800 dark:text-slate-100 line-clamp-2 h-8 hover:text-[#f68b1e] transition-colors cursor-pointer leading-tight"
                 >
                   {p.title}
                 </h3>
@@ -182,7 +182,7 @@ export default function CategoryGrid({
                       />
                     ))}
                   </div>
-                  <span className="text-[9px] font-black text-slate-600 dark:text-slate-400">{p.rating}</span>
+                  <span className="text-3xs font-black text-slate-600 dark:text-slate-400">{p.rating}</span>
                 </div>
 
                 {/* Price tag */}
@@ -192,7 +192,7 @@ export default function CategoryGrid({
                       {formatPrice(p.price)}
                     </span>
                     {p.originalPrice && (
-                      <span className="text-[9px] line-through text-slate-400 font-medium block leading-none">
+                      <span className="text-3xs line-through text-slate-400 font-medium block leading-none">
                         {formatPrice(p.originalPrice)}
                       </span>
                     )}

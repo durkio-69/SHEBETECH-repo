@@ -115,7 +115,7 @@ export default function AmazonCategoryHub({
                   )}
                   
                   {/* Floating count tag */}
-                  <span className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-[10px] font-black px-3 py-1 rounded-full border border-white/10">
+                  <span className="absolute top-3 right-3 bg-slate-900/80 backdrop-blur-md text-white text-3xs font-black px-3 py-1 rounded-full border border-white/10">
                     {count} {count === 1 ? 'Product' : 'Products'} Listed
                   </span>
                 </div>
@@ -138,7 +138,7 @@ export default function AmazonCategoryHub({
 
               {/* Bottom Action Section */}
               <div className="mt-6 pt-3.5 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between">
-                <span className="text-[10px] font-black uppercase text-slate-400 group-hover:text-orange-600 transition-colors">
+                <span className="text-3xs font-black uppercase text-slate-400 group-hover:text-orange-600 transition-colors">
                   Explore Department
                 </span>
                 <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-950 border border-slate-100 dark:border-slate-800/80 group-hover:bg-[#f68b1e] group-hover:border-[#f68b1e] group-hover:text-white flex items-center justify-center transition-all">

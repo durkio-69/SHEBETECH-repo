@@ -133,11 +133,11 @@ export default function JumiaCirclesBanner({
               <span className="w-2.5 h-4 bg-[#f68b1e] rounded-xs" />
               <span>Explore Olimart Uganda Departments</span>
             </h2>
-            <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+            <p className="text-3xs text-slate-400 font-bold mt-0.5">
               Select any circle department to view related products horizontally below
             </p>
           </div>
-          <div className="flex items-center gap-1 bg-[#f68b1e]/10 text-[#f68b1e] text-[9px] font-black uppercase px-2.5 py-1 rounded-full">
+          <div className="flex items-center gap-1 bg-[#f68b1e]/10 text-[#f68b1e] text-3xs font-black uppercase px-2.5 py-1 rounded-full">
             <span>Official Mall Stores</span>
           </div>
         </div>
@@ -168,12 +168,12 @@ export default function JumiaCirclesBanner({
                 >
                   {circle.icon}
                   {isFilterActive && (
-                    <span className="absolute -top-1 -right-1 bg-[#f68b1e] text-white text-[7px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide border border-white dark:border-slate-950">
+                    <span className="absolute -top-1 -right-1 bg-[#f68b1e] text-white text-4xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide border border-white dark:border-slate-950">
                       On
                     </span>
                   )}
                 </div>
-                <span className={`text-[10px] font-black mt-2.5 text-center leading-tight transition-colors line-clamp-2 max-w-[85px] ${
+                <span className={`text-3xs font-black mt-2.5 text-center leading-tight transition-colors line-clamp-2 max-w-[85px] ${
                   isFilterActive ? 'text-[#f68b1e]' : 'text-slate-600 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white'
                 }`}>
                   {circle.label}

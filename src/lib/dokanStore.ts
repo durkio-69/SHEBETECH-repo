@@ -115,6 +115,8 @@ export interface DokanOrder {
   assignedRiderMeans?: string;
   riderAcceptedAt?: string;
   riderTransactionRef?: string;
+  couponCode?: string; // Dokan Pro coupon redeemed at checkout, if any
+  couponDiscount?: number; // amount deducted from subtotal by the coupon
 }
 
 export interface CustomerComment {

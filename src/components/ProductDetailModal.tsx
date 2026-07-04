@@ -155,11 +155,11 @@ export default function ProductDetailModal({
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50">
             <div className="flex items-center gap-2">
-              <span className="bg-orange-500 text-white font-black text-[10px] uppercase px-2.5 py-0.5 rounded-lg tracking-wider">
+              <span className="bg-orange-500 text-white font-black text-3xs uppercase px-2.5 py-0.5 rounded-lg tracking-wider">
                 Product Details
               </span>
               {product.isOfficial && (
-                <span className="bg-blue-50 text-blue-600 font-bold text-[10px] px-2 py-0.5 rounded-md flex items-center gap-1">
+                <span className="bg-blue-50 text-blue-600 font-bold text-3xs px-2 py-0.5 rounded-md flex items-center gap-1">
                   <CheckCircle size={10} fill="currentColor" className="text-blue-600" />
                   Official Store
                 </span>
@@ -208,18 +208,18 @@ export default function ProductDetailModal({
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="bg-emerald-50/50 border border-emerald-100 p-2.5 rounded-2xl flex flex-col items-center justify-center">
                   <Truck size={16} className="text-emerald-600 mb-1" />
-                  <span className="text-[10px] font-black text-emerald-800 leading-tight">Free Delivery</span>
-                  <span className="text-[8px] text-slate-400">Uganda-wide</span>
+                  <span className="text-3xs font-black text-emerald-800 leading-tight">Free Delivery</span>
+                  <span className="text-4xs text-slate-400">Uganda-wide</span>
                 </div>
                 <div className="bg-orange-50/50 border border-orange-100 p-2.5 rounded-2xl flex flex-col items-center justify-center">
                   <Coins size={16} className="text-orange-500 mb-1" />
-                  <span className="text-[10px] font-black text-orange-800 leading-tight">Pay On Delivery</span>
-                  <span className="text-[8px] text-slate-400">Momo / Cash</span>
+                  <span className="text-3xs font-black text-orange-800 leading-tight">Pay On Delivery</span>
+                  <span className="text-4xs text-slate-400">Momo / Cash</span>
                 </div>
                 <div className="bg-blue-50/50 border border-blue-100 p-2.5 rounded-2xl flex flex-col items-center justify-center">
                   <ShieldCheck size={16} className="text-blue-600 mb-1" />
-                  <span className="text-[10px] font-black text-blue-800 leading-tight">100% Genuine</span>
-                  <span className="text-[8px] text-slate-400">Quality Assured</span>
+                  <span className="text-3xs font-black text-blue-800 leading-tight">100% Genuine</span>
+                  <span className="text-4xs text-slate-400">Quality Assured</span>
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function ProductDetailModal({
             {/* Right side: Product purchasing logic & Tabs info */}
             <div className="flex flex-col justify-between space-y-6">
               <div className="space-y-3">
-                <div className="text-slate-400 font-extrabold text-[10px] uppercase tracking-wider flex items-center gap-1.5">
+                <div className="text-slate-400 font-extrabold text-3xs uppercase tracking-wider flex items-center gap-1.5">
                   <span>{product.brand}</span>
                   <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
                   <span className="text-orange-600">{product.category.toUpperCase()}</span>
@@ -263,7 +263,7 @@ export default function ProductDetailModal({
                       <span className="text-xs md:text-sm line-through text-slate-400 font-bold">
                         {formatPrice(product.originalPrice)}
                       </span>
-                      <span className="bg-red-100 text-red-600 text-[10px] font-extrabold px-1.5 py-0.5 rounded-lg">
+                      <span className="bg-red-100 text-red-600 text-3xs font-extrabold px-1.5 py-0.5 rounded-lg">
                         SAVE {formatPrice(product.originalPrice - product.price)}
                       </span>
                     </>
@@ -300,7 +300,7 @@ export default function ProductDetailModal({
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
                       {specs.map((spec, idx) => (
                         <div key={idx} className="flex flex-col p-2 bg-slate-50 rounded-xl border border-slate-100/50">
-                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">{spec.label}</span>
+                          <span className="text-3xs font-bold text-slate-400 uppercase tracking-wide">{spec.label}</span>
                           <span className="text-xs font-semibold text-slate-800 mt-0.5">{spec.value}</span>
                         </div>
                       ))}
@@ -310,7 +310,7 @@ export default function ProductDetailModal({
                   {activeTab === 'delivery' && (
                     <div className="space-y-3 text-slate-600 font-medium">
                       <div className="p-3 bg-blue-50/50 border border-blue-100 rounded-2xl space-y-1">
-                        <h4 className="font-extrabold text-blue-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                        <h4 className="font-extrabold text-blue-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
                           <Truck size={12} /> Fast Shipping Timeline
                         </h4>
                         <p className="text-xs text-blue-800">
@@ -322,7 +322,7 @@ export default function ProductDetailModal({
                       </div>
 
                       <div className="p-3 bg-amber-50/50 border border-amber-100 rounded-2xl space-y-1">
-                        <h4 className="font-extrabold text-amber-900 text-[11px] uppercase tracking-wider flex items-center gap-1.5">
+                        <h4 className="font-extrabold text-amber-900 text-xs uppercase tracking-wider flex items-center gap-1.5">
                           <Coins size={12} /> Mobile Money Cashless Payment
                         </h4>
                         <p className="text-xs text-amber-800">
@@ -337,7 +337,7 @@ export default function ProductDetailModal({
                       {/* Write a review form */}
                       <form onSubmit={handleAddReview} className="p-3 bg-slate-50 border border-slate-100 rounded-2xl space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-[10px] text-slate-500 uppercase">Share your experience</span>
+                          <span className="font-bold text-3xs text-slate-500 uppercase">Share your experience</span>
                           <div className="flex items-center gap-1">
                             {Array.from({ length: 5 }).map((_, i) => (
                               <button
@@ -361,7 +361,7 @@ export default function ProductDetailModal({
                           />
                           <button
                             type="submit"
-                            className="bg-orange-600 text-white font-bold px-3 py-1.5 rounded-xl hover:bg-orange-500 transition-colors cursor-pointer text-[10px] uppercase"
+                            className="bg-orange-600 text-white font-bold px-3 py-1.5 rounded-xl hover:bg-orange-500 transition-colors cursor-pointer text-3xs uppercase"
                           >
                             Submit
                           </button>
@@ -372,7 +372,7 @@ export default function ProductDetailModal({
                       <div className="space-y-2">
                         {reviewsList.map((rev, idx) => (
                           <div key={idx} className="p-3 border border-slate-100 rounded-2xl space-y-1 bg-white">
-                            <div className="flex justify-between items-center text-[10px] text-slate-400">
+                            <div className="flex justify-between items-center text-3xs text-slate-400">
                               <span className="font-black text-slate-700">{rev.name} <span className="font-medium text-slate-400">({rev.location})</span></span>
                               <span>{rev.date}</span>
                             </div>

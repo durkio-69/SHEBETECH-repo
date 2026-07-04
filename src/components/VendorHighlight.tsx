@@ -29,7 +29,7 @@ export default function VendorHighlight() {
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
           {/* Text Content */}
           <div className="max-w-2xl space-y-4">
-            <span className="bg-yellow-400 text-slate-900 font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
+            <span className="bg-yellow-400 text-slate-900 font-black text-3xs uppercase tracking-widest px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
               <Store size={10} /> Partner with us
             </span>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white">
@@ -149,7 +149,7 @@ export default function VendorHighlight() {
                   </button>
                 </div>
 
-                <p className="text-[10px] text-center text-slate-400 leading-normal font-medium">
+                <p className="text-3xs text-center text-slate-400 leading-normal font-medium">
                   By registering, you agree to our Vendor Terms & Conditions. Our vendor team will call your number within 24 hours.
                 </p>
               </form>

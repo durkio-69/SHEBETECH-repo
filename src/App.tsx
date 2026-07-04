@@ -455,7 +455,7 @@ export default function App() {
                           <span className="w-2.5 h-4 bg-[#f68b1e] rounded-xs animate-pulse" />
                           <span>Featured {CATEGORIES.find(c => c.id === selectedCategory)?.name || 'Products'} Deals</span>
                         </h2>
-                        <p className="text-[10px] text-slate-400 font-bold mt-0.5">
+                        <p className="text-3xs text-slate-400 font-bold mt-0.5">
                           Swipe horizontally to discover handpicked listings with instant Express Boda Boda dispatch
                         </p>
                       </div>
@@ -486,13 +486,13 @@ export default function App() {
                                   referrerPolicy="no-referrer"
                                 />
                                 {hasDiscount && (
-                                  <span className="absolute top-1.5 left-1.5 bg-red-600 text-white text-[8px] font-extrabold px-1.5 py-0.5 rounded">
+                                  <span className="absolute top-1.5 left-1.5 bg-red-600 text-white text-4xs font-extrabold px-1.5 py-0.5 rounded">
                                     {p.discountBadge || 'SAVE'}
                                   </span>
                                 )}
                               </div>
                               <div className="mt-3.5 space-y-1">
-                                <span className="text-[9px] text-[#f68b1e] font-extrabold uppercase">{p.brand}</span>
+                                <span className="text-3xs text-[#f68b1e] font-extrabold uppercase">{p.brand}</span>
                                 <h3 
                                   onClick={() => handleProductClick(p)}
                                   className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#f68b1e] cursor-pointer min-h-[32px] leading-tight"
@@ -508,7 +508,7 @@ export default function App() {
                                   {formatPrice(p.price)}
                                 </span>
                                 {hasDiscount && (
-                                  <span className="text-[9px] text-slate-400 line-through">
+                                  <span className="text-3xs text-slate-400 line-through">
                                     {formatPrice(p.originalPrice!)}
                                   </span>
                                 )}
@@ -690,7 +690,7 @@ export default function App() {
           className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors cursor-pointer"
         >
           <Home size={18} className={selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Home</span>
+          <span className={`text-3xs font-bold mt-0.5 ${selectedCategory === 'all' && !activeProductPage && selectedSpecialTab === 'all' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Home</span>
         </button>
         
         <button 
@@ -706,9 +706,9 @@ export default function App() {
         >
           <span className="relative">
             <CheckCircle2 size={18} className={selectedSpecialTab === 'flash-sales' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
-            <span className="absolute -top-1 -right-1.5 bg-red-600 text-white text-[7px] font-black px-1 rounded-full uppercase scale-75 animate-pulse">Hot</span>
+            <span className="absolute -top-1 -right-1.5 bg-red-600 text-white text-4xs font-black px-1 rounded-full uppercase scale-75 animate-pulse">Hot</span>
           </span>
-          <span className={`text-[9px] font-bold mt-0.5 ${selectedSpecialTab === 'flash-sales' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Flash Deals</span>
+          <span className={`text-3xs font-bold mt-0.5 ${selectedSpecialTab === 'flash-sales' ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Flash Deals</span>
         </button>
 
         <button 
@@ -716,7 +716,7 @@ export default function App() {
           className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors cursor-pointer"
         >
           <User size={18} className={isAccountOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${isAccountOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Account</span>
+          <span className={`text-3xs font-bold mt-0.5 ${isAccountOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Account</span>
         </button>
 
         <button 
@@ -724,12 +724,12 @@ export default function App() {
           className="flex flex-col items-center text-slate-500 hover:text-[#f68b1e] transition-colors relative cursor-pointer"
         >
           {totalCartCount > 0 && (
-            <span className="absolute -top-1.5 -right-2 bg-red-600 text-white font-black text-[8px] w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md animate-pulse">
+            <span className="absolute -top-1.5 -right-2 bg-red-600 text-white font-black text-4xs w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-md animate-pulse">
               {totalCartCount}
             </span>
           )}
           <ShoppingCart size={18} className={isCartOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'} />
-          <span className={`text-[9px] font-bold mt-0.5 ${isCartOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Cart</span>
+          <span className={`text-3xs font-bold mt-0.5 ${isCartOpen ? 'text-[#f68b1e]' : 'text-slate-500 dark:text-slate-400'}`}>Cart</span>
         </button>
       </div>
 

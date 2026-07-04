@@ -35,7 +35,13 @@ import {
   saveDokanBrands,
   getDokanTags,
   saveDokanTags,
-  deleteDokanProduct
+  deleteDokanProduct,
+  getDokanCoupons,
+  saveDokanCoupons,
+  DokanCoupon,
+  getDokanRefunds,
+  saveDokanRefunds,
+  DokanRefundRequest
 } from '../lib/dokanStore';
 import { 
   ShieldAlert, 
@@ -228,51 +234,51 @@ const VendorExpandedDetail: React.FC<{
 
         <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800/60 rounded-2xl p-4 space-y-3.5 text-xs">
           <div>
-            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Store Classification</p>
+            <p className="text-3xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Store Classification</p>
             <div className="flex items-center gap-2 mt-1">
-              <span className="bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold px-2.5 py-0.5 rounded text-[10px] uppercase">
+              <span className="bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold px-2.5 py-0.5 rounded text-3xs uppercase">
                 🏷️ {vendor.category || 'general'}
               </span>
-              <span className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+              <span className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 px-2 py-0.5 rounded text-3xs font-black uppercase tracking-wider">
                 ID: {vendor.id}
               </span>
             </div>
           </div>
 
           <div>
-            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Business Description</p>
+            <p className="text-3xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Business Description</p>
             <p className="text-slate-600 dark:text-slate-300 font-semibold mt-1 italic">
               "{vendor.businessSpecifications || 'No specialized corporate specifications registered. Operates as an authorized neighborhood partner store.'}"
             </p>
           </div>
 
           <div className="border-t border-slate-200/50 dark:border-slate-800/50 pt-3 space-y-2">
-            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Payout Ledger Details</p>
-            <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+            <p className="text-3xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Payout Ledger Details</p>
+            <div className="grid grid-cols-2 gap-2 text-xs font-bold">
               <div className="bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50">
-                <span className="text-slate-400 block text-[9px] uppercase">Preferred Route</span>
+                <span className="text-slate-400 block text-3xs uppercase">Preferred Route</span>
                 <span className="text-slate-800 dark:text-slate-200 font-mono font-black truncate">{vendor.paymentDetails || 'Not set'}</span>
               </div>
               <div className="bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50">
-                <span className="text-slate-400 block text-[9px] uppercase">A/C Number</span>
+                <span className="text-slate-400 block text-3xs uppercase">A/C Number</span>
                 <span className="text-slate-800 dark:text-slate-200 font-mono truncate">{vendor.bankAccountNumber || vendor.momoNumber || vendor.paypalAccount || 'N/A'}</span>
               </div>
             </div>
           </div>
 
           <div className="border-t border-slate-200/50 dark:border-slate-800/50 pt-3 space-y-2">
-            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Financial Performance</p>
-            <div className="grid grid-cols-3 gap-1.5 text-[10px] font-black">
+            <p className="text-3xs font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Financial Performance</p>
+            <div className="grid grid-cols-3 gap-1.5 text-3xs font-black">
               <div className="bg-emerald-50/55 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/40 p-2 rounded-xl text-center">
-                <span className="text-emerald-600 dark:text-emerald-400 block text-[8px] uppercase">Net Wallet (85%)</span>
+                <span className="text-emerald-600 dark:text-emerald-400 block text-4xs uppercase">Net Wallet (85%)</span>
                 <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(vendor.balance)}</span>
               </div>
               <div className="bg-amber-50/55 dark:bg-amber-950/25 border border-amber-100 dark:border-amber-900/40 p-2 rounded-xl text-center">
-                <span className="text-amber-600 dark:text-amber-400 block text-[8px] uppercase">Sales Gross</span>
+                <span className="text-amber-600 dark:text-amber-400 block text-4xs uppercase">Sales Gross</span>
                 <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(vendor.totalSales)}</span>
               </div>
               <div className="bg-blue-50/55 dark:bg-blue-950/25 border border-blue-100 dark:border-blue-900/40 p-2 rounded-xl text-center">
-                <span className="text-blue-600 dark:text-blue-400 block text-[8px] uppercase">15% Comm. Paid</span>
+                <span className="text-blue-600 dark:text-blue-400 block text-4xs uppercase">15% Comm. Paid</span>
                 <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(Math.round(vendor.totalSales * 0.15))}</span>
               </div>
             </div>
@@ -309,17 +315,17 @@ const VendorExpandedDetail: React.FC<{
                 return (
                   <div key={log.id} className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 p-2.5 rounded-xl space-y-1 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                      <span className={`text-4xs font-black uppercase px-1.5 py-0.5 rounded border ${badgeColor}`}>
                         {typeLabel}
                       </span>
-                      <span className="text-[9px] font-mono text-slate-400">
+                      <span className="text-3xs font-mono text-slate-400">
                         {new Date(log.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px]">{log.subject}</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-[10.5px] leading-relaxed font-medium">{log.message}</p>
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs">{log.subject}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-3xs leading-relaxed font-medium">{log.message}</p>
                     <div className="flex items-center gap-1 pt-0.5 justify-end">
-                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                      <span className="text-4xs font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                         ✓ {log.status}
                       </span>
                     </div>
@@ -331,7 +337,7 @@ const VendorExpandedDetail: React.FC<{
 
           {/* New Log form */}
           <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800/60 p-3 rounded-2xl space-y-2 text-xs">
-            <p className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-350 tracking-wider">Log New Interaction</p>
+            <p className="text-3xs font-black uppercase text-slate-600 dark:text-slate-350 tracking-wider">Log New Interaction</p>
             
             <div className="grid grid-cols-4 gap-1">
               {(['email', 'sms', 'call', 'system'] as const).map((t) => (
@@ -339,7 +345,7 @@ const VendorExpandedDetail: React.FC<{
                   key={t}
                   type="button"
                   onClick={() => setLogType(t)}
-                  className={`py-1 rounded text-[9px] font-black uppercase tracking-wider cursor-pointer border ${
+                  className={`py-1 rounded text-3xs font-black uppercase tracking-wider cursor-pointer border ${
                     logType === t 
                       ? 'bg-orange-600 text-white border-orange-600 shadow-2xs' 
                       : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
@@ -356,7 +362,7 @@ const VendorExpandedDetail: React.FC<{
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 placeholder="Subject (e.g. Call about stock clearance)"
-                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-[11px] font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
                 required
               />
               <textarea
@@ -364,7 +370,7 @@ const VendorExpandedDetail: React.FC<{
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder="Log notes / message text sent..."
                 rows={2}
-                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-[11px] font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-xs font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
                 required
               />
             </div>
@@ -372,7 +378,7 @@ const VendorExpandedDetail: React.FC<{
             <button
               type="submit"
               disabled={isSimulating || !subject.trim() || !message.trim()}
-              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider py-1.5 rounded-xl cursor-pointer disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black text-3xs uppercase tracking-wider py-1.5 rounded-xl cursor-pointer disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
             >
               {isSimulating ? (
                 <>
@@ -398,7 +404,7 @@ const VendorExpandedDetail: React.FC<{
           {myProducts.length === 0 ? (
             <div className="py-12 text-center text-slate-400 dark:text-slate-500 font-bold">
               <p>No verified products listed in the catalog.</p>
-              <p className="text-[10px] font-normal mt-1">Products can be uploaded from the Vendor App or mapped by merchant ID.</p>
+              <p className="text-3xs font-normal mt-1">Products can be uploaded from the Vendor App or mapped by merchant ID.</p>
             </div>
           ) : (
             myProducts.map((p) => {
@@ -408,10 +414,10 @@ const VendorExpandedDetail: React.FC<{
                 <div key={p.id} className="flex gap-2.5 bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50 hover:border-orange-500/30 transition-colors">
                   <img src={p.image} alt={p.title} className="w-10 h-10 object-cover rounded-lg border border-slate-150 bg-slate-50 shrink-0" />
                   <div className="min-w-0 flex-1 space-y-0.5">
-                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] truncate">{p.title}</p>
-                    <div className="flex items-center justify-between gap-1 text-[10px]">
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate">{p.title}</p>
+                    <div className="flex items-center justify-between gap-1 text-3xs">
                       <span className="font-mono text-orange-600 dark:text-orange-400 font-black">{formatPrice(p.price)}</span>
-                      <span className={`font-bold uppercase text-[9px] px-1.5 py-0.5 rounded ${
+                      <span className={`font-bold uppercase text-3xs px-1.5 py-0.5 rounded ${
                         isLowStock 
                           ? 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 animate-pulse' 
                           : 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400'
@@ -419,9 +425,9 @@ const VendorExpandedDetail: React.FC<{
                         {stockCount} Left
                       </span>
                     </div>
-                    <div className="flex items-center justify-between text-[8px] text-slate-400 font-bold pt-0.5">
+                    <div className="flex items-center justify-between text-4xs text-slate-400 font-bold pt-0.5">
                       <span>★ {p.rating} ({p.reviewsCount} reviews)</span>
-                      <span className="uppercase text-[7.5px] bg-slate-100 dark:bg-slate-800 px-1 rounded">{p.category}</span>
+                      <span className="uppercase text-4xs bg-slate-100 dark:bg-slate-800 px-1 rounded">{p.category}</span>
                     </div>
                   </div>
                 </div>
@@ -476,11 +482,11 @@ const VendorSparkline: React.FC<{ vendor: DokanVendor }> = ({ vendor }) => {
   return (
     <div className="flex items-center gap-3 bg-slate-50 dark:bg-slate-900/40 p-2 rounded-xl border border-slate-150 dark:border-slate-800/60 max-w-sm w-full sm:w-60 shrink-0">
       <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Velocity (30d)</p>
-        <p className="text-[11px] font-black text-slate-800 dark:text-slate-200 mt-0.5 truncate">
+        <p className="text-3xs font-black uppercase tracking-wider text-slate-400 dark:text-slate-500">Velocity (30d)</p>
+        <p className="text-xs font-black text-slate-800 dark:text-slate-200 mt-0.5 truncate">
           Shs {(avg30d !== undefined && avg30d !== null && !isNaN(avg30d)) ? avg30d.toLocaleString() : 0}/day
         </p>
-        <span className={`text-[8.5px] font-black flex items-center gap-0.5 mt-0.5 ${
+        <span className={`text-4xs font-black flex items-center gap-0.5 mt-0.5 ${
           trendPercent >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
         }`}>
           {trendPercent >= 0 ? '📈' : '📉'} {trendPercent >= 0 ? '+' : ''}{trendPercent}%
@@ -496,7 +502,7 @@ const VendorSparkline: React.FC<{ vendor: DokanVendor }> = ({ vendor }) => {
                   const dayVal = firstPayload.payload?.day ?? '';
                   const val = firstPayload.value !== undefined && firstPayload.value !== null ? Number(firstPayload.value) : 0;
                   return (
-                    <div className="bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-1.5 py-0.5 rounded text-[8px] font-black shadow-lg border border-slate-800 dark:border-slate-200">
+                    <div className="bg-slate-950 text-white dark:bg-white dark:text-slate-950 px-1.5 py-0.5 rounded text-4xs font-black shadow-lg border border-slate-800 dark:border-slate-200">
                       <p className="font-mono">{dayVal}</p>
                       <p className="text-orange-400 dark:text-orange-600 font-extrabold">Shs {val.toLocaleString()}</p>
                     </div>
@@ -534,7 +540,9 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   const [orders, setOrders] = useState<DokanOrder[]>([]);
   const [categories, setCategories] = useState<DokanCategory[]>([]);
   const [adminLogsList, setAdminLogsList] = useState<AdminLog[]>([]);
-  const [activeTab, setActiveTab] = useState<'revenue' | 'vendors' | 'withdrawals' | 'orders' | 'catalog' | 'taxonomies' | 'reviews' | 'notifications' | 'database' | 'logs'>('revenue');
+  const [coupons, setCoupons] = useState<DokanCoupon[]>([]);
+  const [refundRequests, setRefundRequests] = useState<DokanRefundRequest[]>([]);
+  const [activeTab, setActiveTab] = useState<'revenue' | 'vendors' | 'withdrawals' | 'orders' | 'catalog' | 'taxonomies' | 'reviews' | 'notifications' | 'database' | 'logs' | 'marketing'>('revenue');
 
   // Vendor filtering and sorting states
   const [vendorStatusFilter, setVendorStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
@@ -645,6 +653,8 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     setCategories(getDokanCategories());
     setNotificationsList(getDokanNotifications());
     setAdminLogsList(getAdminLogs());
+    setCoupons(getDokanCoupons());
+    setRefundRequests(getDokanRefunds());
   }, []);
 
   // Dynamic past 7 days commission aggregates
@@ -686,6 +696,8 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
       setCategories(getDokanCategories());
       setNotificationsList(getDokanNotifications());
       setAdminLogsList(getAdminLogs());
+      setCoupons(getDokanCoupons());
+      setRefundRequests(getDokanRefunds());
     };
     window.addEventListener('storage', handleStorage);
     return () => window.removeEventListener('storage', handleStorage);
@@ -784,6 +796,52 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
     addAdminLog('WITHDRAWAL_DECLINE', `Declined payout of Shs ${(targetReq.amount ?? 0).toLocaleString()} to "${targetReq.vendorName}" (Funds reverted to balance)`, 'warning');
     window.dispatchEvent(new Event('storage'));
     alert('Withdrawal wire declined. Funds returned to vendor account ledger.');
+  };
+
+  // Dokan Pro-style marketing oversight: toggle a vendor coupon on/off platform-wide
+  const handleToggleCoupon = (couponId: string) => {
+    const list = getDokanCoupons();
+    const idx = list.findIndex(c => c.id === couponId);
+    if (idx === -1) return;
+    list[idx].status = list[idx].status === 'disabled' ? 'active' : 'disabled';
+    saveDokanCoupons(list);
+    setCoupons(list);
+    addAdminLog('COUPON_TOGGLE', `${list[idx].status === 'disabled' ? 'Disabled' : 'Re-enabled'} coupon "${list[idx].code}" from ${list[idx].vendorName}`, 'info');
+    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Admin has final say on customer refund requests that a vendor has already reviewed.
+  // Approving deducts the refunded amount from the vendor's ledger balance.
+  const handleAdminResolveRefund = (refundId: string, decision: 'admin_approved' | 'admin_rejected') => {
+    const reqs = getDokanRefunds();
+    const target = reqs.find(r => r.id === refundId);
+    if (!target) return;
+
+    target.status = decision === 'admin_approved' ? 'refunded' : 'admin_rejected';
+    target.resolvedAt = new Date().toISOString();
+    saveDokanRefunds(reqs);
+    setRefundRequests(reqs);
+
+    if (decision === 'admin_approved') {
+      const updatedVendors = vendors.map(v =>
+        v.name.toLowerCase() === target.vendorName.toLowerCase()
+          ? { ...v, balance: Math.max(0, v.balance - target.amount) }
+          : v
+      );
+      saveDokanVendors(updatedVendors);
+      setVendors(updatedVendors);
+      addAdminLog('REFUND_APPROVED', `Approved refund of Shs ${(target.amount ?? 0).toLocaleString()} to ${target.customerName} for order ${target.orderId} (deducted from ${target.vendorName})`, 'success');
+    } else {
+      addAdminLog('REFUND_REJECTED', `Rejected refund request for order ${target.orderId} from ${target.customerName}`, 'warning');
+    }
+    emitEventDrivenNotifications('refund_admin_decision', {
+      orderId: target.orderId,
+      customerName: target.customerName,
+      customerPhone: target.customerPhone,
+      amount: target.amount,
+      decision: target.status
+    });
+    window.dispatchEvent(new Event('storage'));
   };
 
   // Admin creates dynamic category
@@ -999,7 +1057,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
         <form onSubmit={handleUnlockConsole} className="space-y-4">
           <div className="space-y-1 text-left">
-            <label className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Admin Passcode Key</label>
+            <label className="block text-3xs font-bold text-slate-400 uppercase tracking-wider">Admin Passcode Key</label>
             <input
               type="password"
               required
@@ -1008,13 +1066,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               placeholder="Enter secure passcode..."
               className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3.5 py-2.5 rounded-xl text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-orange-500 focus:bg-white text-slate-800 dark:text-white"
             />
-            <p className="text-[9px] text-slate-400 mt-1 font-medium">
+            <p className="text-3xs text-slate-400 mt-1 font-medium">
               💡 Tip: Use <strong className="text-orange-600 font-bold">dokan2026</strong> or <strong className="text-orange-600 font-bold">admin123</strong> to audit and test the system.
             </p>
           </div>
 
           {securityError && (
-            <p className="text-[10px] font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 py-2 rounded-xl border border-red-100 dark:border-red-900/30">
+            <p className="text-3xs font-bold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/20 py-2 rounded-xl border border-red-100 dark:border-red-900/30">
               {securityError}
             </p>
           )}
@@ -1038,13 +1096,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
       <div className="bg-slate-900 text-white rounded-3xl p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2.5">
-            <span className="bg-orange-600 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+            <span className="bg-orange-600 text-3xs font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
               <ShieldAlert size={12} /> Super Admin Control
             </span>
             <span className="text-slate-400 text-xs font-mono">Olimart Admin Console v3.14</span>
             <button
               onClick={handleLockConsole}
-              className="text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold px-2 py-0.5 rounded border border-slate-700 uppercase flex items-center gap-1 cursor-pointer transition-colors"
+              className="text-3xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-extrabold px-2 py-0.5 rounded border border-slate-700 uppercase flex items-center gap-1 cursor-pointer transition-colors"
             >
               <Lock size={10} />
               <span>Lock Terminal</span>
@@ -1058,14 +1116,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-4 flex gap-4">
           <div className="text-left">
-            <p className="text-[10px] text-slate-400 font-bold uppercase">15% Comm. Revenue</p>
+            <p className="text-3xs text-slate-400 font-bold uppercase">15% Comm. Revenue</p>
             <p className="text-lg font-mono font-black text-emerald-400">
               {formatPrice(platformCommissionsTotal)}
             </p>
           </div>
           <div className="w-[1px] bg-slate-700" />
           <div className="text-left">
-            <p className="text-[10px] text-slate-400 font-bold uppercase">Escrow Gross Volume</p>
+            <p className="text-3xs text-slate-400 font-bold uppercase">Escrow Gross Volume</p>
             <p className="text-lg font-mono font-black text-amber-400">
               {formatPrice(totalVolumeGross)}
             </p>
@@ -1132,6 +1190,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
           Customers Reviews ({allReviews.length})
         </button>
         <button
+          onClick={() => setActiveTab('marketing')}
+          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
+            activeTab === 'marketing' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          🏷️ Coupons & Refunds
+        </button>
+        <button
           onClick={() => setActiveTab('notifications')}
           className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
             activeTab === 'notifications' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
@@ -1163,27 +1229,27 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl text-left space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Central Escrow Collection</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Central Escrow Collection</p>
               <p className="text-xl font-black text-slate-900 dark:text-slate-100">
                 {formatPrice(totalVolumeGross + orders.reduce((acc, curr) => acc + (curr.deliveryFee || 0), 0))}
               </p>
-              <p className="text-[9px] text-slate-500">Includes dynamic transport courier fees</p>
+              <p className="text-3xs text-slate-500">Includes dynamic transport courier fees</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl text-left space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">15% Net Commission Revenue</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">15% Net Commission Revenue</p>
               <p className="text-xl font-black text-emerald-600">
                 {formatPrice(platformCommissionsTotal)}
               </p>
-              <p className="text-[9px] text-slate-500">Olimart Platform collected revenue</p>
+              <p className="text-3xs text-slate-500">Olimart Platform collected revenue</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl text-left space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Vendors Net Share (85%)</p>
+              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Vendors Net Share (85%)</p>
               <p className="text-xl font-black text-amber-600">
                 {formatPrice(orders.reduce((acc, curr) => acc + (curr.vendorEarnings || 0), 0))}
               </p>
-              <p className="text-[9px] text-slate-500">Directly withdrawable by partners</p>
+              <p className="text-3xs text-slate-500">Directly withdrawable by partners</p>
             </div>
 
           </div>
@@ -1195,14 +1261,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                   <TrendingUp size={14} className="text-orange-600" /> Daily Commission Ledger Trend
                 </h3>
-                <p className="text-[10px] text-slate-400 mt-0.5">marketplace commission cut over past 7 days</p>
+                <p className="text-3xs text-slate-400 mt-0.5">marketplace commission cut over past 7 days</p>
               </div>
-              <span className="text-[9px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-black px-2 py-0.5 rounded uppercase">
+              <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-black px-2 py-0.5 rounded uppercase">
                 Audited Graph
               </span>
             </div>
             
-            <div className="h-56 w-full text-[10px]">
+            <div className="h-56 w-full text-3xs">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={getCommissionTrendData()} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
@@ -1238,7 +1304,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               </h3>
               <button
                 onClick={handleExportToCSV}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm hover:shadow transition-all cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-3xs uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 shadow-sm hover:shadow transition-all cursor-pointer"
               >
                 <Download size={13} />
                 <span>Export to CSV Report</span>
@@ -1251,7 +1317,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               <div className="overflow-x-auto">
                 <table className="w-full text-xs font-semibold text-slate-700 dark:text-slate-300">
                   <thead>
-                    <tr className="border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400 text-left">
+                    <tr className="border-b border-slate-100 dark:border-slate-800 text-3xs font-black uppercase text-slate-400 text-left">
                       <th className="pb-2">Invoice ID</th>
                       <th className="pb-2">Customer Coordinates</th>
                       <th className="pb-2">Gateway Mode</th>
@@ -1266,10 +1332,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         <td className="py-3 font-bold text-slate-900 dark:text-slate-100">{o.id}</td>
                         <td className="py-3">
                           <p className="font-sans font-black">{o.customerName}</p>
-                          <p className="text-[9px] text-slate-400">{o.customerPhone}</p>
+                          <p className="text-3xs text-slate-400">{o.customerPhone}</p>
                         </td>
                         <td className="py-3">
-                          <span className="bg-slate-100 dark:bg-slate-800 text-[9px] font-bold px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 uppercase">
+                          <span className="bg-slate-100 dark:bg-slate-800 text-3xs font-bold px-2 py-0.5 rounded text-slate-700 dark:text-slate-300 uppercase">
                             {o.paymentMethod}
                           </span>
                         </td>
@@ -1298,7 +1364,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             
             {/* Filter by status */}
             <div className="space-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Filter Status</span>
+              <span className="text-3xs font-black uppercase tracking-wider text-slate-400 block">Filter Status</span>
               <div className="flex flex-wrap gap-2">
                 <button
                   onClick={() => setVendorStatusFilter('all')}
@@ -1348,7 +1414,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
             {/* Sort by Application Date */}
             <div className="space-y-1.5 shrink-0 w-full sm:w-auto">
-              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Sort by Application Date</span>
+              <span className="text-3xs font-black uppercase tracking-wider text-slate-400 block">Sort by Application Date</span>
               <div className="relative">
                 <select
                   value={vendorSortOrder}
@@ -1400,7 +1466,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         <div className="space-y-1.5 flex-1 min-w-0 text-left">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="text-xs font-black text-slate-900 dark:text-slate-100">{v.name}</p>
-                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shrink-0 ${
+                            <span className={`text-3xs font-black uppercase px-2 py-0.5 rounded shrink-0 ${
                               v.status === 'approved' 
                                 ? 'bg-emerald-100 text-emerald-800' 
                                 : v.status === 'pending'
@@ -1410,14 +1476,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                               {v.status}
                             </span>
                             {v.suspended && (
-                              <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse shrink-0">
+                              <span className="text-3xs font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse shrink-0">
                                 ⚠️ Suspended / Inactive
                               </span>
                             )}
                             
                             <label 
                               onClick={(e) => e.stopPropagation()}
-                              className="text-[9px] bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-650 dark:text-slate-350 px-1.5 py-0.5 rounded cursor-pointer transition-colors font-bold block shrink-0"
+                              className="text-3xs bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-650 dark:text-slate-350 px-1.5 py-0.5 rounded cursor-pointer transition-colors font-bold block shrink-0"
                             >
                               Change Logo
                               <input
@@ -1446,14 +1512,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                             </label>
                           </div>
 
-                          <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
+                          <div className="text-xs font-bold text-slate-500 space-y-0.5">
                             <p>👤 Owner: <span className="text-slate-700 dark:text-slate-300">{v.ownerName}</span> &bull; ✉️ {v.email}</p>
                             <p>📞 Phone: {v.phone} &bull; 📍 Store Base: {v.location}</p>
                             <p>💳 payout Route: <span className="font-mono text-slate-800 dark:text-slate-200">{v.paymentDetails}</span></p>
                             {v.trustBadges && v.trustBadges.length > 0 && (
                               <div className="flex flex-wrap gap-1 mt-1.5 pt-1">
                                 {v.trustBadges.map(badge => (
-                                  <span key={badge} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                                  <span key={badge} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-2 py-0.5 rounded text-4xs font-black uppercase tracking-wider flex items-center gap-0.5">
                                     🏅 {badge}
                                   </span>
                                 ))}
@@ -1485,13 +1551,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                               <>
                                 <button
                                   onClick={() => handleApproveVendor(v.id)}
-                                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                                 >
                                   <Check size={12} /> Approve Store
                                 </button>
                                 <button
                                   onClick={() => handleRejectVendor(v.id)}
-                                  className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                                  className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                                 >
                                   <X size={12} /> Reject
                                 </button>
@@ -1500,14 +1566,14 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                             
                             {v.status === 'approved' && (
                               <div className="flex flex-col items-end gap-1.5">
-                                <span className={`text-[10px] font-extrabold flex items-center gap-1 ${
+                                <span className={`text-3xs font-extrabold flex items-center gap-1 ${
                                   v.suspended ? 'text-rose-650 dark:text-rose-450' : 'text-emerald-600'
                                 }`}>
                                   {v.suspended ? '⚠️ Suspended & Offline' : '✅ Partner Published Live'}
                                 </span>
                                 <button
                                   onClick={() => handleToggleSuspension(v.id)}
-                                  className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
+                                  className={`text-3xs font-black uppercase px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
                                     v.suspended 
                                       ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' 
                                       : 'bg-rose-600 hover:bg-rose-500 text-white shadow-xs'
@@ -1519,7 +1585,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                             )}
 
                             {v.status === 'rejected' && (
-                              <span className="text-[10px] text-rose-600 font-extrabold flex items-center gap-1">
+                              <span className="text-3xs text-rose-600 font-extrabold flex items-center gap-1">
                                 ❌ Onboarding Denied
                               </span>
                             )}
@@ -1577,7 +1643,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     <p className="text-sm font-black text-emerald-600 font-mono">
                       Requesting payout: {formatPrice(w.amount)}
                     </p>
-                    <div className="text-[10px] text-slate-500 font-bold space-y-0.5">
+                    <div className="text-3xs text-slate-500 font-bold space-y-0.5">
                       <p>🏦 Wire Method: <span className="uppercase text-slate-800 dark:text-slate-200">{w.method}</span></p>
                       <p>🔑 Bank/MoMo destination: <span className="font-mono text-slate-800 dark:text-slate-200">{w.details}</span></p>
                     </div>
@@ -1588,19 +1654,19 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                       <>
                         <button
                           onClick={() => handleApproveWithdrawal(w.id)}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                         >
                           <Check size={12} /> Clear payout
                         </button>
                         <button
                           onClick={() => handleDeclineWithdrawal(w.id)}
-                          className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                          className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
                         >
                           <X size={12} /> Decline
                         </button>
                       </>
                     ) : (
-                      <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${
+                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${
                         w.status === 'approved' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                       }`}>
                         Cleared payout Status: {w.status.toUpperCase()}
@@ -1627,7 +1693,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono font-black text-slate-950 dark:text-white">{o.id}</span>
-                    <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
+                    <span className={`text-3xs font-black uppercase px-2 py-0.5 rounded ${
                       o.status === 'placed' 
                         ? 'bg-blue-100 text-blue-800' 
                         : o.status === 'dispatched' 
@@ -1640,7 +1706,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     </span>
                   </div>
 
-                  <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
+                  <div className="text-xs font-bold text-slate-500 space-y-0.5">
                     <p>👤 Client: {o.customerName} ({o.customerLocation})</p>
                     <p>🛣️ Logistics routing distance: <span className="text-orange-600 font-mono font-black">{o.distanceKm} km</span></p>
                     <p>🚚 Courier fee: <span className="text-slate-800 dark:text-slate-200">{formatPrice(o.deliveryFee)}</span></p>
@@ -1648,7 +1714,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 </div>
 
                 <div className="flex flex-col items-end gap-1 font-mono text-xs">
-                  <p className="font-sans text-slate-400 text-[10px]">Total collected:</p>
+                  <p className="font-sans text-slate-400 text-3xs">Total collected:</p>
                   <p className="font-black text-slate-900 dark:text-white">{formatPrice(o.total)}</p>
                   <div className="flex gap-1.5 mt-1">
                     <button
@@ -1663,7 +1729,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         setOrders(updated);
                         window.dispatchEvent(new Event('storage'));
                       }}
-                      className="bg-purple-600 hover:bg-purple-500 text-white text-[9px] font-black uppercase px-2.5 py-1 rounded cursor-pointer"
+                      className="bg-purple-600 hover:bg-purple-500 text-white text-3xs font-black uppercase px-2.5 py-1 rounded cursor-pointer"
                     >
                       Dispatch Rider
                     </button>
@@ -1679,7 +1745,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         setOrders(updated);
                         window.dispatchEvent(new Event('storage'));
                       }}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-[9px] font-black uppercase px-2.5 py-1 rounded cursor-pointer"
+                      className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-2.5 py-1 rounded cursor-pointer"
                     >
                       Mark Drop Delivered
                     </button>
@@ -1720,7 +1786,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs font-semibold">
               {/* Commission Rates */}
               <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl">
-                <p className="font-black text-orange-600 uppercase tracking-wide text-[10px]">Commission Rates (%)</p>
+                <p className="font-black text-orange-600 uppercase tracking-wide text-3xs">Commission Rates (%)</p>
                 
                 <div className="space-y-3">
                   <div className="flex justify-between items-center">
@@ -1752,7 +1818,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
               {/* Delivery Tariffs */}
               <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-xl">
-                <p className="font-black text-orange-600 uppercase tracking-wide text-[10px]">Boda Transport & Shipping Tariffs (UGX)</p>
+                <p className="font-black text-orange-600 uppercase tracking-wide text-3xs">Boda Transport & Shipping Tariffs (UGX)</p>
                 
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
@@ -1816,7 +1882,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
           {/* Product list with Type override options */}
           <div className="space-y-3">
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">
+            <h4 className="text-3xs font-black uppercase text-slate-400 tracking-wider">
               Assigned Products List & Overrides ({products.length} products)
             </h4>
             
@@ -1833,13 +1899,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                       />
                       <div className="space-y-0.5 flex-1">
                         <p className="text-xs font-black text-slate-900 dark:text-white line-clamp-2 leading-tight">{p.title}</p>
-                        <p className="text-[10px] text-slate-400 capitalize font-semibold">Category: {p.category}</p>
-                        <p className="text-[11px] font-mono font-black text-orange-600 dark:text-orange-500">{formatPrice(p.price)}</p>
+                        <p className="text-3xs text-slate-400 capitalize font-semibold">Category: {p.category}</p>
+                        <p className="text-xs font-mono font-black text-orange-600 dark:text-orange-500">{formatPrice(p.price)}</p>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-1.5 pt-1">
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border ${
+                      <span className={`text-3xs font-black uppercase px-2 py-0.5 rounded border ${
                         isItemBulky(p) 
                           ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/20 dark:text-amber-300 dark:border-amber-900/30' 
                           : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/20 dark:text-indigo-300 dark:border-indigo-900/30'
@@ -1850,7 +1916,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   </div>
 
                   <div className="border-t border-slate-100 dark:border-slate-800 pt-3 space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-extrabold text-slate-500">
+                    <div className="flex items-center justify-between text-3xs font-extrabold text-slate-500">
                       <span>Brand: {p.brand}</span>
                       <button
                         onClick={() => handleDeleteProduct(p.id)}
@@ -1861,7 +1927,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     </div>
 
                     {/* Quick switch override */}
-                    <div className="flex items-center justify-between pt-1 border-t border-dashed border-slate-100 dark:border-slate-800 text-[10px] font-bold">
+                    <div className="flex items-center justify-between pt-1 border-t border-dashed border-slate-100 dark:border-slate-800 text-3xs font-bold">
                       <span className="text-slate-400">Class Override:</span>
                       <button
                         onClick={() => {
@@ -1878,7 +1944,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                           addAdminLog('PRODUCT_TYPE_TOGGLE', `Toggled product "${p.title.split(' - ')[0]}" type state to "${targetType.toUpperCase()}" override`, 'info');
                           window.dispatchEvent(new Event('storage'));
                         }}
-                        className="text-[10px] font-black px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700 uppercase tracking-wider transition-colors cursor-pointer"
+                        className="text-3xs font-black px-2 py-1 rounded bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 border border-slate-200/50 dark:border-slate-700 uppercase tracking-wider transition-colors cursor-pointer"
                       >
                         Set {isItemBulky(p) ? '🪶 Light' : '📦 Bulky'}
                       </button>
@@ -1900,7 +1966,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
               <FolderPlus size={16} className="text-orange-600" /> Create Category
             </h3>
-            <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
+            <p className="text-xs text-slate-500 font-semibold leading-relaxed">
               Every category created goes directly to the Vendors dashboard as categories available!
             </p>
 
@@ -1922,10 +1988,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             </form>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Currently available categories:</p>
+              <p className="text-3xs font-black uppercase text-slate-400 mb-2">Currently available categories:</p>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map(c => (
-                  <span key={c.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-[10px] font-black px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 capitalize">
+                  <span key={c.id} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-3xs font-black px-2 py-1 rounded-md text-slate-700 dark:text-slate-300 capitalize">
                     📁 {c.name}
                   </span>
                 ))}
@@ -1957,10 +2023,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             </form>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Registered Brand Taxonomies:</p>
+              <p className="text-3xs font-black uppercase text-slate-400 mb-2">Registered Brand Taxonomies:</p>
               <div className="flex flex-wrap gap-1.5">
                 {brandsList.map((b, i) => (
-                  <span key={i} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-[10px] font-black px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
+                  <span key={i} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-3xs font-black px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
                     🏷️ {b}
                   </span>
                 ))}
@@ -1992,10 +2058,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             </form>
 
             <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2">Registered Tag Taxonomies:</p>
+              <p className="text-3xs font-black uppercase text-slate-400 mb-2">Registered Tag Taxonomies:</p>
               <div className="flex flex-wrap gap-1.5">
                 {tagsList.map((t, i) => (
-                  <span key={i} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-[10px] font-black px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
+                  <span key={i} className="bg-slate-50 dark:bg-slate-800 border border-slate-150 dark:border-slate-700 text-3xs font-black px-2.5 py-1 rounded-md text-slate-700 dark:text-slate-300">
                     # {t}
                   </span>
                 ))}
@@ -2031,7 +2097,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         />
                         <div>
                           <p className="font-black text-slate-800 dark:text-slate-200">{r.productTitle}</p>
-                          <p className="text-[10px] text-slate-400">Reviewer: {r.name}</p>
+                          <p className="text-3xs text-slate-400">Reviewer: {r.name}</p>
                         </div>
                       </div>
 
@@ -2046,7 +2112,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                           <Star key={idx} size={12} fill={idx < r.rating ? 'currentColor' : 'none'} />
                         ))}
                       </div>
-                      <span className="text-[10px] text-slate-400">{r.date}</span>
+                      <span className="text-3xs text-slate-400">{r.date}</span>
                     </div>
                   </div>
                 ))}
@@ -2060,7 +2126,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 <Store size={16} className="text-indigo-600" /> Store Trust Badges & Customer Feedback Ledger
               </h3>
-              <p className="text-[11px] text-slate-400 font-bold mt-1">
+              <p className="text-xs text-slate-400 font-bold mt-1">
                 Monitor live customer feedback and the trust badge awards given to vendor stores. Excellent for quality tracking and SLA enforcement.
               </p>
             </div>
@@ -2072,20 +2138,20 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   <div key={v.id} className="pt-4 first:pt-0 space-y-3">
                     <div className="flex justify-between items-start gap-2">
                       <div>
-                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{v.name} &bull; <span className="text-slate-500 font-bold text-[10px]">Owner: {v.ownerName}</span></h4>
-                        <p className="text-[10px] text-slate-400">📍 {v.location} &bull; 📞 {v.phone}</p>
+                        <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">{v.name} &bull; <span className="text-slate-500 font-bold text-3xs">Owner: {v.ownerName}</span></h4>
+                        <p className="text-3xs text-slate-400">📍 {v.location} &bull; 📞 {v.phone}</p>
                       </div>
 
                       {/* Summary of Badges */}
                       <div className="flex flex-wrap gap-1 justify-end max-w-xs">
                         {v.trustBadges && v.trustBadges.length > 0 ? (
                           v.trustBadges.map((badge, bIdx) => (
-                            <span key={bIdx} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                            <span key={bIdx} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-1.5 py-0.5 rounded text-4xs font-black uppercase">
                               🏅 {badge}
                             </span>
                           ))
                         ) : (
-                          <span className="text-[9px] text-slate-400 italic">No trust badges awarded yet</span>
+                          <span className="text-3xs text-slate-400 italic">No trust badges awarded yet</span>
                         )}
                       </div>
                     </div>
@@ -2093,10 +2159,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                     {/* Customer reviews for this vendor */}
                     {v.reviews && v.reviews.length > 0 ? (
                       <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-3 border border-slate-150 dark:border-slate-900 space-y-2">
-                        <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">Customer Testimonials ({v.reviews.length})</p>
+                        <p className="text-3xs font-black uppercase tracking-wider text-slate-500">Customer Testimonials ({v.reviews.length})</p>
                         <div className="space-y-2">
                           {v.reviews.map((rev) => (
-                            <div key={rev.id} className="text-[11px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
+                            <div key={rev.id} className="text-xs bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
                               <div className="flex justify-between items-center">
                                 <span className="font-black text-slate-700 dark:text-slate-300">{rev.customerName}</span>
                                 <div className="flex text-amber-400">
@@ -2106,13 +2172,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                                 </div>
                               </div>
                               <p className="text-slate-600 dark:text-slate-300 italic">"{rev.comment}"</p>
-                              <p className="text-[8px] text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
+                              <p className="text-4xs text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
                             </div>
                           ))}
                         </div>
                       </div>
                     ) : (
-                      <p className="text-[10px] text-slate-400 italic">No testimonials written for this vendor yet.</p>
+                      <p className="text-3xs text-slate-400 italic">No testimonials written for this vendor yet.</p>
                     )}
                   </div>
                 );
@@ -2126,7 +2192,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                 <Truck size={16} className="text-emerald-600" /> Boda Boda Logistics Trust Badges & Review Monitoring
               </h3>
-              <p className="text-[11px] text-slate-400 font-bold mt-1">
+              <p className="text-xs text-slate-400 font-bold mt-1">
                 Easily monitor and track customer ratings, trust badges, and comments awarded to Boda Boda dispatch couriers.
               </p>
             </div>
@@ -2136,20 +2202,20 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 <div key={r.id} className="pt-4 first:pt-0 space-y-3">
                   <div className="flex justify-between items-start gap-2">
                     <div>
-                      <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">🏍️ {r.name} &bull; <span className="text-slate-500 font-bold text-[10px]">Courier Service</span></h4>
-                      <p className="text-[10px] text-slate-400">📞 {r.phone} &bull; Proximity: {r.proximity} &bull; Rating: {r.rating} ⭐</p>
+                      <h4 className="text-xs font-extrabold text-slate-900 dark:text-slate-100">🏍️ {r.name} &bull; <span className="text-slate-500 font-bold text-3xs">Courier Service</span></h4>
+                      <p className="text-3xs text-slate-400">📞 {r.phone} &bull; Proximity: {r.proximity} &bull; Rating: {r.rating} ⭐</p>
                     </div>
 
                     {/* Summary of Badges */}
                     <div className="flex flex-wrap gap-1 justify-end max-w-xs">
                       {r.trustBadges && r.trustBadges.length > 0 ? (
                         r.trustBadges.map((badge, bIdx) => (
-                          <span key={bIdx} className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 px-1.5 py-0.5 rounded text-[8px] font-black uppercase">
+                          <span key={bIdx} className="bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 px-1.5 py-0.5 rounded text-4xs font-black uppercase">
                             🏍️ {badge}
                           </span>
                         ))
                       ) : (
-                        <span className="text-[9px] text-slate-400 italic">No trust badges awarded yet</span>
+                        <span className="text-3xs text-slate-400 italic">No trust badges awarded yet</span>
                       )}
                     </div>
                   </div>
@@ -2157,10 +2223,10 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   {/* Customer reviews for this rider */}
                   {r.reviews && r.reviews.length > 0 ? (
                     <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-2xl p-3 border border-slate-150 dark:border-slate-900 space-y-2">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">Rider Delivery Testimonials ({r.reviews.length})</p>
+                      <p className="text-3xs font-black uppercase tracking-wider text-slate-500">Rider Delivery Testimonials ({r.reviews.length})</p>
                       <div className="space-y-2">
                         {r.reviews.map((rev) => (
-                          <div key={rev.id} className="text-[11px] bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
+                          <div key={rev.id} className="text-xs bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-2.5 rounded-xl space-y-1">
                             <div className="flex justify-between items-center">
                               <span className="font-black text-slate-700 dark:text-slate-300">{rev.customerName}</span>
                               <div className="flex text-amber-400">
@@ -2170,13 +2236,13 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                               </div>
                             </div>
                             <p className="text-slate-600 dark:text-slate-300 italic">"{rev.comment}"</p>
-                            <p className="text-[8px] text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
+                            <p className="text-4xs text-slate-400 font-mono text-right">{new Date(rev.date).toLocaleDateString()}</p>
                           </div>
                         ))}
                       </div>
                     </div>
                   ) : (
-                    <p className="text-[10px] text-slate-400 italic">No testimonials written for this courier yet.</p>
+                    <p className="text-3xs text-slate-400 italic">No testimonials written for this courier yet.</p>
                   )}
                 </div>
               ))}
@@ -2186,27 +2252,125 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
         </div>
       )}
 
+      {/* TAB: COUPONS & REFUNDS OVERSIGHT (Dokan Pro style) */}
+      {activeTab === 'marketing' && (
+        <div className="space-y-6">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+              Marketplace-wide Vendor Coupons
+            </h3>
+            {coupons.length === 0 ? (
+              <div className="py-10 text-center text-slate-400 text-xs">No vendor coupons have been created yet.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {coupons.map(c => (
+                  <div key={c.id} className="py-3 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                    <div className="space-y-0.5">
+                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">
+                        <span className="font-mono text-orange-600">{c.code}</span> &bull; {c.vendorName}
+                      </p>
+                      <p className="text-3xs text-slate-500 font-semibold">
+                        {c.type === 'percentage' ? `${c.value}% off` : `Shs ${c.value.toLocaleString()} off`}
+                        {c.minOrderAmount > 0 ? ` &bull; min Shs ${c.minOrderAmount.toLocaleString()}` : ''}
+                        &bull; used {c.usedCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ''}
+                        &bull; expires {new Date(c.expiryDate).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${
+                        c.status === 'active' ? 'bg-emerald-100 text-emerald-800' :
+                        c.status === 'expired' ? 'bg-slate-200 text-slate-600' : 'bg-rose-100 text-rose-800'
+                      }`}>
+                        {c.status}
+                      </span>
+                      {c.status !== 'expired' && (
+                        <button
+                          onClick={() => handleToggleCoupon(c.id)}
+                          className="text-3xs font-black uppercase px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer"
+                        >
+                          {c.status === 'disabled' ? 'Re-enable' : 'Disable'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 text-left space-y-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
+              Customer Refund Requests — Final Admin Decision
+            </h3>
+            {refundRequests.filter(r => r.status === 'vendor_approved' || r.status === 'pending').length === 0 ? (
+              <div className="py-10 text-center text-slate-400 text-xs">No refund requests awaiting admin clearance.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {refundRequests
+                  .filter(r => r.status === 'vendor_approved' || r.status === 'pending')
+                  .map(r => (
+                    <div key={r.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                      <div className="space-y-1">
+                        <p className="text-xs font-black text-slate-900 dark:text-slate-100">
+                          Order <span className="text-orange-600">{r.orderId}</span> &bull; {r.customerName}
+                        </p>
+                        <p className="text-sm font-black text-rose-600 font-mono">
+                          Refund amount: {formatPrice(r.amount)}
+                        </p>
+                        <p className="text-3xs text-slate-500 font-bold">Vendor: {r.vendorName}</p>
+                        <p className="text-3xs text-slate-500 italic">Reason: {r.reason}</p>
+                        {r.vendorNote && (
+                          <p className="text-3xs text-slate-500">Vendor note: {r.vendorNote}</p>
+                        )}
+                        <span className={`inline-block text-3xs font-black uppercase px-2 py-0.5 rounded ${
+                          r.status === 'vendor_approved' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-600'
+                        }`}>
+                          {r.status === 'vendor_approved' ? 'Vendor approved — awaiting admin' : 'Pending vendor review'}
+                        </span>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          onClick={() => handleAdminResolveRefund(r.id, 'admin_approved')}
+                          className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                        >
+                          <Check size={12} /> Approve refund
+                        </button>
+                        <button
+                          onClick={() => handleAdminResolveRefund(r.id, 'admin_rejected')}
+                          className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                        >
+                          <X size={12} /> Reject
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* TAB 8: EVENT NOTIFICATIONS HUB */}
       {activeTab === 'notifications' && (
         <div className="space-y-6">
           {/* Quick Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-left">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl">
-              <p className="text-[10px] font-black uppercase text-slate-400">Total Alert Logs Dispatch</p>
+              <p className="text-3xs font-black uppercase text-slate-400">Total Alert Logs Dispatch</p>
               <p className="text-2xl font-mono font-black text-slate-900 dark:text-slate-100">{notificationsList.length}</p>
-              <p className="text-[9px] text-slate-500 mt-1">Direct SMS, Email, and WhatsApp outputs</p>
+              <p className="text-3xs text-slate-500 mt-1">Direct SMS, Email, and WhatsApp outputs</p>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl">
-              <p className="text-[10px] font-black uppercase text-slate-400">Security Gateways</p>
+              <p className="text-3xs font-black uppercase text-slate-400">Security Gateways</p>
               <p className="text-sm font-bold text-emerald-600 flex items-center gap-1.5 mt-1">
                 <CheckCircle size={14} /> SMS, Mail & WhatsApp Live
               </p>
-              <p className="text-[9px] text-slate-500 mt-1">Twilio API & SMTP proxy layers</p>
+              <p className="text-3xs text-slate-500 mt-1">Twilio API & SMTP proxy layers</p>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl">
-              <p className="text-[10px] font-black uppercase text-slate-400">Subscribers Status</p>
+              <p className="text-3xs font-black uppercase text-slate-400">Subscribers Status</p>
               <p className="text-2xl font-mono font-black text-orange-600">Active</p>
-              <p className="text-[9px] text-slate-500 mt-1">Realtime broadcast to admin & vendors</p>
+              <p className="text-3xs text-slate-500 mt-1">Realtime broadcast to admin & vendors</p>
             </div>
           </div>
 
@@ -2218,12 +2382,12 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
                   <PlusCircle size={15} className="text-orange-600" /> Event Simulation Panel
                 </h4>
-                <p className="text-[10px] text-slate-400 mt-0.5">Test real-time event-driven notifications</p>
+                <p className="text-3xs text-slate-400 mt-0.5">Test real-time event-driven notifications</p>
               </div>
 
               <form onSubmit={handleSimulateReview} className="space-y-4 text-xs">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Customer Name</label>
+                  <label className="block text-3xs font-bold text-slate-400 uppercase">Customer Name</label>
                   <input
                     type="text"
                     required
@@ -2235,7 +2399,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Assigned Rating</label>
+                  <label className="block text-3xs font-bold text-slate-400 uppercase">Assigned Rating</label>
                   <select
                     value={simRating}
                     onChange={(e) => setSimRating(Number(e.target.value))}
@@ -2250,7 +2414,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-bold text-slate-400 uppercase">Comment / Recommendation</label>
+                  <label className="block text-3xs font-bold text-slate-400 uppercase">Comment / Recommendation</label>
                   <textarea
                     required
                     rows={3}
@@ -2263,7 +2427,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
                 <button
                   type="submit"
-                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-2.5 rounded-xl uppercase tracking-wider text-[10px] cursor-pointer flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                  className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-2.5 rounded-xl uppercase tracking-wider text-3xs cursor-pointer flex items-center justify-center gap-1.5 transition-colors shadow-sm"
                 >
                   <Send size={12} />
                   <span>Simulate Review Submit</span>
@@ -2278,11 +2442,11 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">
                     Live Broadcast Transmission Audit Logs
                   </h4>
-                  <p className="text-[10px] text-slate-400">Verbatim notifications sent to vendors, admins, and couriers</p>
+                  <p className="text-3xs text-slate-400">Verbatim notifications sent to vendors, admins, and couriers</p>
                 </div>
 
                 {/* Filters */}
-                <div className="flex items-center gap-2 flex-wrap text-[10px]">
+                <div className="flex items-center gap-2 flex-wrap text-3xs">
                   <select
                     value={notifChannelFilter}
                     onChange={(e) => setNotifChannelFilter(e.target.value as any)}
@@ -2345,34 +2509,34 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         <div key={n.id} className="p-4 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-900 text-xs font-semibold space-y-2">
                           <div className="flex flex-wrap justify-between items-center gap-2">
                             <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${getEventBadgeClass(n.eventType)}`}>
+                              <span className={`text-3xs px-2 py-0.5 rounded-full font-black uppercase tracking-wider ${getEventBadgeClass(n.eventType)}`}>
                                 {n.eventType.replace('_', ' ')}
                               </span>
-                              <div className="flex items-center gap-1 text-[10px] text-slate-500 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                              <div className="flex items-center gap-1 text-3xs text-slate-500 dark:text-slate-400 font-bold bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
                                 {getChannelIcon(n.channel)}
                                 <span className="uppercase">{n.channel}</span>
                               </div>
                             </div>
-                            <span className="text-[10px] text-slate-400 font-mono">
+                            <span className="text-3xs text-slate-400 font-mono">
                               {new Date(n.timestamp).toLocaleTimeString()}
                             </span>
                           </div>
 
                           <div className="space-y-1">
-                            <p className="text-[10px] text-slate-400 font-bold">RECIPIENT(S):</p>
-                            <p className="text-slate-700 dark:text-slate-300 font-mono text-[10px] bg-slate-100/60 dark:bg-slate-900 px-2.5 py-1 rounded-md">
+                            <p className="text-3xs text-slate-400 font-bold">RECIPIENT(S):</p>
+                            <p className="text-slate-700 dark:text-slate-300 font-mono text-3xs bg-slate-100/60 dark:bg-slate-900 px-2.5 py-1 rounded-md">
                               {n.recipient}
                             </p>
                           </div>
 
                           <div className="space-y-1">
-                            <p className="text-[10px] text-slate-400 font-bold">MESSAGE VERBATIM BODY:</p>
+                            <p className="text-3xs text-slate-400 font-bold">MESSAGE VERBATIM BODY:</p>
                             <p className="p-3 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 rounded-xl leading-relaxed italic font-sans text-xs border border-slate-100 dark:border-slate-800">
                               {n.message}
                             </p>
                           </div>
 
-                          <div className="flex justify-between items-center text-[9px] text-slate-400 pt-1 font-bold">
+                          <div className="flex justify-between items-center text-3xs text-slate-400 pt-1 font-bold">
                             <span className="text-emerald-600 flex items-center gap-1">
                               ● Delivered (API Status: 200 OK)
                             </span>
@@ -2405,7 +2569,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             
             {/* Table Navigation Column */}
             <div className="lg:col-span-1 space-y-2">
-              <p className="text-[10px] font-black uppercase text-slate-400 mb-2.5">System Relational Tables</p>
+              <p className="text-3xs font-black uppercase text-slate-400 mb-2.5">System Relational Tables</p>
               {RELATIONAL_TABLES.map((table) => (
                 <button
                   key={table.name}
@@ -2417,7 +2581,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   }`}
                 >
                   <span className="font-mono">dbo.{table.name}</span>
-                  <span className={`text-[9px] px-1.5 py-0.5 rounded font-black ${
+                  <span className={`text-3xs px-1.5 py-0.5 rounded font-black ${
                     selectedTable === table.name ? 'bg-orange-700 text-white' : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
                   }`}>
                     {table.columns.length} cols
@@ -2437,12 +2601,12 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                       <h4 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 font-mono">
                         dbo.{table.name} Schema Description
                       </h4>
-                      <p className="text-[10px] text-slate-400 mt-0.5 italic">{table.description}</p>
+                      <p className="text-3xs text-slate-400 mt-0.5 italic">{table.description}</p>
                     </div>
 
                     <button
                       onClick={() => handleCopySQL(table.sqlCode, table.name)}
-                      className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+                      className="bg-slate-900 hover:bg-slate-800 text-white font-extrabold text-3xs uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
                     >
                       <span>{copiedTable === table.name ? "✔️ Copied SQL" : "Copy CREATE TABLE SQL"}</span>
                     </button>
@@ -2452,7 +2616,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-2xl">
                     <table className="w-full text-xs font-semibold text-slate-700 dark:text-slate-300 text-left">
                       <thead>
-                        <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400">
+                        <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-3xs font-black uppercase text-slate-400">
                           <th className="p-3">Column Name</th>
                           <th className="p-3">Data Type</th>
                           <th className="p-3">Nullable</th>
@@ -2460,22 +2624,22 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                           <th className="p-3">Description</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-xs">
                         {table.columns.map((col: DBColumn) => (
                           <tr key={col.name}>
                             <td className="p-3 font-bold text-slate-900 dark:text-slate-200">{col.name}</td>
                             <td className="p-3 text-indigo-600 dark:text-indigo-400">{col.type}</td>
-                            <td className="p-3 text-slate-400 text-[10px]">
+                            <td className="p-3 text-slate-400 text-3xs">
                               {!col.constraints?.includes('NOT NULL') ? "YES" : "NO"}
                             </td>
                             <td className="p-3">
                               {col.isPrimaryKey && (
-                                <span className="bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-[9px] font-bold px-1.5 py-0.5 rounded mr-1">
+                                <span className="bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300 text-3xs font-bold px-1.5 py-0.5 rounded mr-1">
                                   🔑 PRIMARY KEY
                                 </span>
                               )}
                               {col.isForeignKey && (
-                                <span className="bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-[9px] font-bold px-1.5 py-0.5 rounded">
+                                <span className="bg-sky-100 dark:bg-sky-950 text-sky-700 dark:text-sky-300 text-3xs font-bold px-1.5 py-0.5 rounded">
                                   🗝️ FOREIGN KEY
                                 </span>
                               )}
@@ -2490,8 +2654,8 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
 
                   {/* SQL Syntax Highlighting Codeblock */}
                   <div className="space-y-1.5 text-left">
-                    <p className="text-[10px] font-black uppercase text-slate-400">Generated Relational DDL Script:</p>
-                    <pre className="bg-slate-950 text-slate-200 p-4 rounded-2xl text-[10px] font-mono overflow-x-auto leading-relaxed border border-slate-800 select-all max-h-52">
+                    <p className="text-3xs font-black uppercase text-slate-400">Generated Relational DDL Script:</p>
+                    <pre className="bg-slate-950 text-slate-200 p-4 rounded-2xl text-3xs font-mono overflow-x-auto leading-relaxed border border-slate-800 select-all max-h-52">
                       {table.sqlCode}
                     </pre>
                   </div>
@@ -2535,7 +2699,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   window.dispatchEvent(new Event('storage'));
                 }
               }}
-              className="bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-[10px] uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
+              className="bg-red-50 hover:bg-red-100 text-red-600 font-extrabold text-3xs uppercase tracking-wider px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors cursor-pointer"
             >
               <Trash2 size={13} />
               <span>Clear Audit Ledger</span>
@@ -2545,23 +2709,23 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
           {/* Quick Metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">Total Activities</span>
+              <span className="text-3xs uppercase font-black tracking-wider text-slate-400">Total Activities</span>
               <p className="text-xl font-black text-slate-800 dark:text-slate-100 mt-1">{adminLogsList.length}</p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] uppercase font-black tracking-wider text-amber-500">Warnings / Alerts</span>
+              <span className="text-3xs uppercase font-black tracking-wider text-amber-500">Warnings / Alerts</span>
               <p className="text-xl font-black text-amber-500 mt-1">
                 {adminLogsList.filter(l => l.severity === 'warning').length}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] uppercase font-black tracking-wider text-red-600">Critical Changes</span>
+              <span className="text-3xs uppercase font-black tracking-wider text-red-600">Critical Changes</span>
               <p className="text-xl font-black text-red-600 mt-1">
                 {adminLogsList.filter(l => l.severity === 'critical').length}
               </p>
             </div>
             <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-100 dark:border-slate-800">
-              <span className="text-[10px] uppercase font-black tracking-wider text-green-600">Secure Status</span>
+              <span className="text-3xs uppercase font-black tracking-wider text-green-600">Secure Status</span>
               <p className="text-xl font-black text-green-600 mt-1 flex items-center gap-1">
                 <span>100% SECURE</span>
               </p>
@@ -2572,7 +2736,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
           <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-2xl">
             <table className="w-full text-xs text-slate-700 dark:text-slate-300 text-left">
               <thead>
-                <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-[10px] font-black uppercase text-slate-400">
+                <tr className="bg-slate-50 dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800 text-3xs font-black uppercase text-slate-400">
                   <th className="p-3 w-44">Timestamp</th>
                   <th className="p-3 w-40">Action Tag</th>
                   <th className="p-3">Audit Details</th>
@@ -2590,11 +2754,11 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 ) : (
                   adminLogsList.map((log) => (
                     <tr key={log.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/10">
-                      <td className="p-3 font-mono text-slate-500 text-[10px]">
+                      <td className="p-3 font-mono text-slate-500 text-3xs">
                         {new Date(log.timestamp).toLocaleString()}
                       </td>
                       <td className="p-3 font-mono text-xs font-black text-slate-900 dark:text-slate-200">
-                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-[10px]">
+                        <span className="bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded text-3xs">
                           {log.action}
                         </span>
                       </td>
@@ -2602,7 +2766,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                         {log.details}
                       </td>
                       <td className="p-3 text-center">
-                        <span className={`inline-block text-[9px] px-2 py-0.5 rounded font-black uppercase ${
+                        <span className={`inline-block text-3xs px-2 py-0.5 rounded font-black uppercase ${
                           log.severity === 'critical' ? 'bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300' :
                           log.severity === 'warning' ? 'bg-amber-100 dark:bg-amber-950 text-amber-700 dark:text-amber-300' :
                           log.severity === 'success' ? 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-300' :
@@ -2611,7 +2775,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                           {log.severity}
                         </span>
                       </td>
-                      <td className="p-3 font-mono text-[10px] text-slate-500 flex items-center gap-1">
+                      <td className="p-3 font-mono text-3xs text-slate-500 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                         {log.ipAddress}
                       </td>

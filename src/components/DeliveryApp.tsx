@@ -182,7 +182,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
       <div className="bg-gradient-to-r from-emerald-700 to-teal-800 text-white rounded-3xl p-6 shadow-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="space-y-1 text-left">
           <div className="flex items-center gap-2">
-            <span className="bg-emerald-900 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+            <span className="bg-emerald-900 text-3xs font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
               🏍️ Kampala Boda Courier
             </span>
             <span className="text-emerald-200 text-xs font-mono">PLATE: {activeRider.motorcyclePlate}</span>
@@ -195,7 +195,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
 
         {/* Change Rider Switcher */}
         <div className="flex items-center gap-3 bg-emerald-900/40 p-2.5 rounded-xl border border-emerald-500/20 text-slate-800 shrink-0">
-          <span className="text-[10px] font-black text-white uppercase">Switch Rider:</span>
+          <span className="text-3xs font-black text-white uppercase">Switch Rider:</span>
           <select
             value={activeRider.id}
             onChange={(e) => {
@@ -221,7 +221,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
           {/* Header Block */}
           <div className="bg-amber-50 dark:bg-slate-900 border border-amber-300 dark:border-amber-900/60 rounded-3xl p-6 text-left flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="space-y-2">
-              <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-[10px] font-black px-2.5 py-1 rounded uppercase tracking-wider font-mono animate-pulse inline-block">
+              <span className="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200 text-3xs font-black px-2.5 py-1 rounded uppercase tracking-wider font-mono animate-pulse inline-block">
                 ⚠️ ONBOARDING STATUS: AWAITING ADMIN APPROVAL
               </span>
               <h3 className="text-xl font-black text-slate-900 dark:text-white">Your Courier Account is Being Verified</h3>
@@ -262,7 +262,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                   className="w-16 h-16 rounded-full object-cover border-2 border-emerald-500 shadow-sm"
                 />
                 <div>
-                  <p className="text-[10px] text-slate-400 font-black uppercase">AUTO-GENERATED USER ID</p>
+                  <p className="text-3xs text-slate-400 font-black uppercase">AUTO-GENERATED USER ID</p>
                   <p className="text-base font-mono font-black text-emerald-600">{activeRider.id}</p>
                 </div>
               </div>
@@ -270,44 +270,44 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
               <div className="space-y-3.5 pt-2 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">FULL NAME</p>
+                    <p className="text-3xs text-slate-400 uppercase">FULL NAME</p>
                     <p className="font-black text-slate-900 dark:text-white">{activeRider.name}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">CONTACT TELEPHONE</p>
+                    <p className="text-3xs text-slate-400 uppercase">CONTACT TELEPHONE</p>
                     <p className="font-black text-slate-900 dark:text-white">{activeRider.phone}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">EMAIL ADDRESS</p>
+                    <p className="text-3xs text-slate-400 uppercase">EMAIL ADDRESS</p>
                     <p className="font-black text-slate-900 dark:text-white">{activeRider.email || 'N/A'}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase font-bold text-[#f68b1e]">COMPULSORY NATIONAL ID</p>
+                    <p className="text-3xs text-slate-400 uppercase font-bold text-[#f68b1e]">COMPULSORY NATIONAL ID</p>
                     <p className="font-mono font-black text-slate-900 dark:text-amber-100">{activeRider.idCard || 'Verified via NIRA'}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 border-t border-slate-100 dark:border-slate-800/80 pt-3">
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">VEHICLE PLATE (REG NO)</p>
+                    <p className="text-3xs text-slate-400 uppercase">VEHICLE PLATE (REG NO)</p>
                     <p className="font-black font-mono text-slate-900 dark:text-white uppercase">{activeRider.motorcyclePlate}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">DRIVING PERMIT CODE</p>
+                    <p className="text-3xs text-slate-400 uppercase">DRIVING PERMIT CODE</p>
                     <p className="font-mono font-black text-slate-900 dark:text-white uppercase">{activeRider.drivingPermit}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">TRANSPORT MEANS</p>
+                    <p className="text-3xs text-slate-400 uppercase">TRANSPORT MEANS</p>
                     <p className="font-black text-emerald-600 uppercase">{activeRider.transportMeans.toUpperCase()}</p>
                   </div>
                   <div>
-                    <p className="text-[9px] text-slate-400 uppercase">OPERATING HUB BASE</p>
+                    <p className="text-3xs text-slate-400 uppercase">OPERATING HUB BASE</p>
                     <p className="font-black text-slate-950 dark:text-white">{activeRider.location}</p>
                   </div>
                 </div>
@@ -332,10 +332,10 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                   {/* WhatsApp Simulation */}
                   <div className="bg-emerald-500/10 border-l-4 border-emerald-500 p-3 rounded-r-xl space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-emerald-600 font-black uppercase flex items-center gap-1">
+                      <span className="text-3xs text-emerald-600 font-black uppercase flex items-center gap-1">
                         💬 WhatsApp Notification API
                       </span>
-                      <span className="text-[9px] text-slate-400 font-bold">Just Now</span>
+                      <span className="text-3xs text-slate-400 font-bold">Just Now</span>
                     </div>
                     <p className="text-xs text-slate-800 dark:text-slate-200 font-medium">
                       "Hi <span className="font-black">{activeRider.name.split(' [')[0]}</span>, congratulations! Your Olimart Courier Profile has been approved by our central safety team. You can now access your dispatcher dashboard instantly via this link: <span className="text-emerald-600 dark:text-emerald-400 font-bold hover:underline cursor-pointer">https://olimart-courier.ug/dashboard/{activeRider.id}</span>"
@@ -345,10 +345,10 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                   {/* SMS Simulation */}
                   <div className="bg-sky-500/10 border-l-4 border-sky-500 p-3 rounded-r-xl space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-sky-600 font-black uppercase flex items-center gap-1">
+                      <span className="text-3xs text-sky-600 font-black uppercase flex items-center gap-1">
                         📱 SMS Cellular Gateway
                       </span>
-                      <span className="text-[9px] text-slate-400 font-bold">1m ago</span>
+                      <span className="text-3xs text-slate-400 font-bold">1m ago</span>
                     </div>
                     <p className="text-xs text-slate-800 dark:text-slate-200 font-medium">
                       "OLIMART DISPATCH: Driver account approved. Access active cargo boards immediately using your unique ID: <span className="font-bold text-sky-600">{activeRider.id}</span>. Access Link: <span className="text-sky-600 hover:underline cursor-pointer">https://olimart-courier.ug/dashboard/{activeRider.id}</span>"
@@ -358,10 +358,10 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                   {/* Email Simulation */}
                   <div className="bg-indigo-500/10 border-l-4 border-indigo-500 p-3 rounded-r-xl space-y-1">
                     <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-indigo-600 font-black uppercase flex items-center gap-1">
+                      <span className="text-3xs text-indigo-600 font-black uppercase flex items-center gap-1">
                         ✉️ Email Delivery Hub
                       </span>
-                      <span className="text-[9px] text-slate-400 font-bold">2m ago</span>
+                      <span className="text-3xs text-slate-400 font-bold">2m ago</span>
                     </div>
                     <p className="text-xs text-slate-800 dark:text-slate-200 font-medium">
                       <span className="font-bold text-slate-900 dark:text-white">Subject: Olimart Courier Partnership Welcome Kit</span><br />
@@ -383,14 +383,14 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex justify-between items-center text-left shadow-xs">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase">My Wallet Earnings</p>
+                <p className="text-3xs font-black text-slate-400 uppercase">My Wallet Earnings</p>
                 <p className="text-lg font-black text-slate-900 dark:text-white">{formatPrice(activeRider.earnings || 0)}</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-black">UGX</div>
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex justify-between items-center text-left shadow-xs">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase">Drops Completed</p>
+                <p className="text-3xs font-black text-slate-400 uppercase">Drops Completed</p>
                 <p className="text-lg font-black text-slate-900 dark:text-white">{activeRider.completedDeliveries || 0} Drops</p>
               </div>
               <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center">
@@ -399,7 +399,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
             </div>
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl flex justify-between items-center text-left shadow-xs">
               <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase">Current Job Status</p>
+                <p className="text-3xs font-black text-slate-400 uppercase">Current Job Status</p>
                 <p className="text-lg font-black text-emerald-600">
                   {activeJob ? 'Active Navigation' : 'Awaiting Bids'}
                 </p>
@@ -417,7 +417,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
           {/* Active HUD */}
           <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-3xl space-y-4 text-left shadow-sm">
             <div className="flex justify-between items-center">
-              <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
+              <span className="bg-amber-100 text-amber-800 text-3xs font-black px-2 py-0.5 rounded uppercase tracking-wider animate-pulse">
                 Active Job: In Transit
               </span>
               <span className="text-xs font-mono font-black">{activeJob.id}</span>
@@ -425,31 +425,31 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
 
             <div className="space-y-3.5 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs font-semibold">
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Landmark Destination</p>
+                <p className="text-slate-400 text-3xs uppercase font-bold">Landmark Destination</p>
                 <div className="flex items-start gap-1.5 mt-1">
                   <MapPin size={16} className="text-rose-600 shrink-0 mt-0.5" />
                   <div>
                     <p className="font-black text-slate-900 dark:text-slate-100">{activeJob.customerAddress}</p>
-                    <p className="text-[11px] text-slate-500 font-bold">{activeJob.customerLocation}</p>
+                    <p className="text-xs text-slate-500 font-bold">{activeJob.customerLocation}</p>
                   </div>
                 </div>
               </div>
 
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Client Contact</p>
+                <p className="text-slate-400 text-3xs uppercase font-bold">Client Contact</p>
                 <p className="text-slate-850 dark:text-slate-200 font-black mt-1">{activeJob.customerName}</p>
                 <p className="font-mono text-slate-500">{activeJob.customerPhone}</p>
               </div>
 
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold">Logistics Breakdown</p>
+                <p className="text-slate-400 text-3xs uppercase font-bold">Logistics Breakdown</p>
                 <div className="grid grid-cols-2 gap-2 mt-1">
                   <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl text-left">
-                    <p className="text-[9px] text-slate-400">DISTANCE</p>
+                    <p className="text-3xs text-slate-400">DISTANCE</p>
                     <p className="font-black font-mono text-slate-900 dark:text-white">{activeJob.distanceKm} Km</p>
                   </div>
                   <div className="bg-slate-50 dark:bg-slate-800/60 p-2 rounded-xl text-left">
-                    <p className="text-[9px] text-slate-400">COURIER FEE</p>
+                    <p className="text-3xs text-slate-400">COURIER FEE</p>
                     <p className="font-black font-mono text-emerald-600">{formatPrice(activeJob.deliveryFee)}</p>
                   </div>
                 </div>
@@ -457,10 +457,10 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
 
               {/* Items in Cargo */}
               <div>
-                <p className="text-slate-400 text-[10px] uppercase font-bold mb-1.5">Cargo Manifest</p>
+                <p className="text-slate-400 text-3xs uppercase font-bold mb-1.5">Cargo Manifest</p>
                 <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl space-y-1">
                   {activeJob.items.map((it, idx) => (
-                    <div key={idx} className="flex justify-between items-center text-[11px] font-bold">
+                    <div key={idx} className="flex justify-between items-center text-xs font-bold">
                       <span className="text-slate-800 dark:text-slate-200">{it.product.title}</span>
                       <span className="text-orange-600">[{it.quantity}x]</span>
                     </div>
@@ -473,13 +473,13 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     onClick={() => triggerDialer(activeJob.customerName, activeJob.customerPhone)}
-                    className="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer text-[10px]"
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer text-3xs"
                   >
                     <Phone size={14} /> Call Customer
                   </button>
                   <button
                     onClick={() => triggerWhatsApp(activeJob.id, activeJob.customerName, activeJob.customerPhone, activeJob.customerLocation)}
-                    className="bg-sky-600 hover:bg-sky-500 text-white py-2.5 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer text-[10px]"
+                    className="bg-sky-600 hover:bg-sky-500 text-white py-2.5 rounded-xl flex items-center justify-center gap-1.5 font-black uppercase cursor-pointer text-3xs"
                   >
                     <MessageSquare size={14} /> Send WhatsApp
                   </button>
@@ -494,7 +494,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
 
                 <button
                   onClick={() => handleCancelJob(activeJob.id)}
-                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer text-[10px] font-bold"
+                  className="w-full bg-slate-100 hover:bg-slate-200 text-slate-600 py-2 rounded-xl flex items-center justify-center gap-1 cursor-pointer text-3xs font-bold"
                 >
                   <X size={12} /> Cancel Delivery Job
                 </button>
@@ -521,7 +521,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                 <div className="w-8 h-8 rounded-full bg-orange-100 text-orange-600 border border-orange-400 flex items-center justify-center shadow">
                   🏪
                 </div>
-                <span className="text-[9px] font-black bg-white/90 px-1 py-0.2 rounded mt-1 text-slate-800 border">Seller Store</span>
+                <span className="text-3xs font-black bg-white/90 px-1 py-0.2 rounded mt-1 text-slate-800 border">Seller Store</span>
               </div>
 
               {/* Route line */}
@@ -534,7 +534,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                 <div className="w-9 h-9 rounded-full bg-emerald-600 text-white flex items-center justify-center shadow-lg border-2 border-white">
                   🏍️
                 </div>
-                <span className="text-[8px] font-bold bg-emerald-700 text-white px-1.5 rounded mt-1">Me (Plate: {activeRider.motorcyclePlate})</span>
+                <span className="text-4xs font-bold bg-emerald-700 text-white px-1.5 rounded mt-1">Me (Plate: {activeRider.motorcyclePlate})</span>
               </div>
 
               {/* Customer node */}
@@ -542,12 +542,12 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                 <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 border border-rose-400 flex items-center justify-center shadow animate-pulse">
                   📍
                 </div>
-                <span className="text-[9px] font-black bg-white/90 px-1 py-0.2 rounded mt-1 text-slate-800 border truncate max-w-[100px]">
+                <span className="text-3xs font-black bg-white/90 px-1 py-0.2 rounded mt-1 text-slate-800 border truncate max-w-[100px]">
                   {activeJob.customerName}
                 </span>
               </div>
 
-              <div className="absolute bottom-3 left-3 bg-slate-900/95 text-white p-2.5 rounded-xl text-[9px] font-bold leading-tight space-y-0.5">
+              <div className="absolute bottom-3 left-3 bg-slate-900/95 text-white p-2.5 rounded-xl text-3xs font-bold leading-tight space-y-0.5">
                 <p>📍 CURRENT ROUTE: <span className="text-orange-400 font-black">Central Corridor Kampala</span></p>
                 <p>🚦 TRAFFIC: <span className="text-emerald-400">Moderate Boda Clearance</span></p>
                 <p>⌛ ESTIMATED DROP: <span className="text-amber-400 font-black">12 Mins</span></p>
@@ -572,7 +572,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                 <Smile size={24} />
               </div>
               <p className="text-slate-400 text-xs font-bold">No Boda drops waiting inside Kampala right now!</p>
-              <p className="text-[10px] text-slate-400">Order from the consumer shop first to generate transit logs.</p>
+              <p className="text-3xs text-slate-400">Order from the consumer shop first to generate transit logs.</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -581,7 +581,7 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                   <div className="space-y-2 text-xs">
                     <div className="flex justify-between items-center">
                       <span className="font-mono font-black text-slate-900 dark:text-white">{o.id}</span>
-                      <span className="bg-emerald-100 text-emerald-800 text-[9px] font-black px-2 py-0.5 rounded uppercase">
+                      <span className="bg-emerald-100 text-emerald-800 text-3xs font-black px-2 py-0.5 rounded uppercase">
                         Drop fee: {formatPrice(o.deliveryFee)}
                       </span>
                     </div>
@@ -592,14 +592,14 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
                       <p>🛣️ Boda Route Distance: <span className="text-orange-600 font-mono font-black">{o.distanceKm} km</span></p>
                     </div>
 
-                    <div className="pl-2 border-l-2 border-emerald-600 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                    <div className="pl-2 border-l-2 border-emerald-600 text-xs font-bold text-slate-700 dark:text-slate-300">
                       Cargo: {o.items.map(it => `${it.product.title} [x${it.quantity}]`).join(', ')}
                     </div>
                   </div>
 
                   <button
                     onClick={() => handleAcceptJob(o.id)}
-                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-black uppercase py-2.5 rounded-xl cursor-pointer shadow flex items-center justify-center gap-1 transition-colors"
+                    className="w-full bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black uppercase py-2.5 rounded-xl cursor-pointer shadow flex items-center justify-center gap-1 transition-colors"
                   >
                     <span>Accept Delivery Drop</span>
                     <ChevronRight size={14} />
@@ -621,14 +621,14 @@ export default function DeliveryApp({ formatPrice }: DeliveryAppProps) {
               <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto animate-pulse">
                 <PhoneCall size={28} className="text-white" />
               </div>
-              <p className="text-[10px] text-slate-500 font-black uppercase tracking-wider font-mono">Dialing via Olimart VOIP Bridge</p>
+              <p className="text-3xs text-slate-500 font-black uppercase tracking-wider font-mono">Dialing via Olimart VOIP Bridge</p>
               <h4 className="text-lg font-black">{callingName}</h4>
               <p className="text-xs text-slate-400 font-mono">{callingPhone}</p>
             </div>
 
             <div className="space-y-1">
-              <p className="text-[11px] text-emerald-400 font-bold animate-pulse">📞 Line Active & Calling...</p>
-              <p className="text-[9px] text-slate-500 font-medium">Auto-connecting to local telecom gateway.</p>
+              <p className="text-xs text-emerald-400 font-bold animate-pulse">📞 Line Active & Calling...</p>
+              <p className="text-3xs text-slate-500 font-medium">Auto-connecting to local telecom gateway.</p>
             </div>
 
             <button

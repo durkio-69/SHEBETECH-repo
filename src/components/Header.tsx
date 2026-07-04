@@ -121,7 +121,7 @@ export default function Header({
   return (
     <header className="w-full bg-white shadow-xs sticky top-0 z-40" id="main-header">
       {/* Top Utility Bar */}
-      <div className="hidden md:block bg-[#1a1a1a] text-slate-300 text-[11px] py-1.5 px-4 border-b border-zinc-800">
+      <div className="hidden md:block bg-[#1a1a1a] text-slate-300 text-xs py-1.5 px-4 border-b border-zinc-800">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           {/* Left Side: Delivery, Sell option & Watchlist */}
           <div className="flex items-center gap-4 flex-wrap justify-center md:justify-start">
@@ -184,7 +184,7 @@ export default function Header({
                     <button onClick={() => setIsWatchlistOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={12} /></button>
                   </div>
                   {watchlist.length === 0 ? (
-                    <div className="py-4 text-center text-slate-400 text-[10px]">
+                    <div className="py-4 text-center text-slate-400 text-3xs">
                       Your watchlist is empty. Add products to track them!
                     </div>
                   ) : (
@@ -198,7 +198,7 @@ export default function Header({
                           />
                           <div className="flex-1 min-w-0">
                             <p 
-                              className="text-[10px] font-bold text-slate-800 truncate hover:text-orange-500 cursor-pointer" 
+                              className="text-3xs font-bold text-slate-800 truncate hover:text-orange-500 cursor-pointer" 
                               onClick={() => { 
                                 onProductClick(product); 
                                 setIsWatchlistOpen(false); 
@@ -206,7 +206,7 @@ export default function Header({
                             >
                               {product.title}
                             </p>
-                            <p className="text-[10px] font-black text-orange-600">{formatPrice(product.price)}</p>
+                            <p className="text-3xs font-black text-orange-600">{formatPrice(product.price)}</p>
                           </div>
                           <button 
                             onClick={() => onWatchlistToggle(product.id)}
@@ -242,7 +242,7 @@ export default function Header({
               </button>
 
               {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
+                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
                   {[
                     { code: 'EN', name: 'English 🇺🇸' },
                     { code: 'LG', name: 'Luganda 🇺🇬' },
@@ -286,7 +286,7 @@ export default function Header({
               </button>
 
               {isFontSizeOpen && (
-                <div className="absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
+                <div className="absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
                   {[
                     { code: 'normal', name: 'Aa Normal (100%)' },
                     { code: 'large', name: 'Aa Large (115%)' },
@@ -327,7 +327,7 @@ export default function Header({
               </button>
 
               {isCurrencyOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
+                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
                   {[
                     { code: 'UGX', label: 'UGX (Shs)' },
                     { code: 'USD', label: 'USD ($)' },
@@ -408,7 +408,7 @@ export default function Header({
             >
               <ShoppingCart size={18} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-bold text-3xs w-5 h-5 rounded-full flex items-center justify-center shadow-md">
                   {cartItemsCount}
                 </span>
               )}
@@ -452,7 +452,7 @@ export default function Header({
                       setSearchQuery('');
                       setShowSuggestions(false);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded uppercase font-bold"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-3xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded uppercase font-bold"
                   >
                     Clear
                   </button>
@@ -475,14 +475,14 @@ export default function Header({
                 {suggestedCategories.length === 0 && suggestedProducts.length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500 font-semibold">
                     <p className="font-bold mb-1 text-slate-600 dark:text-slate-400">No direct matches found</p>
-                    <p className="text-[10px]">Press Enter or click search to browse all matching items.</p>
+                    <p className="text-3xs">Press Enter or click search to browse all matching items.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {/* Category matches */}
                     {suggestedCategories.length > 0 && (
                       <div>
-                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1">
+                        <div className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1">
                           <span>Matched Categories</span>
                         </div>
                         <div className="space-y-0.5">
@@ -507,7 +507,7 @@ export default function Header({
                                 </span>
                                 <span>{cat.name}</span>
                               </span>
-                              <span className="text-[9px] bg-orange-50 dark:bg-orange-950/40 text-[#f68b1e] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
+                              <span className="text-3xs bg-orange-50 dark:bg-orange-950/40 text-[#f68b1e] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
                                 Go to Department
                               </span>
                             </button>
@@ -523,9 +523,9 @@ export default function Header({
                     {/* Product matches */}
                     {suggestedProducts.length > 0 && (
                       <div>
-                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
+                        <div className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
                           <span>Suggested Products</span>
-                          <span className="text-[9px] text-[#f68b1e] lowercase font-bold">matching "{searchQuery}"</span>
+                          <span className="text-3xs text-[#f68b1e] lowercase font-bold">matching "{searchQuery}"</span>
                         </div>
                         <div className="space-y-1">
                           {suggestedProducts.map((p) => (
@@ -550,18 +550,18 @@ export default function Header({
                                   <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate group-hover:text-[#f68b1e] transition-colors">
                                     {p.title}
                                   </p>
-                                  <span className="text-[10px] text-orange-600 dark:text-orange-400 font-black flex-shrink-0">
+                                  <span className="text-3xs text-orange-600 dark:text-orange-400 font-black flex-shrink-0">
                                     {formatPrice(p.price)}
                                   </span>
                                 </div>
-                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 flex items-center gap-1">
+                                <p className="text-3xs text-slate-400 font-bold uppercase mt-0.5 flex items-center gap-1">
                                   <span className="text-slate-500 dark:text-slate-400">{p.brand}</span>
                                   <span>&bull;</span>
                                   <span className="text-yellow-500">★ {p.rating}</span>
                                   {p.isOfficial && (
                                     <>
                                       <span>&bull;</span>
-                                      <span className="text-blue-500 text-[8px] font-black uppercase">Official</span>
+                                      <span className="text-blue-500 text-4xs font-black uppercase">Official</span>
                                     </>
                                   )}
                                 </p>
@@ -599,7 +599,7 @@ export default function Header({
                   Sign In / Register
                 </button>
                 <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
                     <User size={13} /> <span>My Profile & Settings</span>
                   </button>
@@ -623,7 +623,7 @@ export default function Header({
 
               {/* Help Dropdown Panel */}
               <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl py-2 px-3 hidden group-hover/help:block z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
                   <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Help Center</button>
                   <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Place an order</button>
                   <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Payment options</button>
@@ -638,14 +638,14 @@ export default function Header({
               className="flex flex-col items-center cursor-pointer relative group px-2 py-1"
             >
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-1 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm animate-pulse">
+                <span className="absolute -top-1.5 -right-1 bg-red-600 text-white text-3xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm animate-pulse">
                   {cartItemsCount}
                 </span>
               )}
               <div className="text-slate-700 dark:text-slate-300 group-hover:text-[#f68b1e] transition-colors">
                 <ShoppingCart size={20} />
               </div>
-              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#f68b1e] mt-0.5 uppercase tracking-wide">Cart</span>
+              <span className="text-3xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#f68b1e] mt-0.5 uppercase tracking-wide">Cart</span>
             </div>
           </div>
         </div>
@@ -765,7 +765,7 @@ export default function Header({
                 </button>
               </div>
               <div>
-                <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wide">Welcome to Uganda's Marketplace</p>
+                <p className="text-3xs font-bold text-orange-100 uppercase tracking-wide">Welcome to Uganda's Marketplace</p>
                 <button 
                   onClick={() => {
                     onAccountClick();
@@ -783,7 +783,7 @@ export default function Header({
             <div className="p-4 space-y-4 flex-1">
               {/* Special Deals Quick Links */}
               <div className="space-y-1.5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Marketplace Hotspots</p>
+                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Marketplace Hotspots</p>
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -799,7 +799,7 @@ export default function Header({
                       <Sparkles size={14} className="text-red-500" />
                       <span>Today's Deal</span>
                     </span>
-                    <span className="bg-red-600 text-white font-black text-[8px] px-1.5 rounded uppercase">NEW</span>
+                    <span className="bg-red-600 text-white font-black text-4xs px-1.5 rounded uppercase">NEW</span>
                   </button>
 
                   <button
@@ -816,7 +816,7 @@ export default function Header({
                       <Zap size={14} className="text-[#f68b1e]" />
                       <span>Flash Sales</span>
                     </span>
-                    <span className="bg-orange-600 text-white font-black text-[8px] px-1.5 rounded uppercase animate-pulse">LIVE</span>
+                    <span className="bg-orange-600 text-white font-black text-4xs px-1.5 rounded uppercase animate-pulse">LIVE</span>
                   </button>
 
                   <button
@@ -833,7 +833,7 @@ export default function Header({
                       <Percent size={14} className="text-emerald-500" />
                       <span>Super Savings</span>
                     </span>
-                    <span className="text-[10px] text-emerald-500 font-extrabold">-50%</span>
+                    <span className="text-3xs text-emerald-500 font-extrabold">-50%</span>
                   </button>
                 </div>
               </div>
@@ -842,7 +842,7 @@ export default function Header({
 
               {/* Browse Category Departments list */}
               <div className="space-y-1.5">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Our Departments</p>
+                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Our Departments</p>
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -887,7 +887,7 @@ export default function Header({
 
               {/* Kampala services / hotline */}
               <div className="space-y-2">
-                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Support & Settings</p>
+                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Support & Settings</p>
                 <button 
                   onClick={() => {
                     setIsLocationOpen(true);
@@ -910,13 +910,13 @@ export default function Header({
 
                 {/* Currency Quick-change */}
                 <div className="px-3 py-1 text-xs">
-                  <p className="text-[10px] font-bold text-slate-400 mb-1">Select Currency:</p>
+                  <p className="text-3xs font-bold text-slate-400 mb-1">Select Currency:</p>
                   <div className="flex gap-1.5 flex-wrap">
                     {['UGX', 'USD', 'EUR', 'KES'].map(curr => (
                       <button
                         key={curr}
                         onClick={() => setCurrency(curr)}
-                        className={`px-2 py-1 rounded text-[10px] font-black ${
+                        className={`px-2 py-1 rounded text-3xs font-black ${
                           currency === curr 
                             ? 'bg-[#f68b1e] text-white' 
                             : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
@@ -930,7 +930,7 @@ export default function Header({
 
                 {/* Language Quick-change */}
                 <div className="px-3 py-1 text-xs">
-                  <p className="text-[10px] font-bold text-slate-400 mb-1">Select Language:</p>
+                  <p className="text-3xs font-bold text-slate-400 mb-1">Select Language:</p>
                   <div className="flex gap-1.5 flex-wrap">
                     {[
                       { code: 'EN', name: 'EN 🇺🇸' },
@@ -941,7 +941,7 @@ export default function Header({
                       <button
                         key={lang.code}
                         onClick={() => setLanguage(lang.code)}
-                        className={`px-2 py-1 rounded text-[10px] font-black ${
+                        className={`px-2 py-1 rounded text-3xs font-black ${
                           language === lang.code 
                             ? 'bg-orange-600 text-white' 
                             : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
@@ -965,8 +965,8 @@ export default function Header({
 
             {/* Drawer Footer info */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 text-center space-y-1">
-              <p className="text-[10px] font-black text-slate-400">OLIMART UGANDA MARKETPLACE</p>
-              <p className="text-[9px] text-slate-400">MoMo Cash On Delivery Secured</p>
+              <p className="text-3xs font-black text-slate-400">OLIMART UGANDA MARKETPLACE</p>
+              <p className="text-3xs text-slate-400">MoMo Cash On Delivery Secured</p>
             </div>
           </div>
         </div>

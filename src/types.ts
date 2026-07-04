@@ -49,6 +49,17 @@ export interface Product {
   reviews?: ProductReview[];
   tags?: string[];
   productType?: 'bulky' | 'light';
+
+  // --- Description of record ---
+  // The vendor who lists the product must always provide it; the admin can
+  // add or override a moderated description (e.g. correcting misleading
+  // claims) without erasing what the vendor originally wrote — both are
+  // kept, and both are visible to every stakeholder that touches the order.
+  vendorId?: string;
+  vendorDescription?: string;          // required at listing time, written by the vendor
+  adminDescription?: string;           // optional moderation note/override, written by an admin
+  descriptionUpdatedBy?: string;       // user id of whoever last touched either field
+  descriptionUpdatedAt?: string;       // ISO timestamp
 }
 
 export interface CartItem {

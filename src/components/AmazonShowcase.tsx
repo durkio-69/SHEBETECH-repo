@@ -89,7 +89,7 @@ export default function AmazonShowcase({
                 <Flame size={18} className="text-red-600 animate-pulse" />
                 <span>Today's Hot Deals</span>
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold mb-4">Limited-time extreme markdowns</p>
+              <p className="text-3xs text-slate-400 font-bold mb-4">Limited-time extreme markdowns</p>
               
               <div className="grid grid-cols-2 gap-3">
                 {phonesList.map(p => {
@@ -109,10 +109,10 @@ export default function AmazonShowcase({
                         />
                       </div>
                       <div className="mt-2 text-left">
-                        <span className="text-[9px] font-black text-red-600 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded">
+                        <span className="text-3xs font-black text-red-600 bg-red-50 dark:bg-red-950/40 px-1.5 py-0.5 rounded">
                           -{discount}%
                         </span>
-                        <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{(p?.title || '').split(' - ')[0]}</p>
+                        <p className="text-3xs font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{(p?.title || '').split(' - ')[0]}</p>
                       </div>
                     </div>
                   );
@@ -136,7 +136,7 @@ export default function AmazonShowcase({
                 <Award size={18} className="text-[#f68b1e]" />
                 <span>Bestselling Gadgets</span>
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold mb-4">Highly rated smart appliances</p>
+              <p className="text-3xs text-slate-400 font-bold mb-4">Highly rated smart appliances</p>
               
               <div className="grid grid-cols-2 gap-3">
                 {electronicsList.map(p => (
@@ -154,8 +154,8 @@ export default function AmazonShowcase({
                       />
                     </div>
                     <div className="mt-2 text-left">
-                      <p className="text-[10px] font-black text-slate-900 dark:text-slate-100">{formatPrice(p.price)}</p>
-                      <p className="text-[9px] text-slate-400 font-bold truncate">{(p?.title || '').split(' - ')[0]}</p>
+                      <p className="text-3xs font-black text-slate-900 dark:text-slate-100">{formatPrice(p.price)}</p>
+                      <p className="text-3xs text-slate-400 font-bold truncate">{(p?.title || '').split(' - ')[0]}</p>
                     </div>
                   </div>
                 ))}
@@ -178,7 +178,7 @@ export default function AmazonShowcase({
                 <Sparkles size={18} className="text-[#f68b1e]" />
                 <span>Trendy Fashion Deals</span>
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold mb-4">Wardrobe updates & luxury watches</p>
+              <p className="text-3xs text-slate-400 font-bold mb-4">Wardrobe updates & luxury watches</p>
               
               <div className="grid grid-cols-2 gap-3">
                 {fashionList.map(p => (
@@ -196,10 +196,10 @@ export default function AmazonShowcase({
                       />
                     </div>
                     <div className="mt-2 text-left">
-                      <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
+                      <span className="text-3xs font-black text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 px-1.5 py-0.5 rounded">
                         Save Deal
                       </span>
-                      <p className="text-[10px] font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{(p?.title || '').split(' - ')[0]}</p>
+                      <p className="text-3xs font-bold text-slate-800 dark:text-slate-200 mt-1 truncate">{(p?.title || '').split(' - ')[0]}</p>
                     </div>
                   </div>
                 ))}
@@ -222,7 +222,7 @@ export default function AmazonShowcase({
                 <TrendingUp size={18} className="text-emerald-500" />
                 <span>Groceries & Staples</span>
               </h3>
-              <p className="text-[10px] text-slate-400 font-bold mb-4">Pantry milk, oil and soap packages</p>
+              <p className="text-3xs text-slate-400 font-bold mb-4">Pantry milk, oil and soap packages</p>
               
               <div className="grid grid-cols-2 gap-3">
                 {supermarketList.map(p => (
@@ -240,8 +240,8 @@ export default function AmazonShowcase({
                       />
                     </div>
                     <div className="mt-2 text-left">
-                      <p className="text-[10px] font-black text-slate-950 dark:text-slate-50">{formatPrice(p.price)}</p>
-                      <p className="text-[9px] text-slate-400 font-bold truncate">{(p?.title || '').split(' - ')[0]}</p>
+                      <p className="text-3xs font-black text-slate-950 dark:text-slate-50">{formatPrice(p.price)}</p>
+                      <p className="text-3xs text-slate-400 font-bold truncate">{(p?.title || '').split(' - ')[0]}</p>
                     </div>
                   </div>
                 ))}
@@ -291,7 +291,7 @@ export default function AmazonShowcase({
                 >
                   <div>
                     {/* Discount Pill */}
-                    <span className="absolute top-3 left-3 bg-red-600 text-white text-[9px] font-black px-2 py-0.5 rounded-sm">
+                    <span className="absolute top-3 left-3 bg-red-600 text-white text-3xs font-black px-2 py-0.5 rounded-sm">
                       -{discountPercent}% OFF
                     </span>
 
@@ -321,7 +321,7 @@ export default function AmazonShowcase({
                           {formatPrice(p.price)}
                         </span>
                         {p.originalPrice && (
-                          <span className="text-[10px] text-slate-400 line-through">
+                          <span className="text-3xs text-slate-400 line-through">
                             {formatPrice(p.originalPrice)}
                           </span>
                         )}
@@ -329,7 +329,7 @@ export default function AmazonShowcase({
 
                       {/* Dynamic Claimed Progress Bar */}
                       <div className="space-y-1">
-                        <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
+                        <div className="flex justify-between items-center text-3xs font-bold text-slate-500">
                           <span>{claimed}% claimed</span>
                           <span className="text-amber-600">Hurry up!</span>
                         </div>
@@ -364,9 +364,9 @@ export default function AmazonShowcase({
                 <Award size={18} className="text-[#f68b1e]" />
                 <span>Olimart Best Sellers in Uganda</span>
               </h2>
-              <p className="text-[11px] text-slate-400 font-bold">Uganda's hourly top sellers. Based on dynamic sales and fast boda dispatches.</p>
+              <p className="text-xs text-slate-400 font-bold">Uganda's hourly top sellers. Based on dynamic sales and fast boda dispatches.</p>
             </div>
-            <span className="text-[10px] font-black text-[#f68b1e] bg-orange-50 dark:bg-orange-950/40 px-2.5 py-1 rounded-sm border border-orange-100 dark:border-orange-900/30">
+            <span className="text-3xs font-black text-[#f68b1e] bg-orange-50 dark:bg-orange-950/40 px-2.5 py-1 rounded-sm border border-orange-100 dark:border-orange-900/30">
               ⚡ LIVE SALES
             </span>
           </div>
@@ -393,13 +393,13 @@ export default function AmazonShowcase({
                         className="max-h-24 object-contain group-hover:scale-105 transition-transform duration-200" 
                         referrerPolicy="no-referrer"
                       />
-                      <span className="absolute top-2 left-2 bg-slate-900 text-white text-[9px] font-black px-2 py-0.5 rounded-sm">
+                      <span className="absolute top-2 left-2 bg-slate-900 text-white text-3xs font-black px-2 py-0.5 rounded-sm">
                         Rank #{rank}
                       </span>
                     </div>
 
                     <div className="space-y-1 text-left">
-                      <p className="text-[9px] font-bold text-orange-500 uppercase tracking-wider">{p.brand}</p>
+                      <p className="text-3xs font-bold text-orange-500 uppercase tracking-wider">{p.brand}</p>
                       <h4 className="font-bold text-xs text-slate-800 dark:text-slate-200 line-clamp-2 group-hover:text-[#f68b1e] transition-colors leading-tight min-h-[32px]">
                         {p.title}
                       </h4>
@@ -408,13 +408,13 @@ export default function AmazonShowcase({
                       <div className="flex items-center gap-0.5 text-yellow-500 text-xs">
                         <span>★</span>
                         <span className="text-slate-600 dark:text-slate-300 font-bold ml-0.5">{p.rating}</span>
-                        <span className="text-slate-400 font-bold text-[10px]">({p.reviewsCount})</span>
+                        <span className="text-slate-400 font-bold text-3xs">({p.reviewsCount})</span>
                       </div>
 
                       <div className="flex items-baseline gap-1.5">
                         <span className="text-xs font-black text-slate-950 dark:text-white">{formatPrice(p.price)}</span>
                         {p.originalPrice && (
-                          <span className="text-[10px] line-through text-slate-400">{formatPrice(p.originalPrice)}</span>
+                          <span className="text-3xs line-through text-slate-400">{formatPrice(p.originalPrice)}</span>
                         )}
                       </div>
                     </div>
@@ -433,7 +433,7 @@ export default function AmazonShowcase({
             </div>
             <div>
               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Fast Courier Delivery</h4>
-              <p className="text-[11px] text-slate-400 font-semibold mt-1 leading-normal">
+              <p className="text-xs text-slate-400 font-semibold mt-1 leading-normal">
                 Order lightweight or bulky items and enjoy transparent dispatch via local boda-bodas straight to your doorstep.
               </p>
             </div>
@@ -445,7 +445,7 @@ export default function AmazonShowcase({
             </div>
             <div>
               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Pay on Delivery Guarantee</h4>
-              <p className="text-[11px] text-slate-400 font-semibold mt-1 leading-normal">
+              <p className="text-xs text-slate-400 font-semibold mt-1 leading-normal">
                 Inspect items on pickup. Accept or reject instantly without payment risk. Supporting MTN MoMo & Airtel Money.
               </p>
             </div>
@@ -457,7 +457,7 @@ export default function AmazonShowcase({
             </div>
             <div>
               <h4 className="font-extrabold text-sm text-slate-900 dark:text-white uppercase tracking-wider">Hassle-Free Returns</h4>
-              <p className="text-[11px] text-slate-400 font-semibold mt-1 leading-normal">
+              <p className="text-xs text-slate-400 font-semibold mt-1 leading-normal">
                 Wrong size or incorrect description? Hand back the package immediately to the dispatch rider for prompt full refund.
               </p>
             </div>

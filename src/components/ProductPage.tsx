@@ -330,18 +330,18 @@ export default function ProductPage({
           <div className="grid grid-cols-3 gap-3">
             <div className="bg-emerald-50/40 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40 p-3 sm:p-4 rounded-2xl text-center space-y-1">
               <Truck className="text-emerald-600 dark:text-emerald-400 mx-auto mb-1" size={18} />
-              <p className="text-[10px] sm:text-xs font-black text-slate-800 dark:text-slate-200">Express Delivery</p>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500">Uganda-wide service</p>
+              <p className="text-3xs sm:text-xs font-black text-slate-800 dark:text-slate-200">Express Delivery</p>
+              <p className="text-3xs text-slate-400 dark:text-slate-500">Uganda-wide service</p>
             </div>
             <div className="bg-orange-50/40 dark:bg-orange-950/20 border border-orange-100 dark:border-orange-900/40 p-3 sm:p-4 rounded-2xl text-center space-y-1">
               <Coins className="text-orange-500 dark:text-orange-400 mx-auto mb-1" size={18} />
-              <p className="text-[10px] sm:text-xs font-black text-slate-800 dark:text-slate-200">Pay on Delivery</p>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500">Momo / Cash payment</p>
+              <p className="text-3xs sm:text-xs font-black text-slate-800 dark:text-slate-200">Pay on Delivery</p>
+              <p className="text-3xs text-slate-400 dark:text-slate-500">Momo / Cash payment</p>
             </div>
             <div className="bg-blue-50/40 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40 p-3 sm:p-4 rounded-2xl text-center space-y-1">
               <ShieldCheck className="text-blue-600 dark:text-blue-400 mx-auto mb-1" size={18} />
-              <p className="text-[10px] sm:text-xs font-black text-slate-800 dark:text-slate-200">Genuine Guarantee</p>
-              <p className="text-[9px] text-slate-400 dark:text-slate-500">100% Original goods</p>
+              <p className="text-3xs sm:text-xs font-black text-slate-800 dark:text-slate-200">Genuine Guarantee</p>
+              <p className="text-3xs text-slate-400 dark:text-slate-500">100% Original goods</p>
             </div>
           </div>
         </div>
@@ -352,16 +352,16 @@ export default function ProductPage({
             
             {/* Brands and Official Tag */}
             <div className="flex items-center gap-2.5">
-              <span className="bg-orange-500 text-white font-black text-[9px] sm:text-[10px] uppercase px-3 py-1 rounded-lg tracking-wider shadow-xs">
+              <span className="bg-orange-500 text-white font-black text-3xs sm:text-3xs uppercase px-3 py-1 rounded-lg tracking-wider shadow-xs">
                 {product.brand} Official
               </span>
               {product.isOfficial && (
-                <span className="bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 font-extrabold text-[9px] sm:text-[10px] uppercase px-2.5 py-1 rounded-md flex items-center gap-1">
+                <span className="bg-blue-50 text-blue-600 dark:bg-blue-950/30 dark:text-blue-400 font-extrabold text-3xs sm:text-3xs uppercase px-2.5 py-1 rounded-md flex items-center gap-1">
                   <CheckCircle size={10} fill="currentColor" className="text-blue-600 dark:text-blue-400" />
                   Verified Store
                 </span>
               )}
-              <span className="text-[10px] font-black text-emerald-600 dark:text-emerald-400 uppercase">
+              <span className="text-3xs font-black text-emerald-600 dark:text-emerald-400 uppercase">
                 ● In Stock
               </span>
             </div>
@@ -394,7 +394,7 @@ export default function ProductPage({
                 return (
                   <span 
                     key={i} 
-                    className={`text-[10px] font-extrabold px-2.5 py-1.5 rounded-xs tracking-wide ${
+                    className={`text-3xs font-extrabold px-2.5 py-1.5 rounded-xs tracking-wide ${
                       isAmazonChoice 
                         ? 'bg-slate-900 text-white dark:bg-slate-800' 
                         : isBestSeller 
@@ -416,7 +416,7 @@ export default function ProductPage({
             {/* Pricing Details */}
             <div className="p-4 sm:p-5 bg-slate-50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/80 rounded-2xl flex flex-wrap items-center justify-between gap-4">
               <div className="space-y-1">
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide">Discounted Price</p>
+                <p className="text-3xs font-bold text-slate-400 uppercase tracking-wide">Discounted Price</p>
                 <div className="flex items-baseline gap-2.5">
                   <span className="text-xl sm:text-2xl font-black text-orange-600 dark:text-orange-500">
                     {formatPrice(adjustedPrice)}
@@ -431,7 +431,7 @@ export default function ProductPage({
 
               {product.originalPrice && (
                 <div className="bg-red-50 dark:bg-red-950/30 border border-red-100 dark:border-red-900/40 rounded-xl px-3.5 py-2 text-right">
-                  <p className="text-[9px] font-bold text-red-500 uppercase tracking-wider">Total Saving</p>
+                  <p className="text-3xs font-bold text-red-500 uppercase tracking-wider">Total Saving</p>
                   <p className="text-xs sm:text-sm font-black text-red-600 dark:text-red-400">
                     {formatPrice(product.originalPrice - adjustedPrice)} ({product.discountBadge})
                   </p>
@@ -442,14 +442,14 @@ export default function ProductPage({
             {/* JUMIA-STYLE SALES INSIGHTS & REGIONAL STOCK ALARM ALERT (Requirement: add sales insights on each product) */}
             <div className="p-4 bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 rounded-2xl text-xs space-y-2.5 text-left">
               <div className="flex items-center justify-between">
-                <span className="flex items-center gap-1.5 font-black text-[#f68b1e] uppercase text-[10px] tracking-wider">
+                <span className="flex items-center gap-1.5 font-black text-[#f68b1e] uppercase text-3xs tracking-wider">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
                   </span>
                   Live Demand & Sales Insights
                 </span>
-                <span className="bg-[#f68b1e]/10 text-[#f68b1e] text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border border-[#f68b1e]/20">
+                <span className="bg-[#f68b1e]/10 text-[#f68b1e] text-3xs font-black uppercase px-2 py-0.5 rounded-lg border border-[#f68b1e]/20">
                   Global Platform
                 </span>
               </div>
@@ -458,14 +458,14 @@ export default function ProductPage({
                 <p className="font-bold text-slate-800 dark:text-slate-200">
                   ⚡ Highly Demanded Item in <span className="underline decoration-wavy decoration-[#f68b1e]">{localStorage.getItem('olimart_selected_location') || 'Kampala (Central)'}</span>!
                 </p>
-                <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
                   Due to high order volume and search interest from users in this region, stock levels are dropping fast.
                 </p>
               </div>
 
               {/* Progress Bar of Sold Items */}
               <div className="space-y-1">
-                <div className="flex justify-between text-[10px] text-slate-400 font-extrabold uppercase">
+                <div className="flex justify-between text-3xs text-slate-400 font-extrabold uppercase">
                   <span>Stock Exhaustion State</span>
                   <span className="text-[#f68b1e]">85% claimed</span>
                 </div>
@@ -475,18 +475,18 @@ export default function ProductPage({
               </div>
 
               {/* Dynamic Real-time stock status based on actual product stock count */}
-              <div className="bg-white dark:bg-slate-900 border border-amber-150 dark:border-amber-950/40 p-2 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 flex items-center justify-between">
+              <div className="bg-white dark:bg-slate-900 border border-amber-150 dark:border-amber-950/40 p-2 rounded-xl text-3xs font-bold text-slate-600 dark:text-slate-400 flex items-center justify-between">
                 <div className="flex items-center gap-1">
                   <span>🕒 Regional Stock Left:</span>
                   <span className="text-red-600 font-black text-xs">{(product.reviewsCount ? (product.reviewsCount % 12) + 2 : 5)} pieces left</span>
                 </div>
-                <span className="text-[9px] text-slate-400 font-mono">Region: Active Geo-lock Node</span>
+                <span className="text-3xs text-slate-400 font-mono">Region: Active Geo-lock Node</span>
               </div>
             </div>
 
             {/* Selected Seller / Merchant details (Requirement 1 & 3) */}
             <div className="p-3.5 bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/80 rounded-2xl flex flex-col gap-1 text-xs">
-              <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
                 <span>Selected Merchant offer</span>
                 <span className="text-orange-600 dark:text-orange-400 font-black">Fast Dispatch</span>
               </div>
@@ -495,19 +495,19 @@ export default function ProductPage({
                   <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs sm:text-sm">
                     Sold by: <span className="text-orange-600 dark:text-orange-400 hover:underline cursor-pointer font-black">{currentVendor ? currentVendor.name : (product.vendors && product.vendors[0]?.name) || `${product.brand} Official Outlet`}</span>
                   </p>
-                  <p className="text-[10px] text-slate-400 font-semibold mt-0.5">
+                  <p className="text-3xs text-slate-400 font-semibold mt-0.5">
                     Ships from: <strong className="text-slate-600 dark:text-slate-400 font-bold">{currentVendor ? currentVendor.location : (product.vendors && product.vendors[0]?.location) || 'Kampala (Central)'}</strong>
                   </p>
                 </div>
-                <div className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 px-3 py-1.5 rounded-xl text-[10px]">
+                <div className="flex items-center gap-3 bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700/60 px-3 py-1.5 rounded-xl text-3xs">
                   <div className="text-center">
-                    <span className="block text-yellow-500 font-black text-[11px]">★ {currentVendor ? currentVendor.rating : (product.vendors && product.vendors[0]?.rating) || 4.8}</span>
-                    <span className="text-[8px] text-slate-400 uppercase font-bold">Seller Rating</span>
+                    <span className="block text-yellow-500 font-black text-xs">★ {currentVendor ? currentVendor.rating : (product.vendors && product.vendors[0]?.rating) || 4.8}</span>
+                    <span className="text-4xs text-slate-400 uppercase font-bold">Seller Rating</span>
                   </div>
                   <div className="w-px bg-slate-100 dark:bg-slate-700 h-6"></div>
                   <div className="text-center">
-                    <span className="block text-emerald-500 font-black text-[11px]">★ {currentVendor ? (currentVendor.deliveryRating || 4.7) : (product.vendors && product.vendors[0]?.deliveryRating) || 4.6}</span>
-                    <span className="text-[8px] text-slate-400 uppercase font-bold">Delivery Rating</span>
+                    <span className="block text-emerald-500 font-black text-xs">★ {currentVendor ? (currentVendor.deliveryRating || 4.7) : (product.vendors && product.vendors[0]?.deliveryRating) || 4.6}</span>
+                    <span className="text-4xs text-slate-400 uppercase font-bold">Delivery Rating</span>
                   </div>
                 </div>
               </div>
@@ -518,7 +518,7 @@ export default function ProductPage({
               <div className="space-y-3.5 border-t border-b border-slate-100 dark:border-slate-800 py-3.5">
                 {product.variations.map((v) => (
                   <div key={v.name} className="space-y-1.5">
-                    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                    <span className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                       Select {v.name}
                     </span>
                     <div className="flex flex-wrap gap-2">
@@ -547,7 +547,7 @@ export default function ProductPage({
                             }`}
                           >
                             <span>{option}</span>
-                            {modifierLabel && <span className="text-[9px] text-orange-500 font-bold">{modifierLabel}</span>}
+                            {modifierLabel && <span className="text-3xs text-orange-500 font-bold">{modifierLabel}</span>}
                           </button>
                         );
                       })}
@@ -565,7 +565,7 @@ export default function ProductPage({
                     <CheckCircle size={14} className="text-blue-600" />
                     <span>Compare Offers ({product.vendors.length} Sellers)</span>
                   </h4>
-                  <span className="text-[9px] font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-md uppercase">
+                  <span className="text-3xs font-extrabold text-blue-600 bg-blue-50 dark:bg-blue-950/30 px-2 py-0.5 rounded-md uppercase">
                     Direct Importers & Local Stores
                   </span>
                 </div>
@@ -579,13 +579,13 @@ export default function ProductPage({
                           <p className="font-extrabold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                             {v.name}
                             {v.isOfficial && (
-                              <span className="bg-blue-600 text-[8px] text-white font-black px-1 rounded uppercase tracking-wider">Official</span>
+                              <span className="bg-blue-600 text-4xs text-white font-black px-1 rounded uppercase tracking-wider">Official</span>
                             )}
                           </p>
-                          <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-400 font-bold">
+                          <div className="flex flex-col sm:flex-row sm:items-center gap-x-2 gap-y-0.5 text-3xs text-slate-400 font-bold">
                             <span className="text-yellow-500 flex items-center gap-0.5">
                               <span>Seller: ★ {v.rating}</span>
-                              <span className="text-[9px] text-slate-400">({v.reviewsCount})</span>
+                              <span className="text-3xs text-slate-400">({v.reviewsCount})</span>
                             </span>
                             <span className="hidden sm:inline">&bull;</span>
                             <span className="text-emerald-500 flex items-center gap-0.5">
@@ -601,7 +601,7 @@ export default function ProductPage({
                         <div className="flex items-center gap-2.5">
                           <div className="text-right">
                             <p className="font-black text-slate-950 dark:text-slate-50">{formatPrice(v.price)}</p>
-                            <p className="text-[10px] text-slate-400 font-semibold">
+                            <p className="text-3xs text-slate-400 font-semibold">
                               {v.shippingFee === 0 ? 'Free Shipping' : `+ ${formatPrice(v.shippingFee)} shipping`}
                             </p>
                           </div>
@@ -610,7 +610,7 @@ export default function ProductPage({
                             onClick={() => {
                               setSelectedVendorId(isSelected ? null : v.id);
                             }}
-                            className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase transition-all cursor-pointer border ${
+                            className={`px-3 py-1.5 rounded-xl text-3xs font-black uppercase transition-all cursor-pointer border ${
                               isSelected
                                 ? 'bg-orange-600 text-white border-orange-600'
                                 : 'bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:bg-slate-50'
@@ -633,14 +633,14 @@ export default function ProductPage({
                   <Truck size={14} className="text-orange-600" />
                   <span>Uganda Shipping Calculator</span>
                 </h4>
-                <span className="text-[9px] font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-md uppercase">
+                <span className="text-3xs font-extrabold text-orange-600 bg-orange-50 dark:bg-orange-950/30 px-2 py-0.5 rounded-md uppercase">
                   Cash on Delivery Eligible
                 </span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-center">
                 <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-slate-400 uppercase">Select Destination District</label>
+                  <label className="text-3xs font-bold text-slate-400 uppercase">Select Destination District</label>
                   <select
                     value={selectedDistrict}
                     onChange={(e) => setSelectedDistrict(e.target.value)}
@@ -653,11 +653,11 @@ export default function ProductPage({
                 </div>
 
                 <div className="p-2.5 bg-white dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700/50 rounded-xl space-y-1">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Estimate cost & speed</p>
+                  <p className="text-3xs font-bold text-slate-400 uppercase">Estimate cost & speed</p>
                   <p className="text-xs font-black text-slate-800 dark:text-slate-100">
                     Shipping Fee: <span className="text-orange-600">{shippingFee === 0 ? 'FREE' : formatPrice(shippingFee)}</span>
                   </p>
-                  <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-3xs font-medium text-slate-500 dark:text-slate-400">
                     Speed: {deliveryDays}
                   </p>
                 </div>
@@ -731,7 +731,7 @@ export default function ProductPage({
                     <Check size={20} />
                   </div>
                   <h5 className="font-bold text-xs text-slate-800 dark:text-slate-100">Order successfully submitted!</h5>
-                  <p className="text-[10px] text-slate-500">
+                  <p className="text-3xs text-slate-500">
                     Olimart sales rep will call you at <strong>{checkoutPhone}</strong> within 15 minutes to confirm delivery dispatch to <strong>{checkoutAddress}</strong>. Thank you for shopping with us!
                   </p>
                 </div>
@@ -739,7 +739,7 @@ export default function ProductPage({
                 <form onSubmit={handleQuickCheckoutSubmit} className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase">Your Name</label>
+                      <label className="text-3xs font-bold text-slate-400 uppercase">Your Name</label>
                       <input
                         type="text"
                         required
@@ -750,7 +750,7 @@ export default function ProductPage({
                       />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[9px] font-bold text-slate-400 uppercase">Phone Number (MTN / Airtel)</label>
+                      <label className="text-3xs font-bold text-slate-400 uppercase">Phone Number (MTN / Airtel)</label>
                       <input
                         type="tel"
                         required
@@ -763,7 +763,7 @@ export default function ProductPage({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Delivery Address / Landmarks</label>
+                    <label className="text-3xs font-bold text-slate-400 uppercase">Delivery Address / Landmarks</label>
                     <input
                       type="text"
                       required
@@ -779,14 +779,14 @@ export default function ProductPage({
                       <button
                         type="button"
                         onClick={() => setCheckoutMoMoNetwork('MTN')}
-                        className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${checkoutMoMoNetwork === 'MTN' ? 'bg-yellow-400 text-slate-900 border border-yellow-500' : 'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800'}`}
+                        className={`px-3 py-1 rounded-lg text-3xs font-black uppercase ${checkoutMoMoNetwork === 'MTN' ? 'bg-yellow-400 text-slate-900 border border-yellow-500' : 'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800'}`}
                       >
                         MTN MoMo
                       </button>
                       <button
                         type="button"
                         onClick={() => setCheckoutMoMoNetwork('Airtel')}
-                        className={`px-3 py-1 rounded-lg text-[9px] font-black uppercase ${checkoutMoMoNetwork === 'Airtel' ? 'bg-red-600 text-white border border-red-700' : 'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800'}`}
+                        className={`px-3 py-1 rounded-lg text-3xs font-black uppercase ${checkoutMoMoNetwork === 'Airtel' ? 'bg-red-600 text-white border border-red-700' : 'bg-slate-100 text-slate-500 border border-slate-200 dark:bg-slate-800'}`}
                       >
                         Airtel Money
                       </button>
@@ -794,7 +794,7 @@ export default function ProductPage({
 
                     <button
                       type="submit"
-                      className="bg-red-600 hover:bg-red-700 text-white text-[10px] font-black uppercase px-4 py-2 rounded-xl shadow-xs cursor-pointer"
+                      className="bg-red-600 hover:bg-red-700 text-white text-3xs font-black uppercase px-4 py-2 rounded-xl shadow-xs cursor-pointer"
                     >
                       Confirm Order ({formatPrice(adjustedPrice * quantity + shippingFee)})
                     </button>
@@ -840,7 +840,7 @@ export default function ProductPage({
                 key={idx} 
                 className="flex justify-between items-center p-3 bg-slate-50 dark:bg-slate-950/20 rounded-xl border border-slate-100/40 dark:border-slate-800/50 text-xs"
               >
-                <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-[10px]">{item.key}</span>
+                <span className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider text-3xs">{item.key}</span>
                 <span className="font-extrabold text-slate-800 dark:text-slate-200 text-right max-w-[200px] sm:max-w-xs">{item.value}</span>
               </div>
             ))}
@@ -900,7 +900,7 @@ export default function ProductPage({
                         <Star key={i} size={14} fill={i < Math.floor(product.rating) ? 'currentColor' : 'none'} stroke="currentColor" />
                       ))}
                     </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase mt-0.5">Average Score</p>
+                    <p className="text-3xs font-bold text-slate-400 uppercase mt-0.5">Average Score</p>
                   </div>
                 </div>
 
@@ -946,14 +946,14 @@ export default function ProductPage({
 
               {/* Submit Review Form */}
               <form onSubmit={handleAddReview} className="p-5 bg-orange-50/20 dark:bg-slate-950/10 border border-orange-100/50 dark:border-slate-800 rounded-2xl space-y-3">
-                <h5 className="text-[10px] font-black text-orange-700 dark:text-orange-400 uppercase tracking-wider flex items-center gap-1">
+                <h5 className="text-3xs font-black text-orange-700 dark:text-orange-400 uppercase tracking-wider flex items-center gap-1">
                   <MessageSquare size={12} />
                   <span>Write a verified customer review</span>
                 </h5>
 
                 <div className="space-y-2 text-xs">
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Your Name</label>
+                    <label className="text-3xs font-bold text-slate-400 uppercase">Your Name</label>
                     <input
                       type="text"
                       required
@@ -965,7 +965,7 @@ export default function ProductPage({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Product Star Rating</label>
+                    <label className="text-3xs font-bold text-slate-400 uppercase">Product Star Rating</label>
                     <div className="flex items-center gap-1.5 py-1">
                       {Array.from({ length: 5 }).map((_, i) => (
                         <button
@@ -981,7 +981,7 @@ export default function ProductPage({
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-slate-400 uppercase">Your Review Comment</label>
+                    <label className="text-3xs font-bold text-slate-400 uppercase">Your Review Comment</label>
                     <textarea
                       required
                       placeholder="Share details of your experience with shipping speed, product quality, or local customer support..."
@@ -994,7 +994,7 @@ export default function ProductPage({
 
                   <button
                     type="submit"
-                    className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-2.5 rounded-xl transition-colors cursor-pointer text-[10px] uppercase tracking-wider shadow-xs"
+                    className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black py-2.5 rounded-xl transition-colors cursor-pointer text-3xs uppercase tracking-wider shadow-xs"
                   >
                     Submit Verified Review
                   </button>
@@ -1013,15 +1013,15 @@ export default function ProductPage({
                   <div key={idx} className="p-4 sm:p-5 border border-slate-100 dark:border-slate-800 rounded-2xl bg-slate-50/40 dark:bg-slate-950/10 space-y-2">
                     <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-400">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-black flex items-center justify-center text-[10px]">
+                        <div className="w-7 h-7 rounded-full bg-slate-200 text-slate-600 font-black flex items-center justify-center text-3xs">
                           {rev.name.substring(0, 2).toUpperCase()}
                         </div>
                         <div>
                           <p className="font-black text-slate-800 dark:text-slate-200">{rev.name}</p>
-                          <p className="text-[9px] font-medium text-slate-400">Verified Consumer • {rev.location}</p>
+                          <p className="text-3xs font-medium text-slate-400">Verified Consumer • {rev.location}</p>
                         </div>
                       </div>
-                      <span className="text-[10px] font-medium">{rev.date}</span>
+                      <span className="text-3xs font-medium">{rev.date}</span>
                     </div>
 
                     <div className="flex items-center gap-1">
@@ -1030,7 +1030,7 @@ export default function ProductPage({
                           <Star key={i} size={10} fill={i < rev.rating ? 'currentColor' : 'none'} stroke="currentColor" />
                         ))}
                       </div>
-                      <span className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-950 text-[8px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                      <span className="bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-950 text-4xs uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
                         <CheckCircle size={8} fill="currentColor" className="text-white dark:text-emerald-400" />
                         Verified Purchase
                       </span>
@@ -1040,7 +1040,7 @@ export default function ProductPage({
                       {rev.text}
                     </p>
 
-                    <div className="flex items-center gap-4 text-[10px] font-bold text-slate-400 pt-1 border-t border-slate-100/50 dark:border-slate-800/30">
+                    <div className="flex items-center gap-4 text-3xs font-bold text-slate-400 pt-1 border-t border-slate-100/50 dark:border-slate-800/30">
                       <button 
                         onClick={() => {
                           const updated = [...reviewsList];
@@ -1086,7 +1086,7 @@ export default function ProductPage({
               >
                 <div className="relative bg-slate-50 dark:bg-slate-950/40 rounded-xl p-3 flex items-center justify-center overflow-hidden aspect-square mb-2">
                   {p.discountBadge && (
-                    <span className="absolute top-1.5 left-1.5 bg-red-600 text-white font-black text-[9px] px-1.5 py-0.5 rounded-md z-10">
+                    <span className="absolute top-1.5 left-1.5 bg-red-600 text-white font-black text-3xs px-1.5 py-0.5 rounded-md z-10">
                       {p.discountBadge}
                     </span>
                   )}
@@ -1099,13 +1099,13 @@ export default function ProductPage({
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-[9px] font-bold text-slate-400 uppercase">{p.brand}</p>
-                  <h4 className="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-2 h-8 group-hover:text-orange-600 transition-colors">
+                  <p className="text-3xs font-bold text-slate-400 uppercase">{p.brand}</p>
+                  <h4 className="text-xs sm:text-xs font-bold text-slate-800 dark:text-slate-100 line-clamp-2 h-8 group-hover:text-orange-600 transition-colors">
                     {p.title}
                   </h4>
                   <div className="flex items-center gap-1 pt-1">
                     <Star size={10} fill="#eab308" stroke="none" />
-                    <span className="text-[10px] font-black text-slate-700 dark:text-slate-300">{p.rating}</span>
+                    <span className="text-3xs font-black text-slate-700 dark:text-slate-300">{p.rating}</span>
                   </div>
                   <p className="text-xs sm:text-sm font-black text-slate-900 dark:text-slate-50 pt-1">
                     {formatPrice(p.price)}
