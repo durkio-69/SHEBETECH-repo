@@ -12,7 +12,9 @@ import {
   DokanVendor, 
   WithdrawalRequest,
   DokanOrder,
-  DokanRider
+  DokanRider,
+  getAdminSettings,
+  isItemBulky
 } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import { 
@@ -48,6 +50,7 @@ interface VendorAppProps {
 }
 
 export default function VendorApp({ products, setProducts, formatPrice }: VendorAppProps) {
+  const activeAdminSettings = getAdminSettings();
   // Current session vendor (we simulate vendor logs)
   const [currentVendor, setCurrentVendor] = useState<DokanVendor | null>(null);
   const [allVendors, setAllVendors] = useState<DokanVendor[]>([]);
@@ -92,6 +95,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [prodBrand, setProdBrand] = useState('Tecno');
   const [prodImage, setProdImage] = useState('');
   const [prodTags, setProdTags] = useState('Dokan Pro, Verified');
+  const [prodType, setProdType] = useState<'light' | 'bulky'>('light');
 
   // Withdrawal form states
   const [withdrawAmount, setWithdrawAmount] = useState('');
@@ -258,6 +262,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       stockCount: parseInt(prodStockCount) || 15,
       isTrendingHigh: prodIsTrending,
       tags: (prodTags || '').split(',').map(t => t.trim()),
+      productType: prodType,
       vendors: [
         {
           id: currentVendor.id,
@@ -283,6 +288,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setProdImage('');
     setProdStockCount('15');
     setProdIsTrending(true);
+    setProdType('light');
     alert(`Success: "${prodTitle}" added to main catalog with ${newProd.stockCount} units in stock.`);
   };
 
@@ -1343,6 +1349,19 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
 
               <div className="space-y-1">
+                <label className="text-slate-500 font-bold">Weight / Shipping Class</label>
+                <select
+                  value={prodType}
+                  onChange={(e) => setProdType(e.target.value as 'bulky' | 'light')}
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold text-orange-600"
+                >
+                  <option value="light">🪶 Light (Comm: {activeAdminSettings.lightCommission}%, Boda: {activeAdminSettings.lightTransportRate} Shs/km)</option>
+                  <option value="bulky">📦 Bulky (Comm: {activeAdminSettings.bulkyCommission}%, Boda: {activeAdminSettings.bulkyTransportRate} Shs/km)</option>
+                </select>
+                <p className="text-[9px] text-slate-400">Controls checkout boda shipping tariffs & seller commissions.</p>
+              </div>
+
+              <div className="space-y-1">
                 <label className="text-slate-500 font-bold block">Product Image</label>
                 <div className="flex gap-2">
                   <input
@@ -1471,7 +1490,17 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                         />
                         <div className="flex-1 space-y-1">
                           <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
-                          <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span className="text-[10px] text-slate-400 capitalize">Category: {p.category}</span>
+                            <span className="text-slate-300 dark:text-slate-700">|</span>
+                            <span className={`text-[9px] font-black uppercase px-1.5 py-0.2 rounded border ${
+                              isItemBulky(p)
+                                ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/25 dark:text-amber-300 dark:border-amber-900/40'
+                                : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/25 dark:text-indigo-300 dark:border-indigo-900/40'
+                            }`}>
+                              {isItemBulky(p) ? '📦 Bulky' : '🪶 Light'} ({isItemBulky(p) ? activeAdminSettings.bulkyCommission : activeAdminSettings.lightCommission}% Comm)
+                            </span>
+                          </div>
                           
                           {/* Low stock badge with yellow/red color coding depending on intensity */}
                           {isTrending && isLowStock && (
