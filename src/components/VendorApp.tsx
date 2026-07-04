@@ -14,7 +14,16 @@ import {
   DokanOrder,
   DokanRider,
   getAdminSettings,
-  isItemBulky
+  isItemBulky,
+  getDokanCoupons,
+  saveDokanCoupons,
+  DokanCoupon,
+  getDokanShippingZones,
+  saveDokanShippingZones,
+  DokanShippingZone,
+  getDokanRefunds,
+  saveDokanRefunds,
+  DokanRefundRequest
 } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import { 
@@ -39,7 +48,10 @@ import {
   PackageCheck,
   Tag,
   Store,
-  ArrowUpRight
+  ArrowUpRight,
+  Ticket,
+  Truck,
+  RotateCcw
 } from 'lucide-react';
 import { Product } from '../types';
 
@@ -57,8 +69,32 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [orders, setOrders] = useState<DokanOrder[]>([]);
   const [riders, setRiders] = useState<DokanRider[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet' | 'coupons' | 'shipping' | 'refunds'>('dashboard');
   const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<string | null>(null);
+
+  // Dokan Pro feature state: coupons, shipping zones, refund requests
+  const [coupons, setCoupons] = useState<DokanCoupon[]>([]);
+  const [shippingZones, setShippingZones] = useState<DokanShippingZone[]>([]);
+  const [refunds, setRefunds] = useState<DokanRefundRequest[]>([]);
+
+  // New coupon form state
+  const [couponCode, setCouponCode] = useState('');
+  const [couponType, setCouponType] = useState<'percentage' | 'fixed'>('percentage');
+  const [couponValue, setCouponValue] = useState('');
+  const [couponMinOrder, setCouponMinOrder] = useState('0');
+  const [couponMaxDiscount, setCouponMaxDiscount] = useState('');
+  const [couponUsageLimit, setCouponUsageLimit] = useState('0');
+  const [couponExpiry, setCouponExpiry] = useState('');
+
+  // New shipping zone form state
+  const [zoneName, setZoneName] = useState('');
+  const [zoneDistricts, setZoneDistricts] = useState('');
+  const [zoneRateType, setZoneRateType] = useState<'flat' | 'per_km'>('flat');
+  const [zoneFlatFee, setZoneFlatFee] = useState('');
+  const [zonePerKmRate, setZonePerKmRate] = useState('');
+  const [zoneMinFee, setZoneMinFee] = useState('');
+  const [zoneFreeThreshold, setZoneFreeThreshold] = useState('');
+  const [zoneEstimatedDays, setZoneEstimatedDays] = useState('1');
 
   // Registration states
   const [ownerName, setOwnerName] = useState('');
@@ -179,6 +215,16 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       saveDokanVendors(updated);
       setAllVendors(updated);
       setCurrentVendor(newVendor);
+
+      // Notify the new vendor AND alert the Super Admin that a store is pending approval
+      emitEventDrivenNotifications('vendor_registration', {
+        storeName: storeNameWithId,
+        email,
+        phone,
+        uniqueId: uniqueSystemId,
+        accessLink: 'https://olimart.ug/vendor/dashboard'
+      });
+
       alert(`🎉 Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
     } 
     else if (regRole === 'delivery') {
