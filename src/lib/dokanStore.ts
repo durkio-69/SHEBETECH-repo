@@ -406,6 +406,7 @@ const INITIAL_TAGS = ['Best Seller', 'Official Warranty', 'Flash Deal', 'Ugandan
 
 // Getters and Setters from localStorage
 export function getDokanVendors(): DokanVendor[] {
+  setTimeout(() => { syncVendorsWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_vendors');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_vendors', JSON.stringify(INITIAL_VENDORS));
@@ -414,6 +415,11 @@ export function getDokanVendors(): DokanVendor[] {
 
 export function saveDokanVendors(vendors: DokanVendor[]) {
   localStorage.setItem('dokan_vendors', JSON.stringify(vendors));
+  fetch("/api/db/vendors/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(vendors)
+  }).catch(err => console.warn("Failed to sync vendors on save:", err));
 }
 
 export function getDokanWithdrawals(): WithdrawalRequest[] {
@@ -519,6 +525,7 @@ const INITIAL_RIDERS: DokanRider[] = [
 ];
 
 export function getDokanRiders(): DokanRider[] {
+  setTimeout(() => { syncRidersWithDatabase().catch(() => {}); }, 100);
   const saved = localStorage.getItem('dokan_riders');
   if (saved) return JSON.parse(saved);
   localStorage.setItem('dokan_riders', JSON.stringify(INITIAL_RIDERS));
@@ -527,6 +534,11 @@ export function getDokanRiders(): DokanRider[] {
 
 export function saveDokanRiders(riders: DokanRider[]) {
   localStorage.setItem('dokan_riders', JSON.stringify(riders));
+  fetch("/api/db/riders/sync", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(riders)
+  }).catch(err => console.warn("Failed to sync riders on save:", err));
 }
 
 export interface AdminLog {
@@ -580,5 +592,139 @@ export function addAdminLog(action: string, details: string, severity: 'info' | 
   logs.unshift(newLog);
   saveAdminLogs(logs);
   window.dispatchEvent(new Event('storage'));
+}
+
+// ==========================================
+// Neon PostgreSQL Database Synchronizer
+// ==========================================
+
+let isSyncingVendors = false;
+export async function syncVendorsWithDatabase() {
+  if (isSyncingVendors) return;
+  isSyncingVendors = true;
+  try {
+    const res = await fetch("/api/db/vendors");
+    if (res.ok) {
+      const serverVendors = await res.json();
+      if (serverVendors && serverVendors.length > 0) {
+        const localVendors = getDokanVendors();
+        const serverMap = new Map(serverVendors.map((v: any) => [v.id, v]));
+        const merged = [...localVendors];
+        let changed = false;
+
+        merged.forEach((lv, index) => {
+          const sv = serverMap.get(lv.id);
+          if (sv) {
+            const updated = Object.assign({}, lv, sv) as DokanVendor;
+            if (JSON.stringify(lv) !== JSON.stringify(updated)) {
+              merged[index] = updated;
+              changed = true;
+            }
+          }
+        });
+
+        const localIds = new Set(localVendors.map(v => v.id));
+        serverVendors.forEach((sv: any) => {
+          if (!localIds.has(sv.id)) {
+            merged.push(sv);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('dokan_vendors', JSON.stringify(merged));
+          window.dispatchEvent(new Event('storage'));
+        }
+
+        // Send any local-only vendors to database
+        const serverIds = new Set(serverVendors.map((v: any) => v.id));
+        const localOnly = localVendors.filter(lv => !serverIds.has(lv.id));
+        if (localOnly.length > 0) {
+          await fetch("/api/db/vendors/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(localOnly)
+          });
+        }
+      } else {
+        // Database is empty, seed it with our initial vendors
+        const localVendors = getDokanVendors();
+        await fetch("/api/db/vendors/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localVendors)
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Neon Database vendor sync connection deferred:", err);
+  } finally {
+    isSyncingVendors = false;
+  }
+}
+
+let isSyncingRiders = false;
+export async function syncRidersWithDatabase() {
+  if (isSyncingRiders) return;
+  isSyncingRiders = true;
+  try {
+    const res = await fetch("/api/db/riders");
+    if (res.ok) {
+      const serverRiders = await res.json();
+      if (serverRiders && serverRiders.length > 0) {
+        const localRiders = getDokanRiders();
+        const serverMap = new Map(serverRiders.map((r: any) => [r.id, r]));
+        const merged = [...localRiders];
+        let changed = false;
+
+        merged.forEach((lr, index) => {
+          const sr = serverMap.get(lr.id);
+          if (sr) {
+            const updated = Object.assign({}, lr, sr) as DokanRider;
+            if (JSON.stringify(lr) !== JSON.stringify(updated)) {
+              merged[index] = updated;
+              changed = true;
+            }
+          }
+        });
+
+        const localIds = new Set(localRiders.map(r => r.id));
+        serverRiders.forEach((sr: any) => {
+          if (!localIds.has(sr.id)) {
+            merged.push(sr);
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          localStorage.setItem('dokan_riders', JSON.stringify(merged));
+          window.dispatchEvent(new Event('storage'));
+        }
+
+        // Send any local-only riders to database
+        const serverIds = new Set(serverRiders.map((r: any) => r.id));
+        const localOnly = localRiders.filter(lr => !serverIds.has(lr.id));
+        if (localOnly.length > 0) {
+          await fetch("/api/db/riders/sync", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(localOnly)
+          });
+        }
+      } else {
+        // Database is empty, seed it with our initial riders
+        const localRiders = getDokanRiders();
+        await fetch("/api/db/riders/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(localRiders)
+        });
+      }
+    }
+  } catch (err) {
+    console.warn("Neon Database rider sync connection deferred:", err);
+  } finally {
+    isSyncingRiders = false;
+  }
 }
 

@@ -87,6 +87,37 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   const [adminLogsList, setAdminLogsList] = useState<AdminLog[]>([]);
   const [activeTab, setActiveTab] = useState<'revenue' | 'vendors' | 'withdrawals' | 'orders' | 'catalog' | 'taxonomies' | 'reviews' | 'notifications' | 'database' | 'logs'>('revenue');
 
+  // Vendor filtering and sorting states
+  const [vendorStatusFilter, setVendorStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
+  const [vendorSortOrder, setVendorSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Helper to parse dates safely for sorting
+  const getVendorDate = (v: DokanVendor) => {
+    if ((v as any).createdAt) return new Date((v as any).createdAt).getTime();
+    if (v.id === 'v1') return new Date('2026-06-25T10:00:00Z').getTime();
+    if (v.id === 'v2') return new Date('2026-07-01T15:20:00Z').getTime();
+    if (v.id === 'v3') return new Date('2026-07-03T11:45:00Z').getTime();
+    return new Date('2026-07-02T12:00:00Z').getTime(); // Default fallback
+  };
+
+  const filteredAndSortedVendors = React.useMemo(() => {
+    let list = [...vendors];
+    
+    // Status Filter: approved -> Verified, pending -> New, rejected -> Pending Documentation
+    if (vendorStatusFilter !== 'all') {
+      list = list.filter(v => v.status === vendorStatusFilter);
+    }
+    
+    // Sorting by date of application
+    list.sort((a, b) => {
+      const dateA = getVendorDate(a);
+      const dateB = getVendorDate(b);
+      return vendorSortOrder === 'newest' ? dateB - dateA : dateA - dateB;
+    });
+    
+    return list;
+  }, [vendors, vendorStatusFilter, vendorSortOrder]);
+
   // Security Lock-Screen States
   const [isUnlocked, setIsUnlocked] = useState(() => {
     return sessionStorage.getItem('olimart_admin_unlocked') === 'true';
@@ -779,8 +810,88 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
             Partner Store Management & Dokan Onboarding approvals
           </h3>
 
+          {/* Filtering and Sorting Controls (User Request) */}
+          <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+            
+            {/* Filter by status */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Filter Status</span>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setVendorStatusFilter('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all ${
+                    vendorStatusFilter === 'all'
+                      ? 'bg-orange-600 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-650 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  All ({vendors.length})
+                </button>
+                <button
+                  onClick={() => setVendorStatusFilter('approved')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1 ${
+                    vendorStatusFilter === 'approved'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-emerald-650 dark:text-emerald-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  Verified ({vendors.filter(v => v.status === 'approved').length})
+                </button>
+                <button
+                  onClick={() => setVendorStatusFilter('pending')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1 ${
+                    vendorStatusFilter === 'pending'
+                      ? 'bg-amber-500 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-amber-650 dark:text-amber-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+                  New ({vendors.filter(v => v.status === 'pending').length})
+                </button>
+                <button
+                  onClick={() => setVendorStatusFilter('rejected')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider cursor-pointer transition-all flex items-center gap-1 ${
+                    vendorStatusFilter === 'rejected'
+                      ? 'bg-rose-600 text-white shadow-sm'
+                      : 'bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-rose-650 dark:text-rose-450 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                  Pending Documentation ({vendors.filter(v => v.status === 'rejected').length})
+                </button>
+              </div>
+            </div>
+
+            {/* Sort by Application Date */}
+            <div className="space-y-1.5 shrink-0 w-full sm:w-auto">
+              <span className="text-[10px] font-black uppercase tracking-wider text-slate-400 block">Sort by Application Date</span>
+              <div className="relative">
+                <select
+                  value={vendorSortOrder}
+                  onChange={(e) => setVendorSortOrder(e.target.value as 'newest' | 'oldest')}
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-xs font-extrabold text-slate-800 dark:text-slate-100 px-3 py-2 rounded-xl focus:outline-none focus:border-orange-500 cursor-pointer pr-8 appearance-none w-full sm:w-56"
+                >
+                  <option value="newest">📅 Newest Applied First</option>
+                  <option value="oldest">📅 Oldest Applied First</option>
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-slate-400">
+                  <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
-            {vendors.map(v => (
+            {filteredAndSortedVendors.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 font-bold text-xs">
+                No vendors found matching this filter criteria.
+              </div>
+            ) : (
+              filteredAndSortedVendors.map(v => (
               <div key={v.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <div className="flex items-start gap-3">
                   {v.logo ? (
@@ -898,7 +1009,7 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                   )}
                 </div>
               </div>
-            ))}
+            )))}
           </div>
         </div>
       )}
