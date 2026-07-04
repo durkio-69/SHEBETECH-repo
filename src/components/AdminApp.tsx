@@ -66,11 +66,369 @@ import {
   AlertCircle,
   PlusCircle,
   Send,
-  Store
+  Store,
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  History,
+  FileText,
+  User,
+  MapPin,
+  ShieldCheck,
+  UserCheck
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Product } from '../types';
 import { getDokanNotifications, saveDokanNotifications, emitEventDrivenNotifications, DokanNotification } from '../lib/notificationStore';
 import { RELATIONAL_TABLES, DBTable, DBColumn } from '../lib/databaseSchema';
+
+// Contact history structures
+export interface ContactHistoryEntry {
+  id: string;
+  timestamp: string;
+  type: 'email' | 'sms' | 'call' | 'system';
+  subject: string;
+  message: string;
+  status: 'sent' | 'delivered' | 'failed' | 'completed';
+}
+
+export const INITIAL_CONTACT_HISTORY: Record<string, ContactHistoryEntry[]> = {
+  v1: [
+    {
+      id: 'h-1',
+      timestamp: '2026-06-25T10:15:00Z',
+      type: 'system',
+      subject: 'Merchant Application Approved',
+      message: 'System auto-approved store "Mukwano Industries Online" following credentials audit.',
+      status: 'completed'
+    },
+    {
+      id: 'h-2',
+      timestamp: '2026-06-25T10:16:00Z',
+      type: 'email',
+      subject: 'Welcome to OliMart Vendor Program',
+      message: 'Onboarding pack sent to sales@mukwano.co.ug. Provided credentials for seller backend portal.',
+      status: 'sent'
+    },
+    {
+      id: 'h-3',
+      timestamp: '2026-06-28T14:30:00Z',
+      type: 'call',
+      subject: 'Kampala Logistics Alignment',
+      message: 'Phone alignment with Emmanuel Mukwano. Confirmed dispatch capacity for heavy cargo and bulky detergent orders.',
+      status: 'completed'
+    },
+    {
+      id: 'h-4',
+      timestamp: '2026-06-29T12:05:00Z',
+      type: 'sms',
+      subject: 'First Order Received Notification',
+      message: 'SMS dispatched to 0772 900100: "You have a new order ORD-1004. Please ready items for boda pickup."',
+      status: 'delivered'
+    }
+  ],
+  v2: [
+    {
+      id: 'h-5',
+      timestamp: '2026-07-01T15:25:00Z',
+      type: 'system',
+      subject: 'Brand store approval',
+      message: 'Approved Tecno Official Outlet Kampala. Commission tier set to standard 15%.',
+      status: 'completed'
+    },
+    {
+      id: 'h-6',
+      timestamp: '2026-07-01T15:30:00Z',
+      type: 'email',
+      subject: 'Tecno Authorized Vendor Agreement',
+      message: 'Agreement signed. Contact person Justin Chen confirmed integration of live inventory.',
+      status: 'sent'
+    },
+    {
+      id: 'h-7',
+      timestamp: '2026-07-03T09:12:00Z',
+      type: 'sms',
+      subject: 'Withdrawal Request Alert',
+      message: 'OTP sms confirmation of payout request for Shs 2,380,000 sent to 0702 456789.',
+      status: 'delivered'
+    }
+  ],
+  v3: [
+    {
+      id: 'h-8',
+      timestamp: '2026-07-03T11:45:00Z',
+      type: 'system',
+      subject: 'Application Filed',
+      message: 'Moses Ssebaggala submitted onboarding request for Ssebaggala Mobiles Ltd in category: phones.',
+      status: 'completed'
+    },
+    {
+      id: 'h-9',
+      timestamp: '2026-07-03T11:50:00Z',
+      type: 'email',
+      subject: 'Application Received & Reviewing',
+      message: 'Sent automated response to sseba.mobiles@gmail.com. Requesting submission of Kampala trading license.',
+      status: 'sent'
+    }
+  ]
+};
+
+// Interactive Detailed Component for Vendor Expand
+const VendorExpandedDetail: React.FC<{
+  vendor: DokanVendor;
+  products: Product[];
+  formatPrice: (price: number) => string;
+  contactLogs: ContactHistoryEntry[];
+  onAddLog: (type: 'email' | 'sms' | 'call' | 'system', subject: string, message: string) => void;
+}> = ({ vendor, products, formatPrice, contactLogs = [], onAddLog }) => {
+  const [logType, setLogType] = useState<'email' | 'sms' | 'call' | 'system'>('email');
+  const [subject, setSubject] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSimulating, setIsSimulating] = useState(false);
+
+  // Filter top 5 products matching this vendor
+  const myProducts = React.useMemo(() => {
+    return products
+      .filter(p => p.vendors && p.vendors.some(v => v.id === vendor.id))
+      .sort((a, b) => {
+        if (b.rating !== a.rating) return b.rating - a.rating;
+        return (b.reviewsCount || 0) - (a.reviewsCount || 0);
+      })
+      .slice(0, 5);
+  }, [products, vendor.id]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subject.trim() || !message.trim()) return;
+
+    setIsSimulating(true);
+    // Simulate real communication channel latency for high-quality feel
+    setTimeout(() => {
+      onAddLog(logType, subject, message);
+      setSubject('');
+      setMessage('');
+      setIsSimulating(false);
+    }, 900);
+  };
+
+  return (
+    <div className="pt-4 pb-2 px-4 border-t border-dashed border-slate-200 dark:border-slate-800/80 mt-4 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      
+      {/* COLUMN 1: Detailed Business Profile */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider">
+          <FileText size={14} className="text-orange-500" />
+          <span>Detailed Business Profile</span>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800/60 rounded-2xl p-4 space-y-3.5 text-xs">
+          <div>
+            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Store Classification</p>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="bg-slate-200/60 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-extrabold px-2.5 py-0.5 rounded text-[10px] uppercase">
+                🏷️ {vendor.category || 'general'}
+              </span>
+              <span className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/30 px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-wider">
+                ID: {vendor.id}
+              </span>
+            </div>
+          </div>
+
+          <div>
+            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Business Description</p>
+            <p className="text-slate-600 dark:text-slate-300 font-semibold mt-1 italic">
+              "{vendor.businessSpecifications || 'No specialized corporate specifications registered. Operates as an authorized neighborhood partner store.'}"
+            </p>
+          </div>
+
+          <div className="border-t border-slate-200/50 dark:border-slate-800/50 pt-3 space-y-2">
+            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Payout Ledger Details</p>
+            <div className="grid grid-cols-2 gap-2 text-[11px] font-bold">
+              <div className="bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50">
+                <span className="text-slate-400 block text-[9px] uppercase">Preferred Route</span>
+                <span className="text-slate-800 dark:text-slate-200 font-mono font-black truncate">{vendor.paymentDetails || 'Not set'}</span>
+              </div>
+              <div className="bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50">
+                <span className="text-slate-400 block text-[9px] uppercase">A/C Number</span>
+                <span className="text-slate-800 dark:text-slate-200 font-mono truncate">{vendor.bankAccountNumber || vendor.momoNumber || vendor.paypalAccount || 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="border-t border-slate-200/50 dark:border-slate-800/50 pt-3 space-y-2">
+            <p className="text-[10px] font-black uppercase text-slate-400 dark:text-slate-500 tracking-wider">Financial Performance</p>
+            <div className="grid grid-cols-3 gap-1.5 text-[10px] font-black">
+              <div className="bg-emerald-50/55 dark:bg-emerald-950/25 border border-emerald-100 dark:border-emerald-900/40 p-2 rounded-xl text-center">
+                <span className="text-emerald-600 dark:text-emerald-400 block text-[8px] uppercase">Net Wallet (85%)</span>
+                <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(vendor.balance)}</span>
+              </div>
+              <div className="bg-amber-50/55 dark:bg-amber-950/25 border border-amber-100 dark:border-amber-900/40 p-2 rounded-xl text-center">
+                <span className="text-amber-600 dark:text-amber-400 block text-[8px] uppercase">Sales Gross</span>
+                <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(vendor.totalSales)}</span>
+              </div>
+              <div className="bg-blue-50/55 dark:bg-blue-950/25 border border-blue-100 dark:border-blue-900/40 p-2 rounded-xl text-center">
+                <span className="text-blue-600 dark:text-blue-400 block text-[8px] uppercase">15% Comm. Paid</span>
+                <span className="text-slate-800 dark:text-slate-100 font-mono text-xs">{formatPrice(Math.round(vendor.totalSales * 0.15))}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* COLUMN 2: Full Contact History & Touchpoint Log */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider">
+          <History size={14} className="text-orange-500" />
+          <span>Full Contact History</span>
+        </div>
+
+        <div className="space-y-3">
+          {/* Scrollable Logs */}
+          <div className="max-h-[175px] overflow-y-auto space-y-2.5 pr-1 text-xs">
+            {contactLogs.length === 0 ? (
+              <p className="text-slate-400 dark:text-slate-500 font-bold py-4 text-center">No previous interactions logged.</p>
+            ) : (
+              contactLogs.map((log) => {
+                const badgeColor = 
+                  log.type === 'email' ? 'bg-blue-100 text-blue-800 border-blue-200' :
+                  log.type === 'sms' ? 'bg-teal-100 text-teal-800 border-teal-200' :
+                  log.type === 'call' ? 'bg-purple-100 text-purple-800 border-purple-200' :
+                  'bg-slate-100 text-slate-800 border-slate-200';
+                
+                const typeLabel = 
+                  log.type === 'email' ? '✉️ Email' :
+                  log.type === 'sms' ? '📱 SMS' :
+                  log.type === 'call' ? '📞 Call' :
+                  '⚙️ System';
+
+                return (
+                  <div key={log.id} className="bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800/80 p-2.5 rounded-xl space-y-1 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <span className={`text-[8px] font-black uppercase px-1.5 py-0.5 rounded border ${badgeColor}`}>
+                        {typeLabel}
+                      </span>
+                      <span className="text-[9px] font-mono text-slate-400">
+                        {new Date(log.timestamp).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px]">{log.subject}</p>
+                    <p className="text-slate-500 dark:text-slate-400 text-[10.5px] leading-relaxed font-medium">{log.message}</p>
+                    <div className="flex items-center gap-1 pt-0.5 justify-end">
+                      <span className="text-[8px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
+                        ✓ {log.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          {/* New Log form */}
+          <form onSubmit={handleSubmit} className="bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800/60 p-3 rounded-2xl space-y-2 text-xs">
+            <p className="text-[10px] font-black uppercase text-slate-600 dark:text-slate-350 tracking-wider">Log New Interaction</p>
+            
+            <div className="grid grid-cols-4 gap-1">
+              {(['email', 'sms', 'call', 'system'] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setLogType(t)}
+                  className={`py-1 rounded text-[9px] font-black uppercase tracking-wider cursor-pointer border ${
+                    logType === t 
+                      ? 'bg-orange-600 text-white border-orange-600 shadow-2xs' 
+                      : 'bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800'
+                  }`}
+                >
+                  {t === 'email' ? 'Email' : t === 'sms' ? 'SMS' : t === 'call' ? 'Call' : 'Sys'}
+                </button>
+              ))}
+            </div>
+
+            <div className="space-y-1.5">
+              <input
+                type="text"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                placeholder="Subject (e.g. Call about stock clearance)"
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-[11px] font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
+                required
+              />
+              <textarea
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Log notes / message text sent..."
+                rows={2}
+                className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-2.5 py-1 text-[11px] font-bold focus:outline-none focus:border-orange-500 text-slate-800 dark:text-slate-200"
+                required
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSimulating || !subject.trim() || !message.trim()}
+              className="w-full bg-orange-600 hover:bg-orange-500 text-white font-black text-[10px] uppercase tracking-wider py-1.5 rounded-xl cursor-pointer disabled:opacity-50 transition-colors flex items-center justify-center gap-1"
+            >
+              {isSimulating ? (
+                <>
+                  <span className="w-2.5 h-2.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <span>Processing...</span>
+                </>
+              ) : (
+                <span>✓ Dispatch & Log Touchpoint</span>
+              )}
+            </button>
+          </form>
+        </div>
+      </div>
+
+      {/* COLUMN 3: Summary of Top 5 Products */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 text-slate-800 dark:text-slate-200 font-black text-xs uppercase tracking-wider">
+          <Store size={14} className="text-orange-500" />
+          <span>Top Catalog Products</span>
+        </div>
+
+        <div className="bg-slate-50 dark:bg-slate-900/40 border border-slate-150 dark:border-slate-800/60 rounded-2xl p-3.5 space-y-2.5 text-xs max-h-[340px] overflow-y-auto">
+          {myProducts.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 dark:text-slate-500 font-bold">
+              <p>No verified products listed in the catalog.</p>
+              <p className="text-[10px] font-normal mt-1">Products can be uploaded from the Vendor App or mapped by merchant ID.</p>
+            </div>
+          ) : (
+            myProducts.map((p) => {
+              const stockCount = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
+              const isLowStock = stockCount <= 5;
+              return (
+                <div key={p.id} className="flex gap-2.5 bg-white dark:bg-slate-950 p-2 rounded-xl border border-slate-200/60 dark:border-slate-800/50 hover:border-orange-500/30 transition-colors">
+                  <img src={p.image} alt={p.title} className="w-10 h-10 object-cover rounded-lg border border-slate-150 bg-slate-50 shrink-0" />
+                  <div className="min-w-0 flex-1 space-y-0.5">
+                    <p className="font-extrabold text-slate-800 dark:text-slate-200 text-[11px] truncate">{p.title}</p>
+                    <div className="flex items-center justify-between gap-1 text-[10px]">
+                      <span className="font-mono text-orange-600 dark:text-orange-400 font-black">{formatPrice(p.price)}</span>
+                      <span className={`font-bold uppercase text-[9px] px-1.5 py-0.5 rounded ${
+                        isLowStock 
+                          ? 'bg-rose-50 dark:bg-rose-950/20 text-rose-600 dark:text-rose-400 animate-pulse' 
+                          : 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-600 dark:text-emerald-400'
+                      }`}>
+                        {stockCount} Left
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-[8px] text-slate-400 font-bold pt-0.5">
+                      <span>★ {p.rating} ({p.reviewsCount} reviews)</span>
+                      <span className="uppercase text-[7.5px] bg-slate-100 dark:bg-slate-800 px-1 rounded">{p.category}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+    </div>
+  );
+};
 
 // Generate realistic sales velocity data for the last 30 days
 const generateVendorSparklineData = (vendor: DokanVendor) => {
@@ -176,6 +534,35 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
   // Vendor filtering and sorting states
   const [vendorStatusFilter, setVendorStatusFilter] = useState<'all' | 'approved' | 'pending' | 'rejected'>('all');
   const [vendorSortOrder, setVendorSortOrder] = useState<'newest' | 'oldest'>('newest');
+
+  // Vendor expanded state and contact histories
+  const [expandedVendorIds, setExpandedVendorIds] = useState<Record<string, boolean>>({});
+  const [contactHistory, setContactHistory] = useState<Record<string, ContactHistoryEntry[]>>(() => {
+    const saved = localStorage.getItem('olimart_vendor_contact_history');
+    return saved ? JSON.parse(saved) : INITIAL_CONTACT_HISTORY;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('olimart_vendor_contact_history', JSON.stringify(contactHistory));
+  }, [contactHistory]);
+
+  const handleAddContactLog = (vendorId: string, type: 'email' | 'sms' | 'call' | 'system', subject: string, message: string) => {
+    const newEntry: ContactHistoryEntry = {
+      id: `h-user-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      type,
+      subject,
+      message,
+      status: type === 'email' || type === 'sms' ? 'sent' : 'completed'
+    };
+    setContactHistory(prev => {
+      const vendorHistory = prev[vendorId] || [];
+      return {
+        ...prev,
+        [vendorId]: [newEntry, ...vendorHistory]
+      };
+    });
+  };
 
   // Helper to parse dates safely for sorting
   const getVendorDate = (v: DokanVendor) => {
@@ -968,7 +1355,6 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 </div>
               </div>
             </div>
-
           </div>
 
           <div className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -977,129 +1363,186 @@ export default function AdminApp({ products, setProducts, formatPrice }: AdminAp
                 No vendors found matching this filter criteria.
               </div>
             ) : (
-              filteredAndSortedVendors.map(v => (
-              <div key={v.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <div className="flex items-start gap-3">
-                  {v.logo ? (
-                    <img src={v.logo} alt="Store Logo" className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shadow-xs" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 flex items-center justify-center font-black text-sm border border-slate-200 dark:border-slate-700 uppercase">
-                      {v.name.charAt(0)}
-                    </div>
-                  )}
-                  <div className="space-y-1.5">
-                    <div className="flex items-center gap-2">
-                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">{v.name}</p>
-                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
-                        v.status === 'approved' 
-                          ? 'bg-emerald-100 text-emerald-800' 
-                          : v.status === 'pending'
-                          ? 'bg-amber-100 text-amber-800 animate-pulse'
-                          : 'bg-rose-100 text-rose-800'
-                      }`}>
-                        {v.status}
-                      </span>
-                      {v.suspended && (
-                        <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse">
-                          ⚠️ Suspended / Inactive
-                        </span>
-                      )}
-                      
-                      <label className="text-[9px] bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-350 px-1.5 py-0.5 rounded cursor-pointer transition-colors font-bold block">
-                        Change Logo
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              const reader = new FileReader();
-                              reader.onloadend = () => {
-                                const base64 = reader.result as string;
-                                const updatedVendors = vendors.map(vItem => {
-                                  if (vItem.id === v.id) {
-                                    return { ...vItem, logo: base64 };
+              filteredAndSortedVendors.map(v => {
+                const isExpanded = !!expandedVendorIds[v.id];
+                const toggleExpanded = () => {
+                  setExpandedVendorIds(prev => ({
+                    ...prev,
+                    [v.id]: !prev[v.id]
+                  }));
+                };
+
+                return (
+                  <div key={v.id} className="border-b border-slate-100 dark:border-slate-800 last:border-none py-3">
+                    {/* Header Row Clickable area to toggle */}
+                    <div 
+                      onClick={toggleExpanded}
+                      className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 cursor-pointer hover:bg-slate-50/50 dark:hover:bg-slate-800/10 p-2 rounded-2xl transition-all"
+                    >
+                      <div className="flex items-start gap-3 flex-1 min-w-0">
+                        {v.logo ? (
+                          <img src={v.logo} alt="Store Logo" className="w-12 h-12 rounded-full object-cover border border-slate-200 bg-white shadow-xs shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 flex items-center justify-center font-black text-sm border border-slate-200 dark:border-slate-700 uppercase shrink-0">
+                            {v.name.charAt(0)}
+                          </div>
+                        )}
+                        <div className="space-y-1.5 flex-1 min-w-0 text-left">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-black text-slate-900 dark:text-slate-100">{v.name}</p>
+                            <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded shrink-0 ${
+                              v.status === 'approved' 
+                                ? 'bg-emerald-100 text-emerald-800' 
+                                : v.status === 'pending'
+                                ? 'bg-amber-100 text-amber-800 animate-pulse'
+                                : 'bg-rose-100 text-rose-800'
+                            }`}>
+                              {v.status}
+                            </span>
+                            {v.suspended && (
+                              <span className="text-[9px] font-black uppercase bg-red-100 text-red-800 px-2 py-0.5 rounded animate-pulse shrink-0">
+                                ⚠️ Suspended / Inactive
+                              </span>
+                            )}
+                            
+                            <label 
+                              onClick={(e) => e.stopPropagation()}
+                              className="text-[9px] bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-650 dark:text-slate-350 px-1.5 py-0.5 rounded cursor-pointer transition-colors font-bold block shrink-0"
+                            >
+                              Change Logo
+                              <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) {
+                                    const reader = new FileReader();
+                                    reader.onloadend = () => {
+                                      const base64 = reader.result as string;
+                                      const updatedVendors = vendors.map(vItem => {
+                                        if (vItem.id === v.id) {
+                                          return { ...vItem, logo: base64 };
+                                        }
+                                        return vItem;
+                                      });
+                                      saveDokanVendors(updatedVendors);
+                                      setVendors(updatedVendors);
+                                    };
+                                    reader.readAsDataURL(file);
                                   }
-                                  return vItem;
-                                });
-                                saveDokanVendors(updatedVendors);
-                                setVendors(updatedVendors);
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                          className="hidden"
-                        />
-                      </label>
-                    </div>
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          </div>
 
-                  <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
-                    <p>👤 Owner: <span className="text-slate-700 dark:text-slate-300">{v.ownerName}</span> &bull; ✉️ {v.email}</p>
-                    <p>📞 Phone: {v.phone} &bull; 📍 Store Base: {v.location}</p>
-                    <p>💳 payout Route: <span className="font-mono text-slate-800 dark:text-slate-200">{v.paymentDetails}</span></p>
-                    {v.trustBadges && v.trustBadges.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1.5 pt-1">
-                        {v.trustBadges.map(badge => (
-                          <span key={badge} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5">
-                            🏅 {badge}
-                          </span>
-                        ))}
+                          <div className="text-[11px] font-bold text-slate-500 space-y-0.5">
+                            <p>👤 Owner: <span className="text-slate-700 dark:text-slate-300">{v.ownerName}</span> &bull; ✉️ {v.email}</p>
+                            <p>📞 Phone: {v.phone} &bull; 📍 Store Base: {v.location}</p>
+                            <p>💳 payout Route: <span className="font-mono text-slate-800 dark:text-slate-200">{v.paymentDetails}</span></p>
+                            {v.trustBadges && v.trustBadges.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5 pt-1">
+                                {v.trustBadges.map(badge => (
+                                  <span key={badge} className="bg-orange-50 dark:bg-orange-950/40 text-orange-600 dark:text-orange-400 border border-orange-100 dark:border-orange-900/40 px-2 py-0.5 rounded text-[8px] font-black uppercase tracking-wider flex items-center gap-0.5">
+                                    🏅 {badge}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    )}
-                  </div>
-                </div>
-              </div>
 
-              {v.status === 'approved' && (
-                <VendorSparkline vendor={v} />
-              )}
+                      {/* Sparkline & Right actions (stop propagation on click) */}
+                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full lg:w-auto shrink-0 justify-end" onClick={(e) => e.stopPropagation()}>
+                        {v.status === 'approved' && (
+                          <VendorSparkline vendor={v} />
+                        )}
 
-              <div className="flex gap-2">
-                  {v.status === 'pending' && (
-                    <>
-                      <button
-                        onClick={() => handleApproveVendor(v.id)}
-                        className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
-                      >
-                        <Check size={12} /> Approve Store
-                      </button>
-                      <button
-                        onClick={() => handleRejectVendor(v.id)}
-                        className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
-                      >
-                        <X size={12} /> Reject
-                      </button>
-                    </>
-                  )}
-                  
-                  {v.status === 'approved' && (
-                    <div className="flex flex-col items-end gap-1.5">
-                      <span className={`text-[10px] font-extrabold flex items-center gap-1 ${
-                        v.suspended ? 'text-rose-650 dark:text-rose-450' : 'text-emerald-600'
-                      }`}>
-                        {v.suspended ? '⚠️ Suspended & Offline' : '✅ Partner Published Live'}
-                      </span>
-                      <button
-                        onClick={() => handleToggleSuspension(v.id)}
-                        className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
-                          v.suspended 
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' 
-                            : 'bg-rose-600 hover:bg-rose-500 text-white shadow-xs'
-                        }`}
-                      >
-                        {v.suspended ? 'Activate Listing' : 'Suspend Listing'}
-                      </button>
+                        <div className="flex items-center gap-3">
+                          {/* Chevron Expand Indicator */}
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); toggleExpanded(); }}
+                            className="p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition-colors cursor-pointer flex items-center justify-center"
+                            title={isExpanded ? "Collapse view" : "Expand detailed profile & history"}
+                          >
+                            {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                          </button>
+
+                          <div className="flex gap-2 text-left">
+                            {v.status === 'pending' && (
+                              <>
+                                <button
+                                  onClick={() => handleApproveVendor(v.id)}
+                                  className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                                >
+                                  <Check size={12} /> Approve Store
+                                </button>
+                                <button
+                                  onClick={() => handleRejectVendor(v.id)}
+                                  className="bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer"
+                                >
+                                  <X size={12} /> Reject
+                                </button>
+                              </>
+                            )}
+                            
+                            {v.status === 'approved' && (
+                              <div className="flex flex-col items-end gap-1.5">
+                                <span className={`text-[10px] font-extrabold flex items-center gap-1 ${
+                                  v.suspended ? 'text-rose-650 dark:text-rose-450' : 'text-emerald-600'
+                                }`}>
+                                  {v.suspended ? '⚠️ Suspended & Offline' : '✅ Partner Published Live'}
+                                </span>
+                                <button
+                                  onClick={() => handleToggleSuspension(v.id)}
+                                  className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg cursor-pointer transition-colors ${
+                                    v.suspended 
+                                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white shadow-xs' 
+                                      : 'bg-rose-600 hover:bg-rose-500 text-white shadow-xs'
+                                  }`}
+                                >
+                                  {v.suspended ? 'Activate Listing' : 'Suspend Listing'}
+                                </button>
+                              </div>
+                            )}
+
+                            {v.status === 'rejected' && (
+                              <span className="text-[10px] text-rose-600 font-extrabold flex items-center gap-1">
+                                ❌ Onboarding Denied
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
-                  )}
 
-                  {v.status === 'rejected' && (
-                    <span className="text-[10px] text-rose-600 font-extrabold flex items-center gap-1">
-                      ❌ Onboarding Denied
-                    </span>
-                  )}
-                </div>
-              </div>
-            )))}
+                    {/* Expandable sliding panel */}
+                    <AnimatePresence initial={false}>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.25, ease: 'easeInOut' }}
+                          className="overflow-hidden"
+                        >
+                          <VendorExpandedDetail
+                            vendor={v}
+                            products={products}
+                            formatPrice={formatPrice}
+                            contactLogs={contactHistory[v.id] || []}
+                            onAddLog={(type, subject, message) => handleAddContactLog(v.id, type, subject, message)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })
+            )}
           </div>
         </div>
       )}
