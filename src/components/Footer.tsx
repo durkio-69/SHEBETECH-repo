@@ -40,7 +40,7 @@ export default function Footer() {
             </span>
           </div>
           <p className="text-xs text-slate-400 leading-relaxed font-medium">
-            OliMart is Uganda’s premier online e-commerce marketplace. We make buying and selling daily goods, high-tech appliances, fashion wear, and supermarket items safe, fast, and remarkably affordable across all districts.
+            Olimart is Uganda’s premier online e-commerce marketplace. We make buying and selling daily goods, high-tech appliances, fashion wear, and supermarket items safe, fast, and remarkably affordable across all districts.
           </p>
 
           {/* Social icons */}
@@ -89,7 +89,7 @@ export default function Footer() {
             </li>
             <li>
               <a href="#" className="hover:text-orange-500 transition-colors font-medium">
-                Report a Product Counterfeit
+                Report a Counterfeit Product
               </a>
             </li>
             <li>
@@ -127,7 +127,7 @@ export default function Footer() {
 
           {/* App store downloads */}
           <div className="space-y-3">
-            <h4 className="text-xs font-black uppercase tracking-wider text-white">Download OliMart Apps</h4>
+            <h4 className="text-xs font-black uppercase tracking-wider text-white">Download Olimart Apps</h4>
             <div className="flex flex-col sm:flex-row gap-2">
               {/* Google Play */}
               <a href="#" className="flex items-center gap-2 bg-slate-800 hover:bg-slate-750 p-2 rounded-xl transition-colors border border-slate-700/50">
@@ -168,7 +168,7 @@ export default function Footer() {
             </form>
           ) : (
             <div className="bg-orange-950/40 border border-orange-800/60 p-3 rounded-xl text-xs space-y-1">
-              <p className="text-orange-400 font-bold">🎉 Welcome to OliMart Fam!</p>
+              <p className="text-orange-400 font-bold">🎉 Welcome to the Olimart Family!</p>
               <p className="text-[10px] text-slate-300 font-medium leading-relaxed">
                 Check your inbox! We've sent coupon code <strong className="text-yellow-400">MARTUG10</strong> for an immediate Shs 10,000 discount.
               </p>
@@ -180,7 +180,7 @@ export default function Footer() {
 
       {/* Under footer copyright */}
       <div className="max-w-7xl mx-auto px-4 mt-12 pt-6 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-xs text-slate-500 font-medium">
-        <p>&copy; 2026 OliMart Uganda Ltd. All rights reserved.</p>
+        <p>&copy; 2026 Olimart Uganda Ltd. All rights reserved.</p>
         <div className="flex gap-4">
           <a href="#" className="hover:underline">Privacy Policy</a>
           <span>&bull;</span>
