@@ -65,21 +65,21 @@ export default function RecentSearchesSection({
       <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-5 shadow-xs relative overflow-hidden">
         
         {/* Purple gradient top bar highlight */}
-        <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-[#f68b1e] via-orange-500 to-amber-500" />
+        <div className="absolute top-0 left-0 right-0 h-[4px] bg-gradient-to-r from-[#EA6A0C] via-orange-500 to-amber-500" />
 
         <div className="flex flex-wrap justify-between items-center mb-5 gap-3">
           <div>
             <h2 className="text-base sm:text-lg font-black uppercase text-slate-800 dark:text-white flex items-center gap-2 tracking-tight">
-              <Sparkles className="text-[#f68b1e] animate-pulse" size={18} />
+              <Sparkles className="text-[#EA6A0C] animate-pulse" size={18} />
               <span>{recentSearches.length > 0 ? "Inspired by Your Recent Searches" : "Recommended Deals For You"}</span>
             </h2>
-            <p className="text-slate-400 dark:text-slate-500 text-xs font-bold">
+            <p className="text-slate-400 dark:text-slate-500 text-[11px] font-bold">
               {recentSearches.length > 0 
                 ? "Handpicked related items based on your shopping interests in Kampala" 
                 : "Top rated local listings with instant dispatch & pay on delivery"}
             </p>
           </div>
-          <span className="text-3xs uppercase font-black tracking-widest bg-orange-50 dark:bg-orange-950/40 text-[#f68b1e] px-2.5 py-1 rounded-md">
+          <span className="text-[10px] uppercase font-black tracking-widest bg-orange-50 dark:bg-orange-950/40 text-[#EA6A0C] px-2.5 py-1 rounded-md">
             Personalized Feed
           </span>
         </div>
@@ -107,7 +107,7 @@ export default function RecentSearchesSection({
                     
                     {/* Discount badge */}
                     {hasDiscount && (
-                      <span className="absolute top-2 left-2 bg-red-600 text-white text-3xs font-black px-1.5 py-0.5 rounded uppercase">
+                      <span className="absolute top-2 left-2 bg-red-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase">
                         {p.discountBadge || 'SAVE'}
                       </span>
                     )}
@@ -123,18 +123,18 @@ export default function RecentSearchesSection({
 
                   {/* Product details */}
                   <div className="mt-3.5 space-y-1">
-                    <p className="text-3xs text-slate-400 font-extrabold uppercase tracking-wide">
+                    <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wide">
                       {p.brand}
                     </p>
                     <h3 
                       onClick={() => onProductClick(p)}
-                      className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#f68b1e] cursor-pointer min-h-[32px] leading-snug transition-colors"
+                      className="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#EA6A0C] cursor-pointer min-h-[32px] leading-snug transition-colors"
                     >
                       {p.title}
                     </h3>
 
                     {/* Ratings */}
-                    <div className="flex items-center gap-1 text-3xs text-slate-400 font-bold">
+                    <div className="flex items-center gap-1 text-[10px] text-slate-400 font-bold">
                       <span className="text-yellow-500">★ {p.rating}</span>
                       <span>({p.reviewsCount})</span>
                     </div>
@@ -147,15 +147,15 @@ export default function RecentSearchesSection({
                       {formatPrice(p.price)}
                     </span>
                     {hasDiscount && (
-                      <span className="text-3xs text-slate-400 line-through">
+                      <span className="text-[10px] text-slate-400 line-through">
                         {formatPrice(p.originalPrice!)}
                       </span>
                     )}
                   </div>
                   <button
                     onClick={() => onAddToCart(p)}
-                    className="bg-[#f68b1e]/10 hover:bg-[#f68b1e] text-[#f68b1e] hover:text-white p-2 rounded-xl transition-all cursor-pointer active:scale-95 flex-shrink-0"
-                    title="Add to Cart"
+                    className="bg-[#EA6A0C]/10 hover:bg-[#EA6A0C] text-[#EA6A0C] hover:text-white p-2 rounded-xl transition-all cursor-pointer active:scale-95 flex-shrink-0"
+                    title="Add to Basket"
                   >
                     <ShoppingCart size={14} />
                   </button>
@@ -175,13 +175,13 @@ export default function RecentSearchesSection({
                 <Eye className="text-slate-500 dark:text-slate-400" size={16} />
                 <span>Recently Searched & Viewed Items</span>
               </h2>
-              <p className="text-slate-400 dark:text-slate-500 text-3xs font-bold">
+              <p className="text-slate-400 dark:text-slate-500 text-[10px] font-bold">
                 Your absolute recent product history. Safely stored locally.
               </p>
             </div>
             <button
               onClick={onClearHistory}
-              className="text-3xs text-slate-500 hover:text-red-500 font-black uppercase flex items-center gap-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-red-50 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
+              className="text-[10px] text-slate-500 hover:text-red-500 font-black uppercase flex items-center gap-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-red-50 hover:border-red-200 px-3 py-1.5 rounded-lg transition-all active:scale-95 cursor-pointer"
             >
               <Trash2 size={11} />
               <span>Clear History</span>
@@ -194,7 +194,7 @@ export default function RecentSearchesSection({
               <div
                 key={`recent-${p.id}`}
                 onClick={() => onProductClick(p)}
-                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-xl flex items-center gap-3 cursor-pointer hover:border-[#f68b1e]/40 hover:shadow-xs transition-all group"
+                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 p-2.5 rounded-xl flex items-center gap-3 cursor-pointer hover:border-[#EA6A0C]/40 hover:shadow-xs transition-all group"
               >
                 <div className="w-10 h-10 bg-slate-50 dark:bg-slate-950 p-1 flex items-center justify-center rounded-lg flex-shrink-0 border border-slate-100 dark:border-slate-800/80 group-hover:scale-105 transition-transform">
                   <img 
@@ -205,10 +205,10 @@ export default function RecentSearchesSection({
                   />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-extrabold text-slate-800 dark:text-slate-200 truncate group-hover:text-[#f68b1e] transition-colors">
+                  <p className="text-[11px] font-extrabold text-slate-800 dark:text-slate-200 truncate group-hover:text-[#EA6A0C] transition-colors">
                     {(p?.title || '').split(' - ')[0]}
                   </p>
-                  <p className="text-3xs font-black text-slate-500 mt-0.5">
+                  <p className="text-[10px] font-black text-slate-500 mt-0.5">
                     {formatPrice(p.price)}
                   </p>
                 </div>

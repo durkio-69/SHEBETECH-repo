@@ -7,11 +7,15 @@
 
 export type OrderItemStatus =
   | "placed"
+  | "admin_approved"
+  | "rejected"
   | "vendor_confirmed"
   | "packed"
   | "assigned_to_rider"
+  | "rider_accepted"
   | "picked_up"
   | "out_for_delivery"
+  | "arrived"
   | "delivered"
   | "cancelled"
   | "return_requested"
@@ -19,13 +23,23 @@ export type OrderItemStatus =
 
 // Allowed forward transitions. "cancelled" is reachable from any
 // pre-delivery state (customers/vendors can cancel before it ships).
+//
+// Every new order lands in "placed" and now MUST pass through an explicit
+// admin checkpoint (approved or rejected) before the vendor can start
+// fulfilling it — this is the "the admin also [decides if] the order is
+// approved or rejected" requirement. Only once admin-approved does the
+// vendor's own confirm/pack/dispatch sequence begin.
 const TRANSITIONS: Record<OrderItemStatus, OrderItemStatus[]> = {
-  placed: ["vendor_confirmed", "cancelled"],
+  placed: ["admin_approved", "rejected"],
+  admin_approved: ["vendor_confirmed", "cancelled"],
+  rejected: [],
   vendor_confirmed: ["packed", "cancelled"],
   packed: ["assigned_to_rider", "cancelled"],
-  assigned_to_rider: ["picked_up", "cancelled"],
+  assigned_to_rider: ["rider_accepted", "cancelled"],
+  rider_accepted: ["picked_up", "cancelled"],
   picked_up: ["out_for_delivery", "cancelled"],
-  out_for_delivery: ["delivered", "cancelled"],
+  out_for_delivery: ["arrived", "cancelled"],
+  arrived: ["delivered", "return_requested"],
   delivered: ["return_requested"],
   return_requested: ["returned"],
   returned: [],

@@ -99,7 +99,7 @@ export default function DealsPage({
       case 'todays-deal':
         return {
           title: "Today's Gold Box Deals",
-          subtitle: "Up to 60% off exciting deals from top-tier brands, updated every 24 hours.",
+          subtitle: "Up to 60% Off. Exciting top tier brands, updated every 24 hours.",
           bgColor: "from-amber-500 to-orange-600",
           icon: <Sparkles className="text-yellow-300 animate-pulse" size={24} />,
           badge: "Featured Savings",
@@ -108,7 +108,7 @@ export default function DealsPage({
       case 'flash-sales':
         return {
           title: "MoMo Thunder Flash Sales",
-          subtitle: "Extreme discounts in short bursts. Grab your item before it sells out!",
+          subtitle: "Extreme discounts in short bursts. Lock your stock before it sells out!",
           bgColor: "from-red-600 to-yellow-600",
           icon: <Zap className="text-yellow-300 animate-bounce" size={24} />,
           badge: "Limited Stock Left",
@@ -139,7 +139,7 @@ export default function DealsPage({
     <div className="max-w-7xl mx-auto px-4 py-4 space-y-6" id={`deals-page-${type}`}>
       {/* Breadcrumbs Navigation */}
       <div className="flex items-center gap-2 text-xs text-slate-400 font-bold">
-        <button onClick={onBack} className="hover:text-[#f68b1e] cursor-pointer flex items-center gap-1">
+        <button onClick={onBack} className="hover:text-[#EA6A0C] cursor-pointer flex items-center gap-1">
           <ArrowLeft size={12} />
           <span>Back to Home</span>
         </button>
@@ -153,7 +153,7 @@ export default function DealsPage({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.1),transparent)] pointer-events-none" />
         
         <div className="space-y-3 z-10 max-w-xl">
-          <span className="bg-white/20 text-white font-black text-3xs tracking-widest uppercase px-3 py-1 rounded-full border border-white/10">
+          <span className="bg-white/20 text-white font-black text-[10px] tracking-widest uppercase px-3 py-1 rounded-full border border-white/10">
             {config.badge}
           </span>
           <div className="flex items-center gap-2.5">
@@ -167,7 +167,7 @@ export default function DealsPage({
 
         {/* Live Timer Countdown Frame */}
         <div className="bg-slate-950/80 backdrop-blur-md p-4 rounded-2xl border border-white/10 z-10 flex flex-col items-center justify-center text-center flex-shrink-0">
-          <p className="text-3xs font-extrabold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1 justify-center">
+          <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-400 mb-2 flex items-center gap-1 justify-center">
             <Timer size={11} className="text-red-500 animate-pulse" />
             <span>{config.timerLabel}</span>
           </p>
@@ -195,7 +195,7 @@ export default function DealsPage({
             onClick={() => setSelectedCategory('all')}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer border transition-all ${
               selectedCategory === 'all'
-                ? 'bg-[#f68b1e] border-[#f68b1e] text-white'
+                ? 'bg-[#EA6A0C] border-[#EA6A0C] text-white'
                 : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
             }`}
           >
@@ -207,7 +207,7 @@ export default function DealsPage({
               onClick={() => setSelectedCategory(c.id)}
               className={`px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap cursor-pointer border transition-all ${
                 selectedCategory === c.id
-                  ? 'bg-[#f68b1e] border-[#f68b1e] text-white'
+                  ? 'bg-[#EA6A0C] border-[#EA6A0C] text-white'
                   : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100'
               }`}
             >
@@ -218,7 +218,7 @@ export default function DealsPage({
 
         {/* Sort dropdown */}
         <div className="flex items-center gap-2 justify-end">
-          <span className="text-3xs font-black text-slate-400 uppercase tracking-wide flex items-center gap-1">
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-wide flex items-center gap-1">
             <ArrowUpDown size={11} />
             <span>Sort:</span>
           </span>
@@ -244,11 +244,11 @@ export default function DealsPage({
             return (
               <div
                 key={p.id}
-                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-3 flex flex-col justify-between hover:shadow-md hover:border-[#f68b1e] transition-all cursor-pointer relative group/card overflow-hidden"
+                className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-3 flex flex-col justify-between hover:shadow-md hover:border-[#EA6A0C] transition-all cursor-pointer relative group/card overflow-hidden"
               >
                 {/* Save Badges */}
                 {p.discountBadge && (
-                  <span className="absolute top-2.5 left-2.5 bg-red-600 text-white text-3xs font-black uppercase px-2 py-0.5 rounded-md z-10 shadow-xs animate-pulse">
+                  <span className="absolute top-2.5 left-2.5 bg-red-600 text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md z-10 shadow-xs animate-pulse">
                     {p.discountBadge} OFF
                   </span>
                 )}
@@ -280,7 +280,7 @@ export default function DealsPage({
                     referrerPolicy="no-referrer"
                   />
                   {p.isOfficial && (
-                    <span className="absolute bottom-2 left-2 bg-blue-600 text-white font-black text-4xs px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
+                    <span className="absolute bottom-2 left-2 bg-blue-600 text-white font-black text-[7px] px-1.5 py-0.5 rounded uppercase tracking-wider shadow-xs">
                       Official Brand
                     </span>
                   )}
@@ -289,16 +289,16 @@ export default function DealsPage({
                 {/* Info block */}
                 <div className="space-y-2 flex-1 flex flex-col justify-between" onClick={() => onProductClick(p)}>
                   <div className="space-y-1">
-                    <p className="text-3xs font-extrabold text-slate-400 uppercase tracking-wider">{p.brand}</p>
-                    <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover/card:text-[#f68b1e] transition-colors">
+                    <p className="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">{p.brand}</p>
+                    <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-2 leading-snug group-hover/card:text-[#EA6A0C] transition-colors">
                       {p.title}
                     </h3>
 
                     {/* Ratings */}
                     <div className="flex items-center gap-1.5">
                       <span className="text-yellow-500 text-xs">★</span>
-                      <span className="text-3xs font-black text-slate-700 dark:text-slate-200">{p.rating}</span>
-                      <span className="text-3xs text-slate-400">({p.reviewsCount})</span>
+                      <span className="text-[10px] font-black text-slate-700 dark:text-slate-200">{p.rating}</span>
+                      <span className="text-[9px] text-slate-400">({p.reviewsCount})</span>
                     </div>
                   </div>
 
@@ -309,7 +309,7 @@ export default function DealsPage({
                         {formatPrice(p.price)}
                       </span>
                       {p.originalPrice && (
-                        <span className="text-3xs line-through text-slate-400 font-bold">
+                        <span className="text-[10px] line-through text-slate-400 font-bold">
                           {formatPrice(p.originalPrice)}
                         </span>
                       )}
@@ -318,7 +318,7 @@ export default function DealsPage({
                     {/* Amazon/Jumia Live Claim Progress indicator (Requirement 1 & 2) */}
                     {(type === 'flash-sales' || type === 'todays-deal') && (
                       <div className="space-y-1">
-                        <div className="flex justify-between text-4xs font-black text-slate-500">
+                        <div className="flex justify-between text-[8px] font-black text-slate-500">
                           <span>{claimed}% Claimed</span>
                           <span className="text-red-500">Hurry! Only few left</span>
                         </div>
@@ -331,13 +331,13 @@ export default function DealsPage({
                       </div>
                     )}
 
-                    {/* Quick cart addition */}
+                    {/* Quick Basket addition */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
                         onAddToCart(p);
                       }}
-                      className="w-full bg-slate-950 dark:bg-slate-800 hover:bg-[#f68b1e] hover:text-white dark:hover:bg-[#f68b1e] text-white py-2 rounded-xl text-3xs font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer mt-1"
+                      className="w-full bg-slate-950 dark:bg-slate-800 hover:bg-[#EA6A0C] hover:text-white dark:hover:bg-[#EA6A0C] text-white py-2 rounded-xl text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer mt-1"
                     >
                       <ShoppingCart size={11} />
                       <span>Buy Now</span>
@@ -354,7 +354,7 @@ export default function DealsPage({
           <p className="text-xs text-slate-400 max-w-md mx-auto">Please select a different category pill above or clear active filters to discover our premium discount products.</p>
           <button 
             onClick={() => setSelectedCategory('all')} 
-            className="bg-[#f68b1e] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-orange-500 cursor-pointer"
+            className="bg-[#EA6A0C] text-white px-5 py-2.5 rounded-xl text-xs font-bold hover:bg-orange-500 cursor-pointer"
           >
             Clear Filters
           </button>

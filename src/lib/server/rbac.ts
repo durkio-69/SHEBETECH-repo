@@ -24,20 +24,26 @@ export type Role =
 export const ROLE_PERMISSIONS: Record<Role, string[]> = {
   super_admin: ["*"],
   ops_admin: [
-    "vendor.approve", "vendor.reject", "rider.approve", "rider.reject",
-    "category.manage", "order.view.all", "order.escalate", "audit.view",
+    "vendor.approve", "vendor.reject", "vendor.verify", "rider.approve", "rider.reject",
+    "category.manage", "order.view.all", "order.approve", "order.escalate", "audit.view",
+    "announcement.send", "analytics.view.platform", "shipping.manage",
   ],
   finance_admin: [
     "payout.approve", "payout.reject", "transaction.view.all",
     "commission.manage", "order.view.all", "settlement.manage", "audit.view",
+    "analytics.view.platform",
   ],
   catalog_admin: [
     "product.moderate", "product.remove", "coupon.manage", "audit.view",
   ],
   support_admin: [
     "order.view.all", "refund.manage", "vendor.contact", "customer.contact", "audit.view",
+    "announcement.send",
   ],
-  vendor_owner: ["store.manage.own", "product.manage.own", "order.view.own", "payout.request.own"],
+  vendor_owner: [
+    "store.manage.own", "product.manage.own", "order.view.own", "payout.request.own",
+    "shipping.manage.own", "refund.request.own", "staff.manage.own", "analytics.view.own",
+  ],
   vendor_staff: ["order.view.own", "product.manage.own"],
   rider: ["delivery.view.own", "delivery.update.own"],
   customer: ["order.view.self", "order.place"],

@@ -13,7 +13,24 @@ import { TRANSACTIONS_TABLE_SQL, computeSaleSplit, writeLedgerEntries, getVendor
 import { EVENT_LOG_TABLE_SQL, emitEvent } from "./src/lib/server/eventBus";
 import { AUDIT_TABLE_SQL, writeAudit, readAuditLog } from "./src/lib/server/auditLog";
 import { REGISTRATION_SCHEMA, validateRegistration, hashPassword, verifyPassword, isEmailOrPhoneTaken, type StakeholderRole } from "./src/lib/server/registration";
-import { getSettlementAccount, setSettlementAccount, type SettlementAccount } from "./src/lib/server/settlementAccounts";
+import {
+  getSettlementAccount, setSettlementAccount, getAllSettlementAccounts, toPublicSettlementAccount,
+  DEFAULT_SETTLEMENT_ACCOUNTS, type SettlementAccount, type SettlementProvider,
+} from "./src/lib/server/settlementAccounts";
+import {
+  VENDOR_PROGRAMS_TABLE_SQL, getSubscriptionPlans, subscribeVendorToPlan, submitKycDocument, reviewKycDocument,
+  addVendorStaff, followStore, unfollowStore, getStoreFollowers, addStoreReview, getStoreRating,
+  setVacationMode, setVendorStorefront, getVendorStorefront, broadcastAnnouncement,
+} from "./src/lib/server/vendorPrograms";
+import {
+  resolveUnitPrice, validateAndPriceCoupon, recordCouponRedemption, addToWishlist, removeFromWishlist, getWishlist,
+  subscribeBackInStock, notifyBackInStock, creditLoyaltyPoints, redeemLoyaltyPoints, getLoyaltyBalance,
+  saveCartSnapshot, sweepAbandonedCarts, recordPartialPayment, COMMERCE_ENGINE_TABLE_SQL,
+} from "./src/lib/server/commerceEngine";
+import { WITHDRAWAL_TABLE_SQL, requestWithdrawal, reviewWithdrawal, listWithdrawals } from "./src/lib/server/withdrawalRequests";
+import { SHIPPING_RULES_TABLE_SQL, setShippingRule, getShippingRulesForVendor, resolveShippingFee } from "./src/lib/server/shippingRules";
+import { REFUND_TABLE_SQL, openRefundRequest, reviewRefundRequest, listRefundRequests } from "./src/lib/server/refundManagement";
+import { getVendorDashboard, getPlatformReport } from "./src/lib/server/analyticsReports";
 
 // Load environment variables
 dotenv.config();
@@ -234,16 +251,27 @@ async function initDb() {
     await client.query(OTP_TABLE_SQL);
     await client.query(EVENT_LOG_TABLE_SQL);
     await client.query(AUDIT_TABLE_SQL);
+    await client.query(VENDOR_PROGRAMS_TABLE_SQL);
+    await client.query(COMMERCE_ENGINE_TABLE_SQL);
+    await client.query(WITHDRAWAL_TABLE_SQL);
+    await client.query(SHIPPING_RULES_TABLE_SQL);
+    await client.query(REFUND_TABLE_SQL);
 
     // Seed a super_admin so there's always at least one account able to
     // grant the other roles through /api/admin/users.
     const userCheck = await client.query("SELECT COUNT(*) FROM olimart_users");
     if (parseInt(userCheck.rows[0].count, 10) === 0) {
+      // NOTE: without a password_hash, /api/auth/login can never succeed for
+      // this account (verifyPassword against an empty hash always fails),
+      // which silently locked every admin-only route. Seed a real, working
+      // default password here — change it immediately after first login in
+      // any real deployment (see POST /api/admin/users to mint a personal
+      // super_admin account, then retire this one).
       await client.query(
-        `INSERT INTO olimart_users (id, name, email, phone, role) VALUES ($1,$2,$3,$4,'super_admin')`,
-        ["admin-1", "Olimart Super Admin", "admin@olimart.co.ug", "0772900000"]
+        `INSERT INTO olimart_users (id, name, email, phone, password_hash, role) VALUES ($1,$2,$3,$4,$5,'super_admin')`,
+        ["admin-1", "Olimart Super Admin", "admin@olimart.co.ug", "0772900000", hashPassword("OlimartAdmin@2026")]
       );
-      console.log("🌱 Seeded initial super_admin user (admin@olimart.co.ug).");
+      console.log("🌱 Seeded initial super_admin user: admin@olimart.co.ug / OlimartAdmin@2026 (change this immediately in production).");
     }
 
     // Seed products table from the static catalog the first time only.
@@ -294,128 +322,6 @@ async function initDb() {
     }
 
     console.log("🏁 Neon PostgreSQL database tables verified/created successfully.");
-
-    // Seed orders (JSON-document table) with the same demo orders the
-    // frontend falls back to before any real checkout has happened.
-    const orderCheck = await client.query("SELECT COUNT(*) FROM olimart_orders");
-    if (parseInt(orderCheck.rows[0].count, 10) === 0) {
-      console.log("🌱 Seeding olimart_orders table with initial demo orders...");
-      const initialOrders = [
-        {
-          id: "ORDER-10492", customerName: "Nakato Sarah", customerPhone: "0772 888999",
-          customerAddress: "Kiwatule Rd near Shell Station", customerLocation: "Kampala (Nakawa)",
-          items: [{ product: { id: "p1", title: "Tecno Spark 20 Pro - High Speed Dual SIM Smartphone", price: 685000, category: "phones", image: "https://images.unsplash.com/photo-1598327105666-5b89351aff97?auto=format&fit=crop&w=400&q=80", rating: 4.6, reviewsCount: 142, brand: "Tecno", isFlashSale: true, isOfficial: true, freeDelivery: true, payOnDelivery: true, inStock: true }, quantity: 1, selectedVendor: "Tecno Official Outlet Kampala" }],
-          subtotal: 685000, deliveryFee: 9600, total: 694600, paymentMethod: "momo", paymentDetails: "0772 888999",
-          status: "transit", commission: 102750, vendorEarnings: 582250, createdAt: "2026-07-01T15:20:00Z", distanceKm: 8
-        },
-        {
-          id: "ORDER-10493", customerName: "Sempijja Ronald", customerPhone: "0702 333444",
-          customerAddress: "Jinja Road opposite Nile Breweries", customerLocation: "Jinja",
-          items: [{ product: { id: "p29", title: "Mukwano Laundry Bar Soap - White (Box of 10 Bars)", price: 22500, category: "supermarket", image: "https://picsum.photos/seed/soap/400/400", rating: 4.9, reviewsCount: 512, brand: "Mukwano", isFlashSale: true, isOfficial: true, freeDelivery: false, payOnDelivery: true, inStock: true }, quantity: 2, selectedVendor: "Mukwano Industries Online" }],
-          subtotal: 45000, deliveryFee: 96000, total: 141000, paymentMethod: "stripe", paymentDetails: "Visa ending 4242",
-          status: "placed", commission: 6750, vendorEarnings: 38250, createdAt: "2026-07-02T01:10:00Z", distanceKm: 80
-        }
-      ];
-      for (const o of initialOrders) {
-        await client.query(
-          `INSERT INTO olimart_orders (id, status, data) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-          [o.id, o.status, JSON.stringify(o)]
-        );
-      }
-      console.log(`🌱 olimart_orders seeded with ${initialOrders.length} demo orders.`);
-    }
-
-    // Seed withdrawal (payout) requests
-    const withdrawalCheck = await client.query("SELECT COUNT(*) FROM olimart_withdrawals");
-    if (parseInt(withdrawalCheck.rows[0].count, 10) === 0) {
-      console.log("🌱 Seeding olimart_withdrawals table with initial data...");
-      const initialWithdrawals = [
-        { id: "w1", vendorId: "v1", vendorName: "Mukwano Industries Online", amount: 250000, method: "bank", details: "Standard Chartered - Emmanuel Mukwano", status: "approved", createdAt: "2026-06-28T14:30:00Z" },
-        { id: "w2", vendorId: "v2", vendorName: "Tecno Official Outlet Kampala", amount: 500000, method: "momo", details: "0772123456 (Justin Chen)", status: "pending", createdAt: "2026-07-01T10:15:00Z" }
-      ];
-      for (const w of initialWithdrawals) {
-        await client.query(
-          `INSERT INTO olimart_withdrawals (id, status, data) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING`,
-          [w.id, w.status, JSON.stringify(w)]
-        );
-      }
-      console.log(`🌱 olimart_withdrawals seeded with ${initialWithdrawals.length} requests.`);
-    }
-
-    // Seed sample customer product comments
-    const commentCheck = await client.query("SELECT COUNT(*) FROM olimart_comments");
-    if (parseInt(commentCheck.rows[0].count, 10) === 0) {
-      console.log("🌱 Seeding olimart_comments table with initial data...");
-      const initialComments = [
-        { id: "c1", customerName: "Nakato Sarah", productTitle: "Tecno Spark 20 Pro - High Speed Dual SIM Smartphone", rating: 5, comment: "Authentic product, lightning-fast Boda delivery, and the e-wallet checkout options worked seamlessly. A+", date: "July 01, 2026" },
-        { id: "c2", customerName: "Kato Derrick", productTitle: "Mukwano Laundry Bar Soap", rating: 4, comment: "Best laundry soap in Uganda, original box received in Mukono. Transport fee was automatically calculated, very fair.", date: "June 30, 2026" }
-      ];
-      for (const c of initialComments) {
-        await client.query(
-          `INSERT INTO olimart_comments (id, data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-          [c.id, JSON.stringify(c)]
-        );
-      }
-      console.log(`🌱 olimart_comments seeded with ${initialComments.length} comments.`);
-    }
-
-    // Seed default marketplace categories
-    const categoryCheck = await client.query("SELECT COUNT(*) FROM olimart_categories");
-    if (parseInt(categoryCheck.rows[0].count, 10) === 0) {
-      console.log("🌱 Seeding olimart_categories table with default categories...");
-      const defaultCategories = [
-        { id: "phones", name: "Phones & Tablets", icon: "Smartphone", imageUrl: "" },
-        { id: "electronics", name: "Electronics", icon: "Tv", imageUrl: "" },
-        { id: "fashion", name: "Fashion", icon: "Shirt", imageUrl: "" },
-        { id: "home", name: "Home & Office", icon: "Home", imageUrl: "" },
-        { id: "beauty", name: "Health & Beauty", icon: "Sparkles", imageUrl: "" },
-        { id: "supermarket", name: "Supermarket", icon: "ShoppingBag", imageUrl: "" },
-        { id: "farmers-market", name: "Farmers Market", icon: "Leaf", imageUrl: "" }
-      ];
-      for (const cat of defaultCategories) {
-        await client.query(
-          `INSERT INTO olimart_categories (id, data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-          [cat.id, JSON.stringify(cat)]
-        );
-      }
-      console.log(`🌱 olimart_categories seeded with ${defaultCategories.length} categories.`);
-    }
-
-    // Seed the admin activity log with a boot entry
-    const adminLogCheck = await client.query("SELECT COUNT(*) FROM olimart_admin_logs");
-    if (parseInt(adminLogCheck.rows[0].count, 10) === 0) {
-      console.log("🌱 Seeding olimart_admin_logs table with initial entries...");
-      const initialLogs = [
-        { id: "log-1", timestamp: new Date(Date.now() - 3600000 * 5).toISOString(), action: "SYSTEM_BOOT", details: "Olimart Dokan central database initialized on port 3000.", severity: "info", ipAddress: "127.0.0.1" },
-        { id: "log-2", timestamp: new Date(Date.now() - 3600000 * 4).toISOString(), action: "VENDOR_APPROVAL", details: "Vendor store \"Mukwano Industries Online\" has been successfully approved.", severity: "success", ipAddress: "192.168.1.102" }
-      ];
-      for (const log of initialLogs) {
-        await client.query(
-          `INSERT INTO olimart_admin_logs (id, data) VALUES ($1, $2) ON CONFLICT (id) DO NOTHING`,
-          [log.id, JSON.stringify(log)]
-        );
-      }
-      console.log(`🌱 olimart_admin_logs seeded with ${initialLogs.length} entries.`);
-    }
-
-    // Seed singleton settings: brand list, tag list, and default commission/transport rates
-    const settingsToSeed: Array<{ key: string; value: any }> = [
-      { key: "brands", value: ["Tecno", "Infinix", "Samsung", "Apple", "Hisense", "LG", "Mukwano", "Jesa", "Nivea", "Movit"] },
-      { key: "tags", value: ["Best Seller", "Official Warranty", "Flash Deal", "Ugandan Made", "Top Brand", "Bulk Save"] },
-      { key: "adminSettings", value: { bulkyCommission: 15, lightCommission: 8, bulkyTransportRate: 2800, lightTransportRate: 1200, bulkyTransportMin: 7500, lightTransportMin: 3000 } }
-    ];
-    for (const s of settingsToSeed) {
-      const existing = await client.query("SELECT 1 FROM olimart_settings WHERE key = $1", [s.key]);
-      if (existing.rows.length === 0) {
-        await client.query(
-          `INSERT INTO olimart_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING`,
-          [s.key, JSON.stringify(s.value)]
-        );
-        console.log(`🌱 olimart_settings seeded key "${s.key}".`);
-      }
-    }
-
-    console.log("🌱 Initial data seed check complete — every table now has a starting dataset.");
     client.release();
   } catch (err) {
     console.error("🔴 Database schema initialization error:", err);
@@ -646,13 +552,39 @@ async function startServer() {
   // ==========================================
   app.post("/api/orders/checkout", async (req: AuthedRequest, res) => {
     if (!pool) return res.status(503).json({ error: "Database not connected" });
-    const { customerId, customerName, customerPhone, deliveryAddress, paymentMethod, items } = req.body || {};
+    const { customerId, customerName, customerPhone, deliveryAddress, paymentMethod, items, couponCode } = req.body || {};
     if (!customerPhone || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: "customerPhone and a non-empty items[] array are required" });
     }
     try {
       const orderId = `ord-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
-      const grandTotal = items.reduce((sum: number, it: any) => sum + Number(it.unitPrice) * Number(it.quantity || 1), 0);
+
+      // Re-price every line server-side against the product of record — the
+      // client-submitted unitPrice is only ever a fallback for demo data
+      // that has no matching olimart_products row. This is what makes
+      // quantity price-breaks (WooCommerce Dynamic Pricing) real instead of
+      // a client-side display trick.
+      const pricedItems: Array<any> = [];
+      for (const it of items) {
+        let unitPrice = Number(it.unitPrice);
+        const productRow = await pool.query("SELECT data FROM olimart_products WHERE id = $1", [it.productId]);
+        if (productRow.rows.length) {
+          const product = productRow.rows[0].data;
+          const resolved = resolveUnitPrice(Number(product.price), Number(it.quantity || 1), product.priceTiers);
+          unitPrice = resolved.unitPrice;
+        }
+        pricedItems.push({ ...it, unitPrice });
+      }
+      let subtotal = pricedItems.reduce((sum, it) => sum + it.unitPrice * Number(it.quantity || 1), 0);
+
+      let couponDiscount = 0;
+      let couponResult: any = null;
+      if (couponCode) {
+        couponResult = await validateAndPriceCoupon(pool, couponCode, customerId || customerPhone, subtotal);
+        if (couponResult.valid) couponDiscount = couponResult.discount || 0;
+      }
+      const grandTotal = Math.max(0, subtotal - couponDiscount);
+
       const client = await pool.connect();
       const createdItemIds: string[] = [];
       try {
@@ -662,7 +594,7 @@ async function startServer() {
            VALUES ($1,$2,$3,$4,$5,$6,'pending',$7)`,
           [orderId, customerId || null, customerName || null, customerPhone, deliveryAddress || null, paymentMethod || "cash_on_delivery", grandTotal]
         );
-        for (const it of items) {
+        for (const it of pricedItems) {
           const itemId = `oit-${Date.now()}-${crypto.randomUUID().slice(0, 8)}`;
           createdItemIds.push(itemId);
           await client.query(
@@ -684,10 +616,14 @@ async function startServer() {
         client.release();
       }
 
+      if (couponCode && couponResult?.valid) {
+        await recordCouponRedemption(pool, couponCode, customerId || customerPhone, orderId);
+      }
+
       // Confirm the order to the customer once, then tell each affected
       // vendor separately that they have a sale to confirm.
       await emitEvent(pool, { type: "order.placed", actorId: customerId, actorRole: "customer", orderId, customerPhone, payload: { grandTotal, itemCount: items.length } });
-      const vendorIds = [...new Set(items.map((it: any) => it.vendorId))];
+      const vendorIds = [...new Set(pricedItems.map((it: any) => it.vendorId))];
       for (const vendorId of vendorIds) {
         const v = await pool.query("SELECT phone, email FROM olimart_vendors WHERE id = $1", [vendorId]);
         await emitEvent(pool, {
@@ -695,11 +631,136 @@ async function startServer() {
           vendorPhone: v.rows[0]?.phone, payload: { grandTotal },
         });
       }
-      await writeAudit(pool, { actorId: customerId, actorRole: "customer", action: "create", entityType: "order", entityId: orderId, after: { items, grandTotal } });
+      await writeAudit(pool, { actorId: customerId, actorRole: "customer", action: "create", entityType: "order", entityId: orderId, after: { items: pricedItems, subtotal, couponDiscount, grandTotal } });
 
-      res.status(201).json({ success: true, orderId, orderItemIds: createdItemIds, grandTotal, status: "placed" });
+      res.status(201).json({ success: true, orderId, orderItemIds: createdItemIds, subtotal, couponDiscount, grandTotal, status: "placed" });
     } catch (err: any) {
       console.error("Checkout failed:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // List order items — the admin review queue (and, filtered by vendorId,
+  // a vendor's own order list). Nothing rendered any of this before: the
+  // Admin Console's "Order Radar Tracker" only ever read fake localStorage
+  // demo data, so there was no way to even see which real orders were
+  // sitting in "placed" waiting for a decision. This is that read path.
+  // ==========================================
+  app.get("/api/orders/items", requirePermission("order.view.all"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { status, vendorId } = req.query as { status?: string; vendorId?: string };
+    try {
+      const clauses: string[] = [];
+      const params: any[] = [];
+      if (status) {
+        params.push(status);
+        clauses.push(`oi.status = $${params.length}`);
+      }
+      if (vendorId) {
+        params.push(vendorId);
+        clauses.push(`oi.vendor_id = $${params.length}`);
+      }
+      const where = clauses.length ? `WHERE ${clauses.join(" AND ")}` : "";
+      const result = await pool.query(
+        `SELECT oi.id, oi.order_id, oi.vendor_id, oi.product_id, oi.product_title, oi.quantity,
+                oi.unit_price, oi.status, oi.rider_id, oi.created_at, oi.updated_at,
+                o.customer_name, o.customer_phone, o.delivery_address, o.payment_method, o.payment_status,
+                v.name AS vendor_name, v.phone AS vendor_phone
+         FROM olimart_order_items oi
+         JOIN olimart_orders_v2 o ON o.id = oi.order_id
+         LEFT JOIN olimart_vendors v ON v.id = oi.vendor_id
+         ${where}
+         ORDER BY oi.created_at DESC
+         LIMIT 200`,
+        params
+      );
+      res.json(result.rows);
+    } catch (err: any) {
+      console.error("List order items failed:", err);
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Admin approval gate — every order item lands in "placed" and cannot
+  // move any further (vendor can't confirm/pack/dispatch it) until an
+  // ops_admin/super_admin explicitly approves or rejects it here. The
+  // vendor was already told about the order at checkout time (see
+  // order.placed above); this is the separate, authoritative decision
+  // the customer's notification is actually keyed off of. A rejection
+  // auto-opens (and auto-approves) a full refund if payment was already
+  // captured, so the customer isn't left chasing their money.
+  // ==========================================
+  app.post("/api/orders/items/:id/admin-review", requirePermission("order.approve"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { id } = req.params;
+    const { decision, reason } = req.body || {}; // decision: 'approved' | 'rejected'
+    if (decision !== "approved" && decision !== "rejected") {
+      return res.status(400).json({ error: "decision must be 'approved' or 'rejected'" });
+    }
+    if (decision === "rejected" && !reason) {
+      return res.status(400).json({ error: "A reason is required to reject an order" });
+    }
+    try {
+      const current = await pool.query(
+        `SELECT oi.*, o.customer_phone, o.customer_id, o.payment_status, o.id as parent_order_id,
+                v.phone as vendor_phone, v.email as vendor_email
+         FROM olimart_order_items oi
+         JOIN olimart_orders_v2 o ON o.id = oi.order_id
+         LEFT JOIN olimart_vendors v ON v.id = oi.vendor_id
+         WHERE oi.id = $1`,
+        [id]
+      );
+      if (!current.rows.length) return res.status(404).json({ error: "Order item not found" });
+      const row = current.rows[0];
+      const fromStatus = row.status as OrderItemStatus;
+      const toStatus: OrderItemStatus = decision === "approved" ? "admin_approved" : "rejected";
+
+      if (fromStatus !== "placed") {
+        return res.status(409).json({ error: `Order item is already "${fromStatus}" — it has already been reviewed` });
+      }
+      if (!canTransition(fromStatus, toStatus)) {
+        return res.status(409).json({ error: `Cannot move from "${fromStatus}" to "${toStatus}"` });
+      }
+
+      const reviewerId = req.auth?.userId || "admin";
+      await pool.query("UPDATE olimart_order_items SET status = $1, updated_at = NOW() WHERE id = $2", [toStatus, id]);
+      await pool.query(
+        `INSERT INTO olimart_order_status_history (order_item_id, from_status, to_status, changed_by, note)
+         VALUES ($1, $2, $3, $4, $5)`,
+        [id, fromStatus, toStatus, reviewerId, decision === "rejected" ? `Rejected: ${reason}` : "Approved by admin"]
+      );
+
+      await emitEvent(pool, {
+        type: decision === "approved" ? "order.admin_approved" : "order.admin_rejected",
+        actorId: reviewerId, actorRole: req.auth?.role || "ops_admin",
+        orderId: row.parent_order_id, orderItemId: id, vendorId: row.vendor_id,
+        customerPhone: row.customer_phone, vendorPhone: row.vendor_phone,
+        payload: { reason },
+      });
+
+      // If money was already captured on this order and the admin rejects
+      // this line, don't leave the customer to chase a refund manually.
+      // NOTE: at this point in the lifecycle no commission split has been
+      // booked yet (that only happens via /confirm-sale, after the vendor
+      // fulfills), so there is no vendor ledger credit to reverse — this
+      // is purely a payment reversal, not the post-delivery refund flow
+      // in refundManagement.ts (which assumes a booked sale to claw back).
+      let refunded = false;
+      if (decision === "rejected" && row.payment_status === "paid") {
+        await pool.query("UPDATE olimart_orders_v2 SET payment_status = 'refunded' WHERE id = $1", [row.parent_order_id]);
+        refunded = true;
+      }
+
+      await writeAudit(pool, {
+        actorId: reviewerId, actorRole: req.auth?.role, action: "update", entityType: "order_item", entityId: id,
+        before: { status: fromStatus }, after: { status: toStatus, reason, refunded },
+      });
+
+      res.json({ success: true, fromStatus, toStatus, refunded });
+    } catch (err: any) {
+      console.error("Admin order review failed:", err);
       res.status(500).json({ error: err.message });
     }
   });
@@ -718,7 +779,7 @@ async function startServer() {
     const { toStatus, deliveryProof, changedBy, riderId } = req.body || {};
     try {
       const current = await pool.query(
-        `SELECT oi.*, o.customer_phone, o.id as parent_order_id, v.phone as vendor_phone, v.email as vendor_email
+        `SELECT oi.*, o.customer_phone, o.customer_id, o.id as parent_order_id, v.phone as vendor_phone, v.email as vendor_email
          FROM olimart_order_items oi
          JOIN olimart_orders_v2 o ON o.id = oi.order_id
          LEFT JOIN olimart_vendors v ON v.id = oi.vendor_id
@@ -729,6 +790,9 @@ async function startServer() {
       const row = current.rows[0];
       const fromStatus = row.status as OrderItemStatus;
 
+      if (toStatus === "admin_approved" || toStatus === "rejected") {
+        return res.status(403).json({ error: "Use POST /api/orders/items/:id/admin-review to approve or reject an order" });
+      }
       if (!canTransition(fromStatus, toStatus)) {
         return res.status(409).json({ error: `Cannot move from "${fromStatus}" to "${toStatus}"` });
       }
@@ -788,6 +852,13 @@ async function startServer() {
         });
       }
       await writeAudit(pool, { actorId: changedBy, action: "update", entityType: "order_item", entityId: id, before: { status: fromStatus }, after: { status: toStatus } });
+
+      // Loyalty points (WooCommerce Points & Rewards) are only ever earned
+      // once delivery is confirmed — never at checkout, where an order can
+      // still be cancelled or returned.
+      if (toStatus === "delivered" && row.customer_id) {
+        await creditLoyaltyPoints(pool, row.customer_id, row.parent_order_id, Number(row.unit_price) * Number(row.quantity));
+      }
 
       res.json({ success: true, fromStatus, toStatus });
     } catch (err: any) {
@@ -1321,14 +1392,414 @@ async function startServer() {
   });
 
   // ==========================================
-  // Settlement account — "all the money collected is sent to an account;
-  // the admin sets those details." One platform-wide collection account,
-  // manageable only by finance_admin/super_admin, fully audit-logged.
+  // Deposits / partial payments (WooCommerce Deposits) — records a payment
+  // against an order without requiring the full grand_total up front;
+  // payment_status flips to 'paid' automatically once fully covered.
   // ==========================================
-  app.get("/api/admin/settlement-account", requirePermission("settlement.manage"), async (req: AuthedRequest, res) => {
+  app.post("/api/orders/:id/payments", async (req: AuthedRequest, res) => {
     if (!pool) return res.status(503).json({ error: "Database not connected" });
-    const account = await getSettlementAccount(pool);
-    res.json(account || { message: "No settlement account configured yet." });
+    const { amountPaid } = req.body || {};
+    if (!amountPaid || Number(amountPaid) <= 0) return res.status(400).json({ error: "amountPaid must be greater than zero" });
+    try {
+      const result = await recordPartialPayment(pool, req.params.id, Number(amountPaid));
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "update", entityType: "order", entityId: req.params.id, after: result });
+      await emitEvent(pool, { type: "payment.captured", actorId: req.auth?.userId, orderId: req.params.id, payload: { amountPaid, ...result } });
+      res.json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Vendor subscription plans (Dokan Pro) — a paid tier that lowers the
+  // vendor's commission rate by writing directly into the commission
+  // policy the checkout path already reads.
+  // ==========================================
+  app.get("/api/subscription-plans", async (_req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getSubscriptionPlans(pool));
+  });
+
+  app.post("/api/vendor/:vendorId/subscribe", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const plan = await subscribeVendorToPlan(pool, req.params.vendorId, req.body?.planId, req.auth?.userId);
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: "update", entityType: "vendor_subscription", entityId: req.params.vendorId, after: plan });
+      await emitEvent(pool, { type: "vendor.subscription_changed", actorId: req.auth?.userId, vendorId: req.params.vendorId, payload: { planId: plan.id, commissionRate: plan.commissionRate } });
+      res.json({ success: true, plan });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Seller verification (KYC)
+  // ==========================================
+  app.post("/api/vendor/:vendorId/kyc", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { documentType, documentUrl } = req.body || {};
+    if (!documentType || !documentUrl) return res.status(400).json({ error: "documentType and documentUrl are required" });
+    const id = await submitKycDocument(pool, req.params.vendorId, documentType, documentUrl);
+    await writeAudit(pool, { actorId: req.auth?.userId, action: "create", entityType: "vendor_kyc", entityId: id, after: { documentType } });
+    res.status(201).json({ success: true, kycId: id });
+  });
+
+  app.post("/api/admin/kyc/:id/review", requirePermission("vendor.verify"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const row = await reviewKycDocument(pool, req.params.id, req.body?.decision, req.auth?.userId || "unknown");
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: req.body?.decision, entityType: "vendor_kyc", entityId: req.params.id, after: row });
+      if (req.body?.decision === "approved") {
+        const v = await pool.query("SELECT phone FROM olimart_vendors WHERE id = $1", [row.vendor_id]);
+        await emitEvent(pool, { type: "vendor.verified", actorId: req.auth?.userId, vendorId: row.vendor_id, vendorPhone: v.rows[0]?.phone });
+      }
+      res.json({ success: true, kyc: row });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Vendor staff manager
+  // ==========================================
+  app.post("/api/vendor/:vendorId/staff", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { name, email, phone, password } = req.body || {};
+    if (!name || !email || !phone) return res.status(400).json({ error: "name, email, and phone are required" });
+    try {
+      if (await isEmailOrPhoneTaken(pool, email, phone)) return res.status(409).json({ error: "Email or phone already in use" });
+      const staffId = await addVendorStaff(pool, req.params.vendorId, { name, email, phone }, hashPassword(password || crypto.randomUUID()));
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "create", entityType: "vendor_staff", entityId: staffId, after: { name, email, phone, vendorId: req.params.vendorId } });
+      res.status(201).json({ success: true, staffId });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Storefront branding & SEO
+  // ==========================================
+  app.put("/api/vendor/:vendorId/storefront", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      await setVendorStorefront(pool, { vendorId: req.params.vendorId, ...req.body });
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "update", entityType: "vendor_storefront", entityId: req.params.vendorId, after: req.body });
+      await emitEvent(pool, { type: "vendor.storefront_updated", actorId: req.auth?.userId, vendorId: req.params.vendorId });
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/vendor/:vendorId/storefront", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getVendorStorefront(pool, req.params.vendorId));
+  });
+
+  // ==========================================
+  // Follow store & store reviews
+  // ==========================================
+  app.post("/api/vendor/:vendorId/follow", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const customerId = req.body?.customerId || req.auth?.userId;
+    if (!customerId) return res.status(400).json({ error: "customerId is required" });
+    await followStore(pool, customerId, req.params.vendorId);
+    res.json({ success: true });
+  });
+
+  app.delete("/api/vendor/:vendorId/follow", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const customerId = (req.query.customerId as string) || req.auth?.userId;
+    if (!customerId) return res.status(400).json({ error: "customerId is required" });
+    await unfollowStore(pool, customerId, req.params.vendorId);
+    res.json({ success: true });
+  });
+
+  app.get("/api/vendor/:vendorId/followers", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getStoreFollowers(pool, req.params.vendorId));
+  });
+
+  app.post("/api/vendor/:vendorId/reviews", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { customerId, rating, text } = req.body || {};
+    try {
+      const id = await addStoreReview(pool, req.params.vendorId, customerId || req.auth?.userId, rating, text);
+      res.status(201).json({ success: true, reviewId: id });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/vendor/:vendorId/rating", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getStoreRating(pool, req.params.vendorId));
+  });
+
+  // ==========================================
+  // Vacation mode
+  // ==========================================
+  app.put("/api/vendor/:vendorId/vacation-mode", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    await setVacationMode(pool, req.params.vendorId, !!req.body?.onVacation);
+    await writeAudit(pool, { actorId: req.auth?.userId, action: "update", entityType: "vendor", entityId: req.params.vendorId, after: { onVacation: !!req.body?.onVacation } });
+    res.json({ success: true });
+  });
+
+  // ==========================================
+  // Admin -> vendor announcements
+  // ==========================================
+  app.post("/api/admin/announcements", requirePermission("announcement.send"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { audience, subject, message } = req.body || {};
+    if (!message) return res.status(400).json({ error: "message is required" });
+    try {
+      const result = await broadcastAnnouncement(pool, req.auth?.userId || "admin", audience || "all", subject || "Olimart announcement", message);
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: "create", entityType: "announcement", entityId: result.id, after: { audience, subject, message } });
+      await emitEvent(pool, { type: "announcement.sent", actorId: req.auth?.userId, actorRole: req.auth?.role, payload: { recipientCount: result.recipientCount } });
+      res.status(201).json({ success: true, ...result });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Withdrawal requests (Dokan Pro)
+  // ==========================================
+  app.post("/api/vendor/:vendorId/withdrawals", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { amount, method, destinationAccount } = req.body || {};
+    if (!amount || !method || !destinationAccount) return res.status(400).json({ error: "amount, method, and destinationAccount are required" });
+    try {
+      const id = await requestWithdrawal(pool, req.params.vendorId, Number(amount), method, destinationAccount);
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "create", entityType: "withdrawal_request", entityId: id, after: { amount, method, destinationAccount } });
+      await emitEvent(pool, { type: "withdrawal.requested", actorId: req.auth?.userId, vendorId: req.params.vendorId, payload: { amount } });
+      res.status(201).json({ success: true, withdrawalId: id });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/withdrawals/:id/review", requirePermission("payout.approve"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const row = await reviewWithdrawal(pool, req.params.id, req.body?.decision, req.auth?.userId || "unknown", req.body?.reason);
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: req.body?.decision, entityType: "withdrawal_request", entityId: req.params.id, after: row });
+      const v = await pool.query("SELECT phone FROM olimart_vendors WHERE id = $1", [row.vendor_id]);
+      await emitEvent(pool, {
+        type: req.body?.decision === "approved" ? "withdrawal.approved" : "withdrawal.rejected",
+        actorId: req.auth?.userId, vendorId: row.vendor_id, vendorPhone: v.rows[0]?.phone, payload: { amount: row.amount },
+      });
+      res.json({ success: true, withdrawal: row });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/admin/withdrawals", requirePermission("payout.approve"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await listWithdrawals(pool, { vendorId: req.query.vendorId as string, status: req.query.status as any }));
+  });
+
+  app.get("/api/vendor/:vendorId/withdrawals", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await listWithdrawals(pool, { vendorId: req.params.vendorId }));
+  });
+
+  // ==========================================
+  // Shipping rules per vendor/zone
+  // ==========================================
+  app.put("/api/vendor/:vendorId/shipping-rules", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { zoneName, fee, freeShippingThreshold, estimatedDays } = req.body || {};
+    if (!zoneName || fee === undefined) return res.status(400).json({ error: "zoneName and fee are required" });
+    try {
+      const id = await setShippingRule(pool, { vendorId: req.params.vendorId, zoneName, fee, freeShippingThreshold, estimatedDays: estimatedDays || 2 });
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "update", entityType: "shipping_rule", entityId: id, after: req.body });
+      await emitEvent(pool, { type: "shipping_rule.updated", actorId: req.auth?.userId, vendorId: req.params.vendorId, payload: { zoneName, fee } });
+      res.json({ success: true, ruleId: id });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/vendor/:vendorId/shipping-rules", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getShippingRulesForVendor(pool, req.params.vendorId));
+  });
+
+  app.get("/api/vendor/:vendorId/shipping-quote", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const zoneName = req.query.zoneName as string;
+    const subtotal = Number(req.query.subtotal || 0);
+    if (!zoneName) return res.status(400).json({ error: "zoneName query param is required" });
+    res.json(await resolveShippingFee(pool, req.params.vendorId, zoneName, subtotal));
+  });
+
+  // ==========================================
+  // Refund & return requests
+  // ==========================================
+  app.post("/api/orders/items/:id/refund-request", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { vendorId, customerId, reason, detail, evidenceUrl, amount } = req.body || {};
+    if (!vendorId || !reason || !amount) return res.status(400).json({ error: "vendorId, reason, and amount are required" });
+    try {
+      const id = await openRefundRequest(pool, { orderItemId: req.params.id, vendorId, customerId: customerId || req.auth?.userId, reason, detail, evidenceUrl, amount: Number(amount) });
+      await writeAudit(pool, { actorId: req.auth?.userId, action: "create", entityType: "refund_request", entityId: id, after: req.body });
+      await emitEvent(pool, { type: "refund.requested", actorId: req.auth?.userId, orderItemId: req.params.id, vendorId, payload: { reason, amount } });
+      res.status(201).json({ success: true, refundId: id });
+    } catch (err: any) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/admin/refunds/:id/review", requirePermission("refund.manage"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      const row = await reviewRefundRequest(pool, req.params.id, req.body?.decision, req.auth?.userId || "unknown", req.body?.reason);
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: req.body?.decision, entityType: "refund_request", entityId: req.params.id, after: row });
+      const order = await pool.query(
+        `SELECT o.customer_phone, v.phone as vendor_phone FROM olimart_order_items oi
+         JOIN olimart_orders_v2 o ON o.id = oi.order_id LEFT JOIN olimart_vendors v ON v.id = oi.vendor_id
+         WHERE oi.id = $1`, [row.order_item_id]
+      );
+      await emitEvent(pool, {
+        type: req.body?.decision === "approved" ? "refund.approved" : "refund.rejected",
+        actorId: req.auth?.userId, orderItemId: row.order_item_id, vendorId: row.vendor_id,
+        customerPhone: order.rows[0]?.customer_phone, vendorPhone: order.rows[0]?.vendor_phone,
+      });
+      res.json({ success: true, refund: row });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.get("/api/admin/refunds", requirePermission("refund.manage"), async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await listRefundRequests(pool, { vendorId: req.query.vendorId as string, status: req.query.status as any }));
+  });
+
+  // ==========================================
+  // Wishlist, back-in-stock alerts, loyalty points, abandoned carts,
+  // and dynamic pricing preview (WooCommerce Pro feature set)
+  // ==========================================
+  app.post("/api/customer/:customerId/wishlist", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    await addToWishlist(pool, req.params.customerId, req.body?.productId);
+    res.json({ success: true });
+  });
+  app.delete("/api/customer/:customerId/wishlist/:productId", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    await removeFromWishlist(pool, req.params.customerId, req.params.productId);
+    res.json({ success: true });
+  });
+  app.get("/api/customer/:customerId/wishlist", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getWishlist(pool, req.params.customerId));
+  });
+
+  app.post("/api/products/:productId/notify-when-in-stock", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { customerId, customerPhone } = req.body || {};
+    if (!customerId || !customerPhone) return res.status(400).json({ error: "customerId and customerPhone are required" });
+    await subscribeBackInStock(pool, customerId, customerPhone, req.params.productId);
+    res.json({ success: true });
+  });
+
+  // Admin/vendor calls this after restocking — triggers the real SMS fan-out.
+  app.post("/api/products/:productId/restocked", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    await notifyBackInStock(pool, req.params.productId, req.body?.productTitle || "An item on your wishlist");
+    res.json({ success: true });
+  });
+
+  app.get("/api/customer/:customerId/loyalty-points", async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json({ points: await getLoyaltyBalance(pool, req.params.customerId) });
+  });
+
+  app.post("/api/customer/:customerId/loyalty-points/redeem", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    try {
+      await redeemLoyaltyPoints(pool, req.params.customerId, Number(req.body?.points), req.body?.orderId);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(400).json({ error: err.message });
+    }
+  });
+
+  app.post("/api/coupons/validate", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { code, customerId, cartTotal } = req.body || {};
+    if (!code || cartTotal === undefined) return res.status(400).json({ error: "code and cartTotal are required" });
+    const result = await validateAndPriceCoupon(pool, code, customerId || req.auth?.userId || "guest", Number(cartTotal));
+    res.json(result);
+  });
+
+  app.post("/api/cart/snapshot", async (req: AuthedRequest, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const { customerId, customerPhone, items } = req.body || {};
+    if (!customerId || !customerPhone) return res.status(400).json({ error: "customerId and customerPhone are required" });
+    await saveCartSnapshot(pool, customerId, customerPhone, items || []);
+    res.json({ success: true });
+  });
+
+  // Meant to be called by a scheduler (e.g. every 15 minutes); also
+  // callable by an admin for an on-demand sweep.
+  app.post("/api/admin/abandoned-carts/sweep", requirePermission("analytics.view.platform"), async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    const remindersSent = await sweepAbandonedCarts(pool, Number(req.body?.idleMinutes) || 60);
+    res.json({ success: true, remindersSent });
+  });
+
+  // ==========================================
+  // Analytics & reports (Dokan Pro vendor dashboard + admin reports)
+  // ==========================================
+  app.get("/api/vendor/:vendorId/dashboard", requireOwnResourceOrAdmin((req) => req.params.vendorId), async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getVendorDashboard(pool, req.params.vendorId));
+  });
+
+  app.get("/api/admin/reports", requirePermission("analytics.view.platform"), async (req, res) => {
+    if (!pool) return res.status(503).json({ error: "Database not connected" });
+    res.json(await getPlatformReport(pool, Number(req.query.sinceDays) || 30));
+  });
+
+  // ==========================================
+  // Settlement accounts — "all the money collected is sent to an account;
+  // the admin sets those details, and the checkout page must disclose the
+  // real, current destination for whichever payment rail the customer
+  // picks." There is one settlement account per rail (bank / MTN MoMo /
+  // Airtel Money / card aggregator). Admin writes are permission-gated and
+  // fully audit-logged; the public GET is intentionally unauthenticated
+  // because these are collection details Olimart displays to customers by
+  // design — never anything secret like API keys.
+  // ==========================================
+  app.get("/api/settlement-accounts/public", async (req, res) => {
+    if (!pool) {
+      return res.json(
+        Object.fromEntries(
+          (Object.entries(DEFAULT_SETTLEMENT_ACCOUNTS) as [string, SettlementAccount][]).map(([k, v]) => [k, toPublicSettlementAccount(v)])
+        )
+      );
+    }
+    const all = await getAllSettlementAccounts(pool);
+    res.json(
+      Object.fromEntries(
+        (Object.entries(all) as [string, SettlementAccount][]).map(([k, v]) => [k, toPublicSettlementAccount(v)])
+      )
+    );
+  });
+
+  app.get("/api/admin/settlement-accounts", requirePermission("settlement.manage"), async (req: AuthedRequest, res) => {
+    if (!pool) return res.json(DEFAULT_SETTLEMENT_ACCOUNTS);
+    res.json(await getAllSettlementAccounts(pool));
+  });
+
+  app.get("/api/admin/settlement-account", requirePermission("settlement.manage"), async (req: AuthedRequest, res) => {
+    const provider = (req.query.provider as SettlementProvider) || "bank";
+    const account = await getSettlementAccount(pool, provider);
+    res.json(account);
   });
 
   app.put("/api/admin/settlement-account", requirePermission("settlement.manage"), async (req: AuthedRequest, res) => {
@@ -1338,14 +1809,100 @@ async function startServer() {
       return res.status(400).json({ error: "provider, accountName, accountNumber, and currency are required" });
     }
     try {
-      const before = await getSettlementAccount(pool);
+      const before = await getSettlementAccount(pool, body.provider);
       const updated = await setSettlementAccount(pool, body, req.auth?.userId || "unknown");
-      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: "update", entityType: "settlement_account", entityId: "platform", before, after: updated });
+      await writeAudit(pool, { actorId: req.auth?.userId, actorRole: req.auth?.role, action: "update", entityType: "settlement_account", entityId: body.provider, before, after: updated });
       await emitEvent(pool, { type: "settlement_account.updated", actorId: req.auth?.userId, actorRole: req.auth?.role, payload: { provider: updated.provider } });
       res.json({ success: true, account: updated });
     } catch (err: any) {
       console.error("Failed to update settlement account:", err);
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  // ==========================================
+  // Flutterwave payment gateway integration
+  // ------------------------------------------------------------------------
+  // Real integration point for card / bank-transfer / USSD / mobile-money
+  // collections. It is entirely optional: if FLUTTERWAVE_SECRET_KEY (and
+  // FLUTTERWAVE_PUBLIC_KEY on the client) are not configured, the storefront
+  // automatically falls back to the simulated Mobile-Money PIN prompt /
+  // disclosed bank-transfer flow further below — nothing breaks either way.
+  //
+  // Flow:
+  //   1. Client calls POST /api/payments/flutterwave/initiate with the order
+  //      total + customer details -> we call Flutterwave's Standard
+  //      Payments API and hand back a hosted checkout `link`.
+  //   2. Client redirects the customer to that link (or opens it in the
+  //      inline modal via the flutterwave v3 checkout script).
+  //   3. Flutterwave redirects back to redirect_url with a transaction_id;
+  //      the client calls GET /api/payments/flutterwave/verify/:id, which we
+  //      confirm server-side against Flutterwave before crediting anything.
+  // ==========================================
+  app.get("/api/payments/flutterwave/public-config", (req, res) => {
+    const publicKey = process.env.FLUTTERWAVE_PUBLIC_KEY || "";
+    res.json({ enabled: Boolean(publicKey), publicKey });
+  });
+
+  app.post("/api/payments/flutterwave/initiate", async (req, res) => {
+    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+    if (!secretKey) {
+      return res.status(503).json({ error: "Flutterwave is not configured on this server yet. Set FLUTTERWAVE_SECRET_KEY / FLUTTERWAVE_PUBLIC_KEY." });
+    }
+    const { amount, currency, customerEmail, customerPhone, customerName, orderId, redirectUrl } = req.body || {};
+    if (!amount || !customerPhone || !orderId) {
+      return res.status(400).json({ error: "amount, customerPhone and orderId are required" });
+    }
+    try {
+      const txRef = `OLIMART-${orderId}-${Date.now()}`;
+      const flwRes = await fetch("https://api.flutterwave.com/v3/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${secretKey}`,
+        },
+        body: JSON.stringify({
+          tx_ref: txRef,
+          amount,
+          currency: currency || "UGX",
+          redirect_url: redirectUrl || `${process.env.APP_URL || ""}/checkout/flutterwave/callback`,
+          customer: {
+            email: customerEmail || "customer@olimart.ug",
+            phonenumber: customerPhone,
+            name: customerName || "Olimart Customer",
+          },
+          customizations: {
+            title: "Olimart Uganda",
+            description: `Payment for order ${orderId}`,
+            logo: `${process.env.APP_URL || ""}/favicon.ico`,
+          },
+        }),
+      });
+      const data = await flwRes.json();
+      if (!flwRes.ok || data.status !== "success") {
+        return res.status(502).json({ error: data.message || "Flutterwave could not initiate this payment." });
+      }
+      res.json({ success: true, txRef, link: data.data.link });
+    } catch (err: any) {
+      console.error("Flutterwave initiate error:", err);
+      res.status(500).json({ error: "Could not reach Flutterwave. Please try Mobile Money or bank transfer instead." });
+    }
+  });
+
+  app.get("/api/payments/flutterwave/verify/:transactionId", async (req, res) => {
+    const secretKey = process.env.FLUTTERWAVE_SECRET_KEY;
+    if (!secretKey) return res.status(503).json({ error: "Flutterwave is not configured on this server." });
+    try {
+      const flwRes = await fetch(
+        `https://api.flutterwave.com/v3/transactions/${req.params.transactionId}/verify`,
+        { headers: { Authorization: `Bearer ${secretKey}` } }
+      );
+      const data = await flwRes.json();
+      const ok = flwRes.ok && data.status === "success" && data.data?.status === "successful";
+      res.json({ success: ok, data: data.data || null });
+    } catch (err: any) {
+      console.error("Flutterwave verify error:", err);
+      res.status(500).json({ error: "Could not verify this transaction with Flutterwave." });
     }
   });
 

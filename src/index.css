@@ -1,72 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import "tailwindcss";
 
-/*
-  TYPOGRAPHY STRATEGY (Amazon-style)
-  ----------------------------------
-  Amazon's own apps don't force one webfont everywhere: the web uses a
-  brand font with a full native fallback chain, while iOS/Android/desktop
-  apps render in the OS's own system font (SF Pro on iOS, Roboto on
-  Android, Segoe UI on Windows) so text feels native, loads instantly
-  (zero font-swap flash), and automatically honors each platform's own
-  accessibility text-size settings.
-
-  We do the same: Inter loads as a progressive enhancement (font-display:
-  swap already handles the flash), but --font-sans always resolves to each
-  OS's native UI font first. If the Google Fonts request is slow/blocked
-  (common on low-end Android + patchy connections, which matters a lot for
-  a Uganda-market app), the app still renders in a good-looking native font
-  immediately instead of invisible/fallback-serif text.
-*/
 @theme {
-  --font-sans:
-    "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-    "Helvetica Neue", Arial, "Noto Sans", "Liberation Sans", sans-serif,
-    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --font-display: var(--font-sans);
-
-  /*
-    Fluid, REM-based type scale.
-    Every size is in rem (relative to the root font-size), never raw px,
-    so text scales correctly when a user increases their OS/browser text
-    size — a real accessibility need on the small Android screens most of
-    our customers use. The old scale used hard-coded text-[7px]/[8px]/[9px]
-    utilities, which stay stuck at that pixel size no matter what the
-    user's device/browser settings are, and drop under the ~0.75rem legibility
-    floor for body text.
-  */
-  --text-4xs: 0.625rem;   /* 10px  — smallest legal label size (badges only) */
-  --text-3xs: 0.6875rem;  /* 11px  — meta text (ratings count, timestamps)  */
-  /* Anything 12px and up already exists as Tailwind's default text-xs/sm/base/... */
-
-  --color-trust-text-primary: #111111;
-  --color-trust-text-secondary: #565959;
-  --color-trust-link: #0066CC;
-  --color-trust-price: #B12704;
-  --color-trust-rating: #FFA41C;
-  --color-trust-cta: #FFD814;
-  --color-trust-cta-hover: #F7CA00;
-}
-
-/*
-  Root font-size scales gently with viewport width instead of staying fixed
-  at 16px everywhere. This is what makes "text-sm", "text-base" etc. actually
-  feel proportionate on a small phone vs. a wide desktop monitor, without
-  needing a different Tailwind class per breakpoint on every element.
-*/
-html {
-  font-size: clamp(15px, 0.9vw + 13px, 17px);
-  -webkit-text-size-adjust: 100%; /* stop iOS Safari auto-shrinking/zooming text in landscape */
-  text-size-adjust: 100%;
-}
-
-/* Respect users who've asked their OS/browser to reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
 }
 
 @variant dark (&:where(.dark, .dark *));

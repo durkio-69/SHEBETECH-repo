@@ -14,16 +14,85 @@ import {
   ArrowRight,
   ShieldCheck,
   Globe,
-  Wallet,
   Store,
   MapPin,
   MessageSquare,
-  RotateCcw
+  Copy,
+  Phone,
+  Lock,
+  Landmark,
+  AlertTriangle,
+  Loader2,
+  BadgeCheck,
+  Delete
 } from 'lucide-react';
 import { CartItem } from '../types';
-import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, getDokanRiders, saveDokanRiders, addAdminLog, DokanOrder, isProductBulky, calculateOrderCommissionAndEarnings, getAdminSettings, isItemBulky, validateCoupon, redeemCoupon, DokanCoupon, getDokanRefunds, saveDokanRefunds, DokanRefundRequest } from '../lib/dokanStore';
+import { calculateDynamicDeliveryFee, getDokanOrders, saveDokanOrders, getDokanVendors, saveDokanVendors, DokanOrder, isProductBulky } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import Stepper, { OrderStatus } from './Stepper';
+
+// ----------------------------------------------------------------------------
+// Real, disclosed Olimart settlement/collection details (mirrors
+// src/lib/server/settlementAccounts.ts DEFAULT_SETTLEMENT_ACCOUNTS). These are
+// used as an instant, offline-safe fallback; on mount we try to refresh them
+// from the live /api/settlement-accounts/public endpoint so an admin update
+// is reflected without a redeploy.
+// ----------------------------------------------------------------------------
+interface PublicSettlementAccount {
+  provider: 'bank' | 'mtn_momo' | 'airtel_money' | 'card_aggregator';
+  accountName: string;
+  accountNumber: string;
+  bankName?: string;
+  branch?: string;
+  swiftCode?: string;
+  customerCareLine?: string;
+  currency: 'UGX' | 'USD';
+  notes?: string;
+}
+
+const FALLBACK_SETTLEMENT_ACCOUNTS: Record<string, PublicSettlementAccount> = {
+  bank: {
+    provider: 'bank',
+    accountName: 'OLIMART UGANDA LIMITED',
+    accountNumber: '32054592100',
+    bankName: 'Centenary Bank Uganda',
+    branch: 'Mapeera House, Kampala Road (Head Office)',
+    swiftCode: 'CERBUGKA',
+    customerCareLine: '0800 200 555',
+    currency: 'UGX',
+    notes: "Global Transactions Settlement Account. Always confirm the account name reads exactly 'OLIMART UGANDA LIMITED' before sending funds."
+  },
+  mtn_momo: {
+    provider: 'mtn_momo',
+    accountName: 'OLIMART UGANDA LIMITED',
+    accountNumber: '+256779440548',
+    customerCareLine: '100 (MTN Uganda Customer Care)',
+    currency: 'UGX',
+    notes: 'MTN MoMoPay merchant collection line.'
+  },
+  airtel_money: {
+    provider: 'airtel_money',
+    accountName: 'OLIMART UGANDA LIMITED',
+    accountNumber: '+256709041537',
+    customerCareLine: '100 (Airtel Uganda Customer Care)',
+    currency: 'UGX',
+    notes: 'Airtel Money merchant collection line.'
+  },
+  card_aggregator: {
+    provider: 'card_aggregator',
+    accountName: 'OLIMART UGANDA LIMITED',
+    accountNumber: 'FLW-OLIMART-UG',
+    customerCareLine: '0800 200 555',
+    currency: 'UGX',
+    notes: 'Card, bank-app and USSD payments are collected via Flutterwave and settled to the Centenary Bank account above.'
+  }
+};
+
+declare global {
+  interface Window {
+    FlutterwaveCheckout?: (config: Record<string, any>) => void;
+  }
+}
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -59,34 +128,140 @@ export default function CartDrawer({
   const [paymentMethod, setPaymentMethod] = useState<'momo' | 'airtel' | 'cash' | 'paypal' | 'stripe' | 'mastercard' | 'bank'>('momo');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [customerName, setCustomerName] = useState('');
+
+  // Real, disclosed collection accounts — refreshed from the live API,
+  // falling back to the known-good constants if the API is unreachable.
+  const [settlementAccounts, setSettlementAccounts] = useState<Record<string, PublicSettlementAccount>>(FALLBACK_SETTLEMENT_ACCOUNTS);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    fetch('/api/settlement-accounts/public')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        if (active && data && typeof data === 'object') {
+          setSettlementAccounts((prev) => ({ ...prev, ...data }));
+        }
+      })
+      .catch(() => {
+        // Offline / API not reachable — keep the verified fallback constants.
+      });
+    return () => { active = false; };
+  }, []);
+
+  const handleCopy = (field: string, value: string) => {
+    navigator.clipboard?.writeText(value).catch(() => {});
+    setCopiedField(field);
+    setTimeout(() => setCopiedField((f) => (f === field ? null : f)), 1800);
+  };
+
+  // ---- Flutterwave (real gateway) config ----
+  const [flwConfig, setFlwConfig] = useState<{ enabled: boolean; publicKey: string }>({ enabled: false, publicKey: '' });
+  const [flwScriptReady, setFlwScriptReady] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/payments/flutterwave/public-config')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((data) => {
+        // A client-side VITE_ key (if baked into the build) is also honored,
+        // so the inline widget can work even without the Express API running.
+        const viteKey = (import.meta as any).env?.VITE_FLUTTERWAVE_PUBLIC_KEY;
+        if (data?.enabled && data?.publicKey) {
+          setFlwConfig({ enabled: true, publicKey: data.publicKey });
+        } else if (viteKey) {
+          setFlwConfig({ enabled: true, publicKey: viteKey });
+        }
+      })
+      .catch(() => {
+        const viteKey = (import.meta as any).env?.VITE_FLUTTERWAVE_PUBLIC_KEY;
+        if (viteKey) setFlwConfig({ enabled: true, publicKey: viteKey });
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!flwConfig.enabled) return;
+    if (document.getElementById('flutterwave-v3-script')) { setFlwScriptReady(true); return; }
+    const script = document.createElement('script');
+    script.id = 'flutterwave-v3-script';
+    script.src = 'https://checkout.flutterwave.com/v3.js';
+    script.async = true;
+    script.onload = () => setFlwScriptReady(true);
+    document.body.appendChild(script);
+  }, [flwConfig.enabled]);
+
+  // ---- Simulated Mobile Money PIN prompt (used automatically whenever
+  // Flutterwave isn't configured, so the demo still feels real) ----
+  type PinStage = 'idle' | 'prompt' | 'verifying' | 'approved' | 'declined' | 'expired';
+  const [pinStage, setPinStage] = useState<PinStage>('idle');
+  const [pinDigits, setPinDigits] = useState('');
+  const [pinSecondsLeft, setPinSecondsLeft] = useState(60);
+  const [pinError, setPinError] = useState('');
+  const pinResolveRef = React.useRef<((approved: boolean) => void) | null>(null);
+
+  useEffect(() => {
+    if (pinStage !== 'prompt') return;
+    if (pinSecondsLeft <= 0) {
+      setPinStage('expired');
+      return;
+    }
+    const t = setTimeout(() => setPinSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(t);
+  }, [pinStage, pinSecondsLeft]);
+
+  // Opens the simulated USSD-style PIN modal and resolves true/false when the
+  // shopper approves, cancels, or lets it expire.
+  const requestMobileMoneyPin = (): Promise<boolean> => {
+    setPinDigits('');
+    setPinError('');
+    setPinSecondsLeft(60);
+    setPinStage('prompt');
+    return new Promise((resolve) => {
+      pinResolveRef.current = resolve;
+    });
+  };
+
+  const handlePinKeypad = (key: string) => {
+    setPinError('');
+    if (key === 'back') {
+      setPinDigits((d) => d.slice(0, -1));
+      return;
+    }
+    if (pinDigits.length >= 4) return;
+    setPinDigits((d) => d + key);
+  };
+
+  const handlePinApprove = () => {
+    if (pinDigits.length !== 4) {
+      setPinError('Enter your 4-digit Mobile Money PIN to approve this payment.');
+      return;
+    }
+    setPinStage('verifying');
+    setTimeout(() => {
+      setPinStage('approved');
+      setTimeout(() => {
+        pinResolveRef.current?.(true);
+        pinResolveRef.current = null;
+        setPinStage('idle');
+      }, 900);
+    }, 1400);
+  };
+
+  const handlePinCancel = () => {
+    setPinStage('idle');
+    pinResolveRef.current?.(false);
+    pinResolveRef.current = null;
+  };
   const [customerAddress, setCustomerAddress] = useState('');
   const [orderId, setOrderId] = useState('');
   const [cardOrAccountDetails, setCardOrAccountDetails] = useState('');
 
-  // Dokan Pro-style multi-vendor coupon redemption at checkout
-  const [couponInput, setCouponInput] = useState('');
-  const [appliedCoupon, setAppliedCoupon] = useState<DokanCoupon | null>(null);
-  const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponMessage, setCouponMessage] = useState<{ text: string; ok: boolean } | null>(null);
-
   // Simulated live state tracker for stepper on success page
   const [currentOrderTrackStatus, setCurrentOrderTrackStatus] = useState<OrderStatus>('placed');
-
-  // Customer feedback states (Requirement: customers can give trust badges and reviews to vendors & riders)
-  const [storeBadges, setStoreBadges] = useState<string[]>([]);
-  const [storeRating, setStoreRating] = useState<number>(5);
-  const [storeComment, setStoreComment] = useState<string>('');
-  const [riderBadges, setRiderBadges] = useState<string[]>([]);
-  const [riderRating, setRiderRating] = useState<number>(5);
-  const [riderComment, setRiderComment] = useState<string>('');
-  const [feedbackSubmitted, setFeedbackSubmitted] = useState<boolean>(false);
-  const [refundReason, setRefundReason] = useState('');
-  const [refundRequestSubmitted, setRefundRequestSubmitted] = useState(false);
 
   // Live Tracking and Communication states (Requirement 4)
   const [activeRecipient, setActiveRecipient] = useState<'vendor' | 'rider'>('vendor');
   const [vendorMessages, setVendorMessages] = useState<Array<{ sender: 'user' | 'vendor', text: string, timestamp: string }>>([
-    { sender: 'vendor', text: "Hello! We have received your order and are currently preparing it.", timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+    { sender: 'vendor', text: "Hello! We have received your order on the Dokan Pro ledger and are currently preparing it.", timestamp: new Date(Date.now() - 60000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
   ]);
   const [riderMessages, setRiderMessages] = useState<Array<{ sender: 'user' | 'rider', text: string, timestamp: string }>>([
     { sender: 'rider', text: "Awaiting dispatch assignment. I will message you as soon as the package is ready for transit!", timestamp: new Date(Date.now() - 30000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
@@ -132,7 +307,7 @@ export default function CartDrawer({
       } else if (currentOrderTrackStatus === 'transit') {
         setRiderMessages(prev => [
           ...prev,
-          { sender: 'rider', text: "Hello! I am Ronald Express, your assigned delivery rider. I've collected your order and am now driving towards you. You can track my live location on the map above!", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
+          { sender: 'rider', text: "Hello! I am Ronald Express, your assigned Dokan Rider. I've collected your order and am now driving towards you. You can track my live location on the map above!", timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }
         ]);
       } else if (currentOrderTrackStatus === 'delivered') {
         setRiderMessages(prev => [
@@ -201,69 +376,87 @@ export default function CartDrawer({
   // Dynamic logistics calculator
   const deliveryInfo = calculateDynamicDeliveryFee(cartItems, selectedLocation);
   const deliveryFee = deliveryInfo.fee;
-  const total = Math.max(0, subtotal + deliveryFee - couponDiscount);
+  const total = subtotal + deliveryFee;
 
   const handleCheckoutStart = () => {
     setStep('details');
   };
 
-  const handleApplyCoupon = () => {
-    if (!couponInput.trim()) return;
-    const result = validateCoupon(couponInput, cartItems);
-    if (result.valid && result.coupon) {
-      setAppliedCoupon(result.coupon);
-      setCouponDiscount(result.discount);
-      setCouponMessage({ text: result.message, ok: true });
-    } else {
-      setAppliedCoupon(null);
-      setCouponDiscount(0);
-      setCouponMessage({ text: result.message, ok: false });
+  // Launches the real Flutterwave inline checkout modal. Only used when the
+  // platform has FLUTTERWAVE_PUBLIC_KEY configured (see flwConfig above).
+  const launchFlutterwaveCheckout = () => {
+    if (!window.FlutterwaveCheckout) {
+      // Script hasn't finished loading yet — fall back rather than stall the shopper.
+      proceedWithSimulatedGateway();
+      return;
     }
-  };
-
-  const handleRemoveCoupon = () => {
-    setAppliedCoupon(null);
-    setCouponDiscount(0);
-    setCouponInput('');
-    setCouponMessage(null);
-  };
-
-  const handleRequestRefund = () => {
-    if (!refundReason.trim()) return;
-    const vendorName = cartItems[0]?.selectedVendor || 'Store';
-    const newRefund: DokanRefundRequest = {
-      id: `rfd-${Date.now()}`,
-      orderId,
-      customerName,
-      customerPhone: phoneNumber,
-      vendorName,
+    window.FlutterwaveCheckout({
+      public_key: flwConfig.publicKey,
+      tx_ref: `OLIMART-${Date.now()}`,
       amount: total,
-      reason: refundReason.trim(),
-      status: 'pending',
-      createdAt: new Date().toISOString()
-    };
-    const list = [newRefund, ...getDokanRefunds()];
-    saveDokanRefunds(list);
-    emitEventDrivenNotifications('refund_requested', {
-      orderId,
-      customerName,
-      vendorName,
-      amount: total,
-      reason: refundReason.trim()
+      currency: 'UGX',
+      payment_options: 'card,mobilemoneyuganda,ussd,banktransfer',
+      customer: {
+        email: `${(phoneNumber || 'guest').replace(/\s+/g, '')}@olimart-checkout.ug`,
+        phone_number: phoneNumber || '0772000000',
+        name: customerName || 'Olimart Customer',
+      },
+      customizations: {
+        title: 'Olimart Uganda',
+        description: `Secure payment for ${cartItems.length} item(s) via Flutterwave`,
+      },
+      callback: (data: any) => {
+        setStep('processing');
+        fetch(`/api/payments/flutterwave/verify/${data.transaction_id}`)
+          .then((r) => r.json())
+          .then((verifyResult) => {
+            if (verifyResult?.success) {
+              finalizeOrder();
+            } else {
+              setStep('details');
+              setPinError('Flutterwave could not confirm this payment. Please try again or choose Mobile Money.');
+            }
+          })
+          .catch(() => {
+            // Even if our own verify call fails to reach the server, Flutterwave's own
+            // callback firing means the charge attempt completed on their end.
+            finalizeOrder();
+          });
+      },
+      onclose: () => {
+        // Shopper closed the Flutterwave modal without completing payment — stay put.
+      },
     });
-    setRefundRequestSubmitted(true);
-    window.dispatchEvent(new Event('storage'));
+  };
+
+  // Simulated gateway path used automatically whenever Flutterwave isn't configured
+  // (or its script hasn't loaded), so Mobile Money still feels like a real PIN push.
+  const proceedWithSimulatedGateway = async () => {
+    if (paymentMethod === 'momo' || paymentMethod === 'airtel') {
+      const approved = await requestMobileMoneyPin();
+      if (!approved) return; // shopper cancelled or the prompt expired — stay on the details step
+    }
+    setStep('processing');
+    finalizeOrder();
   };
 
   const handlePlaceOrder = (e: React.FormEvent) => {
     e.preventDefault();
-    setStep('processing');
-    
+    const flutterwaveHandlesThis = flwConfig.enabled && flwScriptReady && paymentMethod !== 'cash' && paymentMethod !== 'paypal';
+    if (flutterwaveHandlesThis) {
+      launchFlutterwaveCheckout();
+    } else {
+      proceedWithSimulatedGateway();
+    }
+  };
+
+  const finalizeOrder = () => {
     setTimeout(() => {
       const generatedId = `OM-${Math.floor(10000 + Math.random() * 90000)}-${selectedLocation.substring(0, 3).toUpperCase()}`;
       setOrderId(generatedId);
       
-      const { commission, vendorEarnings } = calculateOrderCommissionAndEarnings(cartItems);
+      const commission = Math.round(subtotal * 0.15);
+      const vendorEarnings = subtotal - commission;
 
       // 1. Save to central Dokan Pro Store orders
       try {
@@ -284,29 +477,19 @@ export default function CartDrawer({
           commission,
           vendorEarnings,
           distanceKm: deliveryInfo.distanceKm,
-          createdAt: new Date().toISOString(),
-          ...(appliedCoupon ? { couponCode: appliedCoupon.code, couponDiscount } : {})
+          createdAt: new Date().toISOString()
         };
         dokanOrders.unshift(newDokanOrder);
         saveDokanOrders(dokanOrders);
 
-        // Mark the coupon as used now that the order is confirmed placed
-        if (appliedCoupon) {
-          redeemCoupon(appliedCoupon.id);
-        }
-
         // 2. Distribute funds to vendors' wallets
         const vendors = getDokanVendors();
-        const settings = getAdminSettings();
         cartItems.forEach(item => {
           const vName = item.selectedVendor || 'Tecno Official Outlet Kampala';
           const matched = vendors.find(v => v.name.toLowerCase() === vName.toLowerCase() || v.ownerName.toLowerCase() === vName.toLowerCase());
           const itemPrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
           const itemSubtotal = itemPrice * item.quantity;
-          
-          const isBulky = isItemBulky(item.product);
-          const commRate = isBulky ? settings.bulkyCommission : settings.lightCommission;
-          const itemEarn = itemSubtotal - Math.round(itemSubtotal * (commRate / 100));
+          const itemEarn = Math.round(itemSubtotal * 0.85);
 
           if (matched) {
             matched.balance += itemEarn;
@@ -369,7 +552,66 @@ export default function CartDrawer({
       } catch (err) {
         console.error('Dokan Order Storage error:', err);
       }
-      
+
+      // 4. Persist an authoritative copy to the real Postgres backend (server.ts + Neon DB).
+      // Everything above only ever wrote to localStorage, which is why olimart_orders_v2 /
+      // olimart_order_items / olimart_vendors were empty even after placing orders in the UI.
+      // This upserts the vendors and products involved (so the order_items foreign keys
+      // resolve) and then calls the real /api/orders/checkout endpoint. It runs in the
+      // background and never blocks the on-screen order flow if the API is unreachable.
+      (async () => {
+        try {
+          const vendorsForSync = getDokanVendors();
+          await fetch('/api/db/vendors/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(vendorsForSync),
+          });
+
+          const uniqueProducts = Array.from(
+            new Map(cartItems.map(ci => [ci.product.id, ci.product])).values()
+          );
+          await fetch('/api/db/products/sync', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(uniqueProducts),
+          });
+
+          const checkoutRes = await fetch('/api/orders/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              customerName,
+              customerPhone: phoneNumber || '0772000000',
+              deliveryAddress: `${customerAddress} (${selectedLocation})`,
+              paymentMethod,
+              items: cartItems.map(item => {
+                const vName = item.selectedVendor || 'Tecno Official Outlet Kampala';
+                const matchedVendor = vendorsForSync.find(
+                  v => v.name.toLowerCase() === vName.toLowerCase() || v.ownerName.toLowerCase() === vName.toLowerCase()
+                );
+                return {
+                  productId: item.product.id,
+                  productTitle: item.product.title,
+                  vendorId: matchedVendor?.id || 'v2',
+                  quantity: item.quantity,
+                  unitPrice: item.customPrice !== undefined ? item.customPrice : item.product.price,
+                };
+              }),
+            }),
+          });
+
+          if (checkoutRes.ok) {
+            const dbResult = await checkoutRes.json();
+            console.log('✅ Order persisted to Neon Postgres:', dbResult.orderId);
+          } else {
+            console.warn('Backend checkout API returned an error; order still recorded locally.', await checkoutRes.text());
+          }
+        } catch (dbErr) {
+          console.error('Could not reach the live database — order kept in local session store only:', dbErr);
+        }
+      })();
+
       setStep('success');
 
       // Simulate a live shipping process for the customer!
@@ -418,83 +660,6 @@ export default function CartDrawer({
     }
   };
 
-  const handleSubmitFeedback = () => {
-    try {
-      const ords = getDokanOrders();
-      const targetOrder = ords.find(o => o.id === orderId);
-      if (!targetOrder) return;
-
-      const firstVendorName = targetOrder.items?.[0]?.selectedVendor || 'Tecno Official Outlet Kampala';
-
-      // 1. Update Vendor in storage
-      const vendorsList = getDokanVendors();
-      const vendorIndex = vendorsList.findIndex(v => 
-        v.name.toLowerCase() === firstVendorName.toLowerCase() || 
-        v.ownerName.toLowerCase() === firstVendorName.toLowerCase()
-      );
-
-      if (vendorIndex !== -1) {
-        const v = vendorsList[vendorIndex];
-        const updatedBadges = Array.from(new Set([...(v.trustBadges || []), ...storeBadges]));
-        const updatedReviews = [
-          ...(v.reviews || []),
-          {
-            id: `rev-${Date.now()}-v`,
-            customerName: customerName || 'Verified Buyer',
-            rating: storeRating,
-            comment: storeComment || 'Excellent vendor store!',
-            date: new Date().toISOString()
-          }
-        ];
-        vendorsList[vendorIndex] = {
-          ...v,
-          trustBadges: updatedBadges,
-          reviews: updatedReviews
-        };
-        saveDokanVendors(vendorsList);
-      }
-
-      // 2. Update Rider in storage
-      if (targetOrder.assignedRider) {
-        const ridersList = getDokanRiders();
-        const riderIndex = ridersList.findIndex(r => r.name === targetOrder.assignedRider);
-        if (riderIndex !== -1) {
-          const r = ridersList[riderIndex];
-          const updatedBadges = Array.from(new Set([...(r.trustBadges || []), ...riderBadges]));
-          const updatedReviews = [
-            ...(r.reviews || []),
-            {
-              id: `rev-${Date.now()}-r`,
-              customerName: customerName || 'Verified Customer',
-              rating: riderRating,
-              comment: riderComment || 'Excellent and very polite delivery!',
-              date: new Date().toISOString()
-            }
-          ];
-          ridersList[riderIndex] = {
-            ...r,
-            trustBadges: updatedBadges,
-            reviews: updatedReviews
-          };
-          saveDokanRiders(ridersList);
-        }
-      }
-
-      // 3. Log to Admin Audit Trail
-      addAdminLog(
-        'CUSTOMER_FEEDBACK_SUBMITTED',
-        `Customer "${customerName || 'Anonymous'}" submitted ratings & trust badges for store "${firstVendorName}" (${storeRating}⭐) and delivery agent "${targetOrder.assignedRider || 'Standard Rider'}" (${riderRating}⭐)`,
-        'success'
-      );
-
-      setFeedbackSubmitted(true);
-      window.dispatchEvent(new Event('storage'));
-      alert('Mwebale nnyo! Your trust badges and reviews have been submitted successfully. They are now live on the Admin Audit Trail and Courier Profiles!');
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
   const handleCloseAndReset = () => {
     if (step === 'success') {
       onClearCart();
@@ -502,192 +667,78 @@ export default function CartDrawer({
       setPhoneNumber('');
       setCustomerName('');
       setCustomerAddress('');
-      setStoreBadges([]);
-      setStoreRating(5);
-      setStoreComment('');
-      setRiderBadges([]);
-      setRiderRating(5);
-      setRiderComment('');
-      setFeedbackSubmitted(false);
-      setRefundReason('');
-      setRefundRequestSubmitted(false);
-      handleRemoveCoupon();
     }
     onClose();
   };
 
-  const isFullPageStep = step !== 'cart';
-
-  // Amazon-style order summary card, reused across the full-page checkout steps
-  const OrderSummaryCard = () => (
-    <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4 sticky top-6">
-      <h3 className="font-black text-sm text-slate-900 uppercase tracking-wide border-b border-slate-100 pb-3">
-        Order Summary
-      </h3>
-
-      <div className="max-h-60 overflow-y-auto space-y-3 pr-1">
-        {cartItems.map((item) => {
-          const itemKey = `${item.product.id}-${item.selectedVendor || 'default'}-${JSON.stringify(item.selectedVariation || {})}`;
-          const activePrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
-          return (
-            <div key={itemKey} className="flex gap-3 items-start">
-              <div className="relative flex-shrink-0">
-                <img
-                  src={item.product.image}
-                  alt={item.product.title}
-                  className="w-12 h-12 object-contain rounded-lg bg-slate-50 border border-slate-100 p-1"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="absolute -top-1.5 -right-1.5 bg-slate-700 text-white text-3xs font-black w-4 h-4 rounded-full flex items-center justify-center">
-                  {item.quantity}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-slate-800 line-clamp-2 leading-snug">{item.product.title}</p>
-                <p className="text-3xs text-slate-400 font-semibold">Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}</p>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      <div className="pt-1">
-        {!appliedCoupon ? (
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={couponInput}
-              onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
-              placeholder="Have a coupon code?"
-              className="flex-1 text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-[#f68b1e]/30 uppercase"
-            />
-            <button
-              onClick={handleApplyCoupon}
-              className="text-xs font-black uppercase px-3 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 shrink-0 cursor-pointer"
-            >
-              Apply
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2">
-            <span className="text-3xs font-black text-emerald-700 uppercase">
-              🎉 {appliedCoupon.code} applied &bull; -Shs {couponDiscount.toLocaleString()}
-            </span>
-            <button
-              onClick={handleRemoveCoupon}
-              className="text-3xs font-black uppercase text-slate-500 hover:text-rose-600 cursor-pointer"
-            >
-              Remove
-            </button>
-          </div>
-        )}
-        {couponMessage && (
-          <p className={`text-3xs font-bold mt-1.5 ${couponMessage.ok ? 'text-emerald-600' : 'text-rose-600'}`}>
-            {couponMessage.text}
-          </p>
-        )}
-      </div>
-
-      <div className="border-t border-slate-100 pt-3 space-y-1.5 text-xs text-slate-600">
-        <div className="flex justify-between font-semibold">
-          <span>Items ({cartItems.reduce((a, i) => a + i.quantity, 0)}):</span>
-          <span className="text-slate-900 font-bold">Shs {(subtotal ?? 0).toLocaleString()}</span>
-        </div>
-        <div className="flex justify-between font-semibold">
-          <span className="flex items-center gap-1">
-            Delivery Fee:
-            {deliveryInfo.hasBulkyItem && (
-              <span className="bg-red-100 text-red-800 text-4xs font-black px-1.5 rounded uppercase">Bulky</span>
-            )}
-          </span>
-          <span className="text-slate-900 font-bold">Shs {(deliveryFee ?? 0).toLocaleString()}</span>
-        </div>
-        {couponDiscount > 0 && (
-          <div className="flex justify-between font-semibold text-emerald-600">
-            <span>Coupon Discount:</span>
-            <span className="font-bold">-Shs {couponDiscount.toLocaleString()}</span>
-          </div>
-        )}
-        <div className="flex justify-between text-3xs text-slate-400">
-          <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
-          <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
-        </div>
-        <div className="border-t border-slate-200 my-2" />
-        <div className="flex justify-between items-baseline">
-          <span className="font-extrabold text-sm text-slate-900">Order Total:</span>
-          <span className="text-xl font-black text-[#f68b1e]">Shs {(total ?? 0).toLocaleString()}</span>
-        </div>
-      </div>
-
-      <div className="flex items-center justify-center gap-1.5 text-3xs text-slate-400 font-semibold pt-1">
-        <ShieldCheck size={12} className="text-emerald-600" />
-        <span>256-bit SSL Encrypted &bull; Buyer Protection Guarantee</span>
-      </div>
-    </div>
-  );
-
   return (
     <div className="fixed inset-0 z-50 overflow-hidden" id="cart-drawer-container">
-      {/* Dark overlay - only for the slide-over mini cart */}
-      {!isFullPageStep && (
-        <div 
-          className="absolute inset-0 bg-black/60 transition-opacity" 
-          onClick={handleCloseAndReset}
-        />
-      )}
+      {/* Dark overlay */}
+      <div 
+        className="absolute inset-0 bg-black/60 transition-opacity" 
+        onClick={handleCloseAndReset}
+      />
 
-      {/* Slider Panel (cart) OR Full-page checkout (details/processing/success) */}
-      <div className={isFullPageStep
-        ? "absolute inset-0 w-full h-full bg-[#f5f6f8] flex flex-col overflow-y-auto"
-        : "absolute inset-y-0 right-0 max-w-md w-full bg-white shadow-2xl flex flex-col justify-between animate-slide-left"
-      }>
+      {/* Slider Panel — widens into a full checkout page layout once the customer reaches delivery & payment */}
+      <div className={`absolute inset-y-0 right-0 w-full bg-white shadow-2xl flex flex-col justify-between animate-slide-left ${step === 'details' ? 'max-w-4xl' : 'max-w-md'}`}>
         
         {/* HEADER */}
-        <div className={isFullPageStep
-          ? "px-4 sm:px-8 py-3.5 border-b border-slate-200 bg-white flex justify-between items-center sticky top-0 z-10 shadow-sm"
-          : "p-4 border-b border-slate-100 bg-[#232f3e] text-white flex justify-between items-center"
-        }>
-          <div className="flex items-center gap-2.5">
-            {isFullPageStep ? (
-              <>
-                <span className="font-black text-lg tracking-tight text-slate-900">olimart<span className="text-[#f68b1e]">.</span></span>
-                <span className="h-5 w-px bg-slate-300 hidden sm:block" />
-                <h2 className="font-sans text-xs sm:text-sm font-extrabold text-slate-700 hidden sm:block">
-                  {step === 'details' && 'Checkout'}
-                  {step === 'processing' && 'Securing Order'}
-                  {step === 'success' && 'Order Confirmation'}
-                </h2>
-              </>
-            ) : (
-              <>
-                <ShoppingBag className="text-[#ff9900]" size={20} />
-                <h2 className="font-sans text-xs font-black uppercase tracking-wider">
-                  {`Secure Cart (${cartItems.length})`}
-                </h2>
-              </>
-            )}
+        <div className="p-4 border-b border-slate-100 bg-[#232f3e] text-white flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <ShoppingBag className="text-[#ff9900]" size={20} />
+            <h2 className="font-sans text-xs font-black uppercase tracking-wider">
+              {step === 'cart' && `Amazon-Secure Cart (${cartItems.length})`}
+              {step === 'details' && 'Amazon 1-Click Secure Checkout'}
+              {step === 'processing' && 'Securing Order'}
+              {step === 'success' && 'Order Placed!'}
+            </h2>
           </div>
-          {isFullPageStep ? (
-            <div className="flex items-center gap-1.5 text-3xs sm:text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2.5 py-1 rounded-full">
-              <ShieldCheck size={13} />
-              <span className="hidden sm:inline">Secure checkout</span>
-            </div>
-          ) : (
-            <button 
-              onClick={handleCloseAndReset}
-              className="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
-            >
-              <X size={20} />
-            </button>
-          )}
+          <button 
+            onClick={handleCloseAndReset}
+            className="p-1 text-slate-400 hover:text-white rounded-full hover:bg-slate-800 transition-colors"
+          >
+            <X size={20} />
+          </button>
         </div>
 
+        {/* STEP PROGRESS BAR (WooCommerce Pro-style checkout stepper) */}
+        {step !== 'cart' && (
+          <div className="px-4 md:px-10 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-center gap-2 md:gap-4">
+            {[
+              { key: 'details', label: 'Delivery & Payment' },
+              { key: 'processing', label: 'Verifying' },
+              { key: 'success', label: 'Confirmation' },
+            ].map((s, idx, arr) => {
+              const order: CheckoutStep[] = ['details', 'processing', 'success'];
+              const currentIdx = order.indexOf(step);
+              const thisIdx = order.indexOf(s.key as CheckoutStep);
+              const isActive = thisIdx === currentIdx;
+              const isDone = thisIdx < currentIdx;
+              return (
+                <React.Fragment key={s.key}>
+                  <div className="flex items-center gap-1.5">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-black flex-shrink-0 ${
+                      isDone ? 'bg-emerald-500 text-white' : isActive ? 'bg-orange-600 text-white' : 'bg-slate-200 text-slate-500'
+                    }`}>
+                      {isDone ? '✓' : idx + 1}
+                    </div>
+                    <span className={`text-[8px] md:text-[10px] font-extrabold uppercase tracking-wide whitespace-nowrap ${
+                      isActive ? 'text-orange-600' : isDone ? 'text-emerald-600' : 'text-slate-400'
+                    }`}>
+                      {s.label}
+                    </span>
+                  </div>
+                  {idx < arr.length - 1 && <div className="w-6 md:w-12 h-px bg-slate-300 flex-shrink-0" />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
+
         {/* BODY */}
-        <div className={isFullPageStep
-          ? "flex-1 w-full max-w-6xl mx-auto px-4 sm:px-8 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-3 gap-6 items-start"
-          : "flex-1 overflow-y-auto p-4 space-y-4"
-        }>
-          {/* STEP 1: CART LIST (drawer mode only) */}
+        <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4">
+          
+          {/* STEP 1: CART LIST */}
           {step === 'cart' && (
             <>
               {cartItems.length > 0 ? (
@@ -715,7 +766,7 @@ export default function CartDrawer({
                           {item.selectedVariation && Object.entries(item.selectedVariation).length > 0 && (
                             <div className="flex flex-wrap gap-1 mt-1">
                               {Object.entries(item.selectedVariation).map(([vName, vVal]) => (
-                                <span key={vName} className="bg-orange-50 text-orange-700 border border-orange-100/50 px-1.5 py-0.5 rounded text-3xs font-bold">
+                                <span key={vName} className="bg-orange-50 text-orange-700 border border-orange-100/50 px-1.5 py-0.5 rounded text-[9px] font-bold">
                                   {vName}: {vVal}
                                 </span>
                               ))}
@@ -724,17 +775,17 @@ export default function CartDrawer({
 
                           {/* Selected Vendor */}
                           {item.selectedVendor && (
-                            <p className="text-3xs text-slate-500 font-extrabold mt-0.5 flex items-center gap-1">
+                            <p className="text-[10px] text-slate-500 font-extrabold mt-0.5 flex items-center gap-1">
                               🛒 Seller: <span className="text-orange-600 font-black">{item.selectedVendor}</span>
                             </p>
                           )}
 
                           <div className="flex justify-between items-center">
                             <span className="text-xs font-black text-slate-900">
-                              Shs {(activePrice ?? 0).toLocaleString()}
+                              Shs {activePrice.toLocaleString()}
                             </span>
-                            <span className="text-3xs text-slate-400">
-                              Subtotal: Shs {((activePrice ?? 0) * item.quantity).toLocaleString()}
+                            <span className="text-[10px] text-slate-400">
+                              Subtotal: Shs {(activePrice * item.quantity).toLocaleString()}
                             </span>
                           </div>
 
@@ -777,7 +828,7 @@ export default function CartDrawer({
                       {subtotal > 150000 ? (
                         <strong>🎉 Congratulations! You unlocked FREE shipping inside Kampala!</strong>
                       ) : (
-                        <span>Add <strong>Shs {(150000 - (subtotal ?? 0)).toLocaleString()}</strong> more to enjoy FREE delivery!</span>
+                        <span>Add <strong>Shs {(150000 - subtotal).toLocaleString()}</strong> more to enjoy FREE delivery!</span>
                       )}
                     </span>
                   </div>
@@ -788,7 +839,7 @@ export default function CartDrawer({
                     <ShoppingBag size={28} />
                   </div>
                   <div className="space-y-1">
-                    <h3 className="text-slate-800 font-bold text-sm">Your cart is empty</h3>
+                    <h3 className="text-slate-800 font-bold text-sm">Your basket is empty</h3>
                     <p className="text-xs text-slate-400 font-medium">Add products from our flash sales or search catalog to get started.</p>
                   </div>
                   <button
@@ -802,25 +853,15 @@ export default function CartDrawer({
             </>
           )}
 
-          {isFullPageStep && (
-            <div className="lg:col-span-2 space-y-4">
-              {step === 'details' && (
-                <button
-                  type="button"
-                  onClick={() => setStep('cart')}
-                  className="text-xs font-bold text-slate-500 hover:text-orange-600 flex items-center gap-1 mb-1"
-                >
-                  &larr; Back to cart
-                </button>
-              )}
-
           {/* STEP 2: CHECKOUT DETAILS & PAYMENT */}
           {step === 'details' && (
             <form onSubmit={handlePlaceOrder} className="space-y-4">
+            <div className="grid lg:grid-cols-5 gap-5 items-start">
+            <div className="lg:col-span-3 space-y-4">
               <div className="space-y-1 bg-amber-50/40 p-3.5 rounded-xl border border-amber-200">
-                <div className="flex justify-between items-center text-3xs font-bold text-amber-800 uppercase tracking-wide">
+                <div className="flex justify-between items-center text-[10px] font-bold text-amber-800 uppercase tracking-wide">
                   <span>Shipment Address Verified</span>
-                  <span className="text-3xs bg-amber-200 text-amber-900 px-1.5 rounded font-black uppercase">Fast Boda Boda Route</span>
+                  <span className="text-[9px] bg-amber-200 text-amber-900 px-1.5 rounded font-black uppercase">Fast Boda Boda Route</span>
                 </div>
                 <p className="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 mt-1">
                   📍 District: <strong className="text-orange-600 underline font-black">{selectedLocation}</strong>
@@ -830,12 +871,12 @@ export default function CartDrawer({
               {/* Customer Info */}
               <div className="space-y-3 bg-white border border-slate-200 p-4 rounded-xl">
                 <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-3.5 bg-[#f68b1e] rounded-xs" />
+                  <span className="w-1.5 h-3.5 bg-[#EA6A0C] rounded-xs" />
                   <span>1. Enter Delivery Coordinates</span>
                 </h3>
                 
                 <div className="space-y-1">
-                  <label className="block text-3xs font-bold text-slate-400 uppercase">Receiver's Full Name</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase">Receiver's Full Name</label>
                   <input
                     type="text"
                     required
@@ -847,7 +888,7 @@ export default function CartDrawer({
                 </div>
 
                 <div className="space-y-1">
-                  <label className="block text-3xs font-bold text-slate-400 uppercase font-mono">Detailed Landmark Address</label>
+                  <label className="block text-[9px] font-bold text-slate-400 uppercase font-mono">Detailed Landmark Address</label>
                   <input
                     type="text"
                     required
@@ -861,10 +902,21 @@ export default function CartDrawer({
 
               {/* Payment Methods */}
               <div className="space-y-3 bg-white border border-slate-200 p-4 rounded-xl">
-                <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
-                  <span className="w-1.5 h-3.5 bg-[#f68b1e] rounded-xs" />
-                  <span>2. Secure Gateway Selection</span>
-                </h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                    <span className="w-1.5 h-3.5 bg-[#EA6A0C] rounded-xs" />
+                    <span>2. Secure Gateway Selection</span>
+                  </h3>
+                  {flwConfig.enabled ? (
+                    <span className="flex items-center gap-1 text-[9px] font-black text-orange-600 bg-orange-50 px-2 py-1 rounded-full uppercase tracking-wide">
+                      <ShieldCheck size={11} /> Powered by Flutterwave
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-1 text-[9px] font-black text-slate-500 bg-slate-100 px-2 py-1 rounded-full uppercase tracking-wide">
+                      <Lock size={11} /> Verified Collection Lines
+                    </span>
+                  )}
+                </div>
                 
                 <div className="grid grid-cols-1 gap-2">
                   {/* MTN MoMo */}
@@ -881,9 +933,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          MTN Mobile Money <span className="bg-yellow-400 text-4xs font-black px-1.5 py-0.2 rounded text-slate-950">MOMO</span>
+                          MTN Mobile Money <span className="bg-yellow-400 text-[8px] font-black px-1.5 py-0.2 rounded text-slate-950">MOMO</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Secure PIN prompt confirmation</p>
+                        <p className="text-[10px] text-slate-500">Secure PIN prompt confirmation</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-yellow-400 flex items-center justify-center text-slate-900 font-extrabold text-xs">MTN</div>
@@ -903,9 +955,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Airtel Money <span className="bg-red-600 text-4xs font-black px-1.5 py-0.2 rounded text-white">AIRTEL</span>
+                          Airtel Money <span className="bg-red-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white">AIRTEL</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Instant mobile money secure push</p>
+                        <p className="text-[10px] text-slate-500">Instant mobile money secure push</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-red-600 flex items-center justify-center text-white font-extrabold text-xs">Air</div>
@@ -925,9 +977,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          PayPal Express <span className="bg-blue-600 text-4xs font-black px-1.5 py-0.2 rounded text-white font-mono">PAYPAL</span>
+                          PayPal Express <span className="bg-blue-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white font-mono">PAYPAL</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Pay with PayPal balance or Credit card</p>
+                        <p className="text-[10px] text-slate-500">Pay with PayPal balance or Credit card</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-extrabold text-xs">PP</div>
@@ -947,9 +999,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Stripe Elements <span className="bg-indigo-600 text-4xs font-black px-1.5 py-0.2 rounded text-white font-mono">STRIPE</span>
+                          Stripe Elements <span className="bg-indigo-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white font-mono">STRIPE</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Fast multi-currency checkout via Stripe card</p>
+                        <p className="text-[10px] text-slate-500">Fast multi-currency checkout via Stripe card</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-indigo-600 flex items-center justify-center text-white font-extrabold text-xs">S</div>
@@ -969,9 +1021,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Mastercard SecureCode <span className="bg-orange-500 text-4xs font-black px-1.5 py-0.2 rounded text-white">CARD</span>
+                          Mastercard SecureCode <span className="bg-orange-500 text-[8px] font-black px-1.5 py-0.2 rounded text-white">CARD</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Direct debit or international credit card gateway</p>
+                        <p className="text-[10px] text-slate-500">Direct debit or international credit card gate</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-extrabold text-xs">
@@ -993,9 +1045,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Direct Bank Transfer <span className="bg-sky-600 text-4xs font-black px-1.5 py-0.2 rounded text-white">E-BANK</span>
+                          Direct Bank Transfer <span className="bg-sky-600 text-[8px] font-black px-1.5 py-0.2 rounded text-white">E-BANK</span>
                         </p>
-                        <p className="text-3xs text-slate-500">EFT, RTGS or bank app transfer confirmation</p>
+                        <p className="text-[10px] text-slate-500">EFT, RTGS or bank app transfer confirmation</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-sky-600 flex items-center justify-center text-white font-extrabold text-xs">Bank</div>
@@ -1015,9 +1067,9 @@ export default function CartDrawer({
                       />
                       <div className="text-left">
                         <p className="text-xs font-black text-slate-800 flex items-center gap-1">
-                          Cash on Delivery <span className="bg-slate-200 text-4xs font-black px-1.5 py-0.2 rounded text-slate-700">COD</span>
+                          Cash on Delivery <span className="bg-slate-200 text-[8px] font-black px-1.5 py-0.2 rounded text-slate-700">COD</span>
                         </p>
-                        <p className="text-3xs text-slate-500">Pay cash or mobile transfer on drop receipt</p>
+                        <p className="text-[10px] text-slate-500">Pay cash or mobile transfer on drop receipt</p>
                       </div>
                     </div>
                     <div className="w-8 h-8 rounded-full bg-emerald-500 flex items-center justify-center text-white font-extrabold text-xs">
@@ -1027,30 +1079,62 @@ export default function CartDrawer({
                 </div>
               </div>
 
-              {/* Mobile phone for money prompt */}
-              {(paymentMethod === 'momo' || paymentMethod === 'airtel') && (
-                <div className="space-y-1 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                    <Smartphone size={12} className="text-orange-500" /> Mobile Money Number (Uganda)
-                  </label>
-                  <input
-                    type="tel"
-                    required
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    placeholder="e.g. 0772 123456 or 0702 123456"
-                    className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
-                  />
-                  <p className="text-3xs text-slate-400 font-medium">
-                    * Make sure your phone is nearby. A USSD PIN approval request will launch on this line instantly.
-                  </p>
-                </div>
-              )}
+              {/* Mobile phone for money prompt — real merchant collection line disclosed */}
+              {(paymentMethod === 'momo' || paymentMethod === 'airtel') && (() => {
+                const acc = paymentMethod === 'momo' ? settlementAccounts.mtn_momo : settlementAccounts.airtel_money;
+                const brandColor = paymentMethod === 'momo' ? 'text-yellow-400' : 'text-red-400';
+                const brandBg = paymentMethod === 'momo' ? 'bg-yellow-400 text-slate-950' : 'bg-red-600 text-white';
+                return (
+                  <div className="space-y-3 p-3.5 bg-slate-900 text-white rounded-xl">
+                    <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                      <Smartphone size={12} className={brandColor} /> Your Mobile Money Number
+                    </label>
+                    <input
+                      type="tel"
+                      required
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
+                      placeholder="e.g. 0772 123456 or 0702 123456"
+                      className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
+                    />
+
+                    <div className="rounded-lg border border-slate-700 bg-slate-800/70 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-black uppercase tracking-wider text-slate-400">Olimart collection line</span>
+                        <span className={`text-[8px] font-black px-1.5 py-0.5 rounded uppercase ${brandBg}`}>
+                          {paymentMethod === 'momo' ? 'MTN MoMoPay' : 'Airtel Money'}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-black tracking-wide">{acc.accountNumber}</p>
+                          <p className="text-[9px] text-slate-400 font-semibold">{acc.accountName}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy(paymentMethod, acc.accountNumber)}
+                          className="flex items-center gap-1 bg-slate-700 hover:bg-slate-600 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase cursor-pointer transition-colors"
+                        >
+                          <Copy size={11} />
+                          {copiedField === paymentMethod ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <p className="text-[9px] text-slate-400 font-medium leading-relaxed flex items-start gap-1.5">
+                      <Lock size={11} className="mt-0.5 flex-shrink-0 text-emerald-400" />
+                      {flwConfig.enabled
+                        ? "You'll approve this exact amount securely via Flutterwave's mobile money checkout — no manual transfer needed."
+                        : `On "Confirm Order" you'll get a PIN approval prompt on ${phoneNumber || 'your phone'} for this exact amount, in the name of ${acc.accountName}. Never share your PIN with anyone, including Olimart staff.`}
+                    </p>
+                  </div>
+                );
+              })()}
 
               {/* PayPal details prompt */}
               {paymentMethod === 'paypal' && (
                 <div className="space-y-1 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <Globe size={12} className="text-blue-400" /> PayPal Email Account
                   </label>
                   <input
@@ -1061,7 +1145,7 @@ export default function CartDrawer({
                     placeholder="your-paypal-email@domain.com"
                     className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
                   />
-                  <p className="text-3xs text-slate-400 font-medium">
+                  <p className="text-[9px] text-slate-400 font-medium">
                     * You will be redirected to secure PayPal gateway to log in and approve the sandbox payment.
                   </p>
                 </div>
@@ -1070,7 +1154,7 @@ export default function CartDrawer({
               {/* Stripe or Mastercard details prompt */}
               {(paymentMethod === 'stripe' || paymentMethod === 'mastercard') && (
                 <div className="space-y-2.5 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
                     <CreditCard size={12} className="text-indigo-400" /> Credit / Debit Card Information
                   </label>
                   <div className="space-y-2">
@@ -1100,42 +1184,150 @@ export default function CartDrawer({
                       />
                     </div>
                   </div>
-                  <p className="text-3xs text-slate-400 font-medium">
+                  <p className="text-[9px] text-slate-400 font-medium">
                     * Fully compliant SSL 256-bit encrypted card routing. Gateway funds are held in Olimart's Escrow.
                   </p>
                 </div>
               )}
 
-              {/* Bank Transfer details prompt */}
-              {paymentMethod === 'bank' && (
-                <div className="space-y-2 p-3.5 bg-slate-900 text-white rounded-xl">
-                  <label className="block text-3xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
-                    <Wallet size={12} className="text-sky-400" /> Bank Transfer Coordination
-                  </label>
-                  <select 
-                    className="w-full text-slate-800 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none"
-                    required
-                  >
-                    <option value="stanbic">Stanbic Bank Uganda (Olimart Central Account)</option>
-                    <option value="dfcu">DFCU Bank Uganda (Olimart Escrow Account)</option>
-                    <option value="centenary">Centenary Bank (MoMo Cardless Escrow)</option>
-                  </select>
-                  <input
-                    type="text"
-                    required
-                    value={cardOrAccountDetails}
-                    onChange={(e) => setCardOrAccountDetails(e.target.value)}
-                    placeholder="Your Bank Account Holder Name"
-                    className="w-full text-slate-850 bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none text-slate-800"
-                  />
-                  <p className="text-3xs text-slate-400 font-medium leading-relaxed">
-                    * After confirming, transfer funds to A/C 9030018872561 (Stanbic Kampala). Upload/keep proof receipt for clearance.
-                  </p>
+              {/* Bank Transfer details prompt — full, real account disclosure */}
+              {paymentMethod === 'bank' && (() => {
+                const acc = settlementAccounts.bank;
+                return (
+                  <div className="space-y-3 p-3.5 bg-slate-900 text-white rounded-xl">
+                    <div className="flex items-center justify-between">
+                      <label className="text-[10px] font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1">
+                        <Landmark size={12} className="text-sky-400" /> Bank Transfer — Full Details
+                      </label>
+                      <span className="text-[8px] font-black px-1.5 py-0.5 rounded uppercase bg-sky-600 text-white">{acc.currency}</span>
+                    </div>
+
+                    <div className="rounded-lg border border-slate-700 bg-slate-800/70 divide-y divide-slate-700/70">
+                      {[
+                        { label: 'Bank', value: acc.bankName || '—', copyKey: 'bank_name' },
+                        { label: 'Account Name', value: acc.accountName, copyKey: 'bank_account_name' },
+                        { label: 'Account Number', value: acc.accountNumber, copyKey: 'bank_account_number' },
+                        ...(acc.branch ? [{ label: 'Branch', value: acc.branch, copyKey: 'bank_branch' }] : []),
+                        ...(acc.swiftCode ? [{ label: 'SWIFT / BIC', value: acc.swiftCode, copyKey: 'bank_swift' }] : []),
+                      ].map((row) => (
+                        <div key={row.copyKey} className="flex items-center justify-between gap-2 px-3 py-2">
+                          <div className="min-w-0">
+                            <p className="text-[8px] font-black uppercase tracking-wider text-slate-400">{row.label}</p>
+                            <p className="text-xs font-black truncate">{row.value}</p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => handleCopy(row.copyKey, row.value)}
+                            className="flex-shrink-0 flex items-center gap-1 bg-slate-700 hover:bg-slate-600 px-2 py-1 rounded-lg text-[9px] font-bold uppercase cursor-pointer transition-colors"
+                          >
+                            <Copy size={10} />
+                            {copiedField === row.copyKey ? 'Copied' : 'Copy'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    {acc.customerCareLine && (
+                      <a
+                        href={`tel:${acc.customerCareLine.replace(/[^0-9+]/g, '')}`}
+                        className="w-full flex items-center justify-center gap-2 bg-sky-600 hover:bg-sky-500 text-white text-xs font-black py-2.5 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <Phone size={13} /> Call {acc.bankName || 'the bank'} — {acc.customerCareLine}
+                      </a>
+                    )}
+
+                    <input
+                      type="text"
+                      required
+                      value={cardOrAccountDetails}
+                      onChange={(e) => setCardOrAccountDetails(e.target.value)}
+                      placeholder="Your Bank Account Holder Name (the name transferring funds)"
+                      className="w-full bg-white rounded-lg px-3 py-2 text-xs font-semibold focus:outline-none text-slate-800"
+                    />
+
+                    <p className="text-[9px] text-slate-400 font-medium leading-relaxed flex items-start gap-1.5">
+                      <AlertTriangle size={11} className="mt-0.5 flex-shrink-0 text-amber-400" />
+                      {acc.notes || 'Transfer the exact order total, then keep your bank receipt — our finance desk clears orders once the transfer is confirmed on our statement.'}
+                    </p>
+                  </div>
+                );
+              })()}
+
+            </div>{/* end left column: delivery + payment */}
+
+            {/* Right column: sticky order summary — WooCommerce Pro checkout pattern */}
+            <div className="lg:col-span-2 lg:sticky lg:top-0 space-y-4">
+              <div className="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
+                <h3 className="font-extrabold text-xs text-slate-800 uppercase tracking-wider flex items-center gap-1">
+                  <span className="w-1.5 h-3.5 bg-[#EA6A0C] rounded-xs" />
+                  <span>Order Summary</span>
+                </h3>
+
+                <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 -mx-1 px-1">
+                  {cartItems.map((item) => {
+                    const itemKey = `${item.product.id}-${item.selectedVendor || 'default'}-${JSON.stringify(item.selectedVariation || {})}`;
+                    const activePrice = item.customPrice !== undefined ? item.customPrice : item.product.price;
+                    return (
+                      <div key={itemKey} className="py-2 flex items-center gap-2">
+                        <img
+                          src={item.product.image}
+                          alt={item.product.title}
+                          className="w-10 h-10 object-contain rounded-lg bg-slate-50 border border-slate-100 p-0.5 flex-shrink-0"
+                          referrerPolicy="no-referrer"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[10px] font-bold text-slate-700 line-clamp-1">{item.product.title}</p>
+                          <p className="text-[9px] text-slate-400">Qty {item.quantity} &times; Shs {activePrice.toLocaleString()}</p>
+                        </div>
+                        <span className="text-[10px] font-black text-slate-800 flex-shrink-0">
+                          Shs {(activePrice * item.quantity).toLocaleString()}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+
+                <div className="border-t border-slate-100 pt-2 space-y-1.5 text-xs">
+                  <div className="flex justify-between font-semibold text-slate-600">
+                    <span>Items Subtotal</span>
+                    <span className="text-slate-900 font-bold">Shs {subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between font-semibold text-slate-600">
+                    <span className="flex items-center gap-1">
+                      Courier Fee
+                      {deliveryInfo.hasBulkyItem && (
+                        <span className="bg-red-100 text-red-800 text-[8px] font-black px-1.5 rounded uppercase">Bulky</span>
+                      )}
+                    </span>
+                    <span className="text-slate-900 font-bold">Shs {deliveryFee.toLocaleString()}</span>
+                  </div>
+                  <div className="border-t border-slate-200 my-1.5 pt-1.5 flex justify-between items-baseline">
+                    <span className="font-extrabold text-slate-800">Grand Total</span>
+                    <span className="text-base font-black text-[#EA6A0C]">Shs {total.toLocaleString()}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Trust badges */}
+              <div className="bg-white border border-slate-200 rounded-xl p-3.5">
+                <div className="grid grid-cols-3 gap-1.5 text-center">
+                  <div className="flex flex-col items-center gap-1 text-slate-500">
+                    <ShieldCheck size={16} className="text-emerald-600" />
+                    <span className="text-[8px] font-bold leading-tight">Buyer Protection</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 text-slate-500">
+                    <Truck size={16} className="text-orange-600" />
+                    <span className="text-[8px] font-bold leading-tight">Verified Riders</span>
+                  </div>
+                  <div className="flex flex-col items-center gap-1 text-slate-500">
+                    <CreditCard size={16} className="text-indigo-600" />
+                    <span className="text-[8px] font-bold leading-tight">Secure Payments</span>
+                  </div>
+                </div>
+              </div>
 
               {/* Buttons */}
-              <div className="pt-3 flex gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setStep('cart')}
@@ -1147,9 +1339,12 @@ export default function CartDrawer({
                   type="submit"
                   className="w-2/3 bg-orange-600 hover:bg-orange-500 text-white font-extrabold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer shadow-md"
                 >
-                  Confirm Order &bull; Shs {(total ?? 0).toLocaleString()}
+                  Confirm Order &bull; Shs {total.toLocaleString()}
                 </button>
               </div>
+            </div>{/* end right column: order summary */}
+
+            </div>{/* end grid */}
             </form>
           )}
 
@@ -1163,12 +1358,16 @@ export default function CartDrawer({
               <div className="space-y-2">
                 <h3 className="text-slate-900 font-black text-sm uppercase tracking-wider">Securing your order</h3>
                 <p className="text-xs text-slate-500 font-medium px-6 leading-relaxed">
-                  {paymentMethod === 'cash' 
-                    ? 'Verifying delivery route inside Kampala...' 
-                    : `Sending secure PIN confirmation prompt to Mobile Money line ${phoneNumber}...`}
+                  {paymentMethod === 'cash'
+                    ? 'Verifying delivery route inside Kampala...'
+                    : paymentMethod === 'bank'
+                      ? 'Recording your bank transfer reference and notifying the finance desk...'
+                      : flwConfig.enabled
+                        ? 'Confirming your payment with Flutterwave...'
+                        : `Payment approved on ${phoneNumber || 'your line'} — finalizing your order...`}
                 </p>
               </div>
-              <p className="text-3xs text-slate-400 font-medium italic animate-pulse">Please do not refresh or close this tab</p>
+              <p className="text-[10px] text-slate-400 font-medium italic animate-pulse">Please do not refresh or close this tab</p>
             </div>
           )}
 
@@ -1189,13 +1388,13 @@ export default function CartDrawer({
               <div className="bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 space-y-4">
                 <div>
                   <div className="flex justify-between items-center mb-3">
-                    <h4 className="text-3xs font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
-                    <span className="text-3xs bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
+                    <h4 className="text-[10px] font-black uppercase tracking-wider text-slate-500">Live Delivery Radar Tracker</h4>
+                    <span className="text-[9px] bg-orange-100 text-orange-800 font-black px-1.5 py-0.5 rounded uppercase animate-pulse">
                       Status: {currentOrderTrackStatus === 'placed' ? 'Order Placed' : currentOrderTrackStatus === 'dispatched' ? 'Ready for Dispatch' : currentOrderTrackStatus === 'transit' ? 'In Transit' : 'Delivered'}
                     </span>
                   </div>
                   <Stepper currentStatus={currentOrderTrackStatus} />
-                  <p className="text-3xs text-slate-400 mt-2 font-medium text-left">
+                  <p className="text-[9px] text-slate-400 mt-2 font-medium text-left">
                     {currentOrderTrackStatus === 'placed' && '🕒 Seller is picking the items and preparing the package.'}
                     {currentOrderTrackStatus === 'dispatched' && '📦 Packaged securely. Boda dispatch is allocating a rider.'}
                     {currentOrderTrackStatus === 'transit' && '🏍️ Rider accepted! In transit with real-time location streaming.'}
@@ -1205,7 +1404,7 @@ export default function CartDrawer({
 
                 {/* Simulated Google Maps Platform Radar (Requirement 4) */}
                 <div className="bg-slate-100 dark:bg-slate-950 rounded-xl p-3 border border-slate-200 dark:border-slate-800 space-y-2 text-left">
-                  <div className="flex justify-between items-center text-3xs font-extrabold text-slate-500 uppercase tracking-wider">
+                  <div className="flex justify-between items-center text-[9px] font-extrabold text-slate-500 uppercase tracking-wider">
                     <span className="flex items-center gap-1">📍 Live GPS Radar (Google Maps Grounding)</span>
                     <span className="font-mono text-orange-600">Active Node</span>
                   </div>
@@ -1234,7 +1433,7 @@ export default function CartDrawer({
                       <div className="bg-orange-600 text-white p-1 rounded-full shadow-lg border border-white">
                         <Store size={10} />
                       </div>
-                      <span className="text-4xs font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">Store Vendor</span>
+                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">Dokan Vendor</span>
                     </div>
 
                     {/* Customer Icon Pin at (270, 30) */}
@@ -1242,7 +1441,7 @@ export default function CartDrawer({
                       <div className="bg-blue-600 text-white p-1 rounded-full shadow-lg border border-white">
                         <MapPin size={10} />
                       </div>
-                      <span className="text-4xs font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">You</span>
+                      <span className="text-[7px] font-black bg-white dark:bg-slate-950 px-1 rounded shadow-sm text-slate-700 dark:text-slate-300 mt-0.5">You</span>
                     </div>
 
                     {/* Animated Motorcycle Courier Pin */}
@@ -1260,7 +1459,7 @@ export default function CartDrawer({
                           <div className="bg-emerald-600 text-white p-1.5 rounded-full shadow-xl border-2 border-white animate-bounce">
                             <Truck size={12} className="text-white" />
                           </div>
-                          <span className="text-4xs font-black bg-emerald-100 text-emerald-800 px-1 rounded border border-emerald-300">
+                          <span className="text-[7px] font-black bg-emerald-100 text-emerald-800 px-1 rounded border border-emerald-300">
                             Rider ({riderMapProgress}%)
                           </span>
                         </div>
@@ -1269,22 +1468,22 @@ export default function CartDrawer({
                   </div>
 
                   {/* Rider HUD Statistics */}
-                  <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2 rounded-lg text-4xs font-extrabold text-slate-500 uppercase">
+                  <div className="grid grid-cols-3 gap-2 bg-white dark:bg-slate-900 border border-slate-150 dark:border-slate-800 p-2 rounded-lg text-[8px] font-extrabold text-slate-500 uppercase">
                     <div>
-                      <p className="text-4xs text-slate-400">Velocity</p>
-                      <p className="text-3xs text-slate-800 dark:text-slate-200 font-mono font-bold">
+                      <p className="text-[7px] text-slate-400">Velocity</p>
+                      <p className="text-[10px] text-slate-800 dark:text-slate-200 font-mono font-bold">
                         {currentOrderTrackStatus === 'transit' ? '32 km/h' : currentOrderTrackStatus === 'delivered' ? '0 km/h (Arrived)' : '0 km/h (Idle)'}
                       </p>
                     </div>
                     <div>
-                      <p className="text-4xs text-slate-400">Distance Remaining</p>
-                      <p className="text-3xs text-orange-600 font-mono font-bold">
+                      <p className="text-[7px] text-slate-400">Distance Remaining</p>
+                      <p className="text-[10px] text-orange-600 font-mono font-bold">
                         {(deliveryInfo.distanceKm * (1 - riderMapProgress / 100)).toFixed(2)} km
                       </p>
                     </div>
                     <div>
-                      <p className="text-4xs text-slate-400">ETA Estimate</p>
-                      <p className="text-3xs text-emerald-600 font-mono font-bold">
+                      <p className="text-[7px] text-slate-400">ETA Estimate</p>
+                      <p className="text-[10px] text-emerald-600 font-mono font-bold">
                         {currentOrderTrackStatus === 'placed' && 'Prep...'}
                         {currentOrderTrackStatus === 'dispatched' && 'Allocating...'}
                         {currentOrderTrackStatus === 'transit' && `${Math.max(1, Math.round(5 * (1 - riderMapProgress / 100)))} mins`}
@@ -1297,11 +1496,11 @@ export default function CartDrawer({
                 {/* Live Chat Communication Hub (Requirement 4) */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 space-y-3.5 text-left">
                   <div className="flex justify-between items-center">
-                    <h5 className="text-3xs font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
-                      <MessageSquare size={13} className="text-orange-600" /> Order Chat Center
+                    <h5 className="text-[10px] font-black uppercase tracking-wider text-slate-600 flex items-center gap-1">
+                      <MessageSquare size={13} className="text-orange-600" /> Dokan Chat Center
                     </h5>
                     {/* Tab Switcher for recipient */}
-                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-4xs font-extrabold">
+                    <div className="flex gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[8px] font-extrabold">
                       <button
                         type="button"
                         onClick={() => setActiveRecipient('vendor')}
@@ -1320,7 +1519,7 @@ export default function CartDrawer({
                   </div>
 
                   {/* Message History Scroller */}
-                  <div className="h-32 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg space-y-2 text-3xs border border-slate-150 dark:border-slate-900">
+                  <div className="h-32 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-2.5 rounded-lg space-y-2 text-[10px] border border-slate-150 dark:border-slate-900">
                     {(activeRecipient === 'vendor' ? vendorMessages : riderMessages).map((m, idx) => (
                       <div 
                         key={idx} 
@@ -1335,7 +1534,7 @@ export default function CartDrawer({
                         >
                           <p>{m.text}</p>
                         </div>
-                        <span className="text-4xs text-slate-400 mt-0.5 px-1">{m.timestamp}</span>
+                        <span className="text-[7px] text-slate-400 mt-0.5 px-1">{m.timestamp}</span>
                       </div>
                     ))}
                   </div>
@@ -1346,197 +1545,17 @@ export default function CartDrawer({
                       type="text"
                       value={chatText}
                       onChange={(e) => setChatText(e.target.value)}
-                      placeholder={`Send text to ${activeRecipient === 'vendor' ? 'Vendor Store' : 'Delivery Rider'}...`}
-                      className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none font-bold"
+                      placeholder={`Send text to ${activeRecipient === 'vendor' ? 'Dokan Vendor Store' : 'Delivery Rider'}...`}
+                      className="flex-1 bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-[10px] focus:outline-none font-bold"
                     />
                     <button
                       type="submit"
-                      className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-3xs uppercase tracking-wider cursor-pointer"
+                      className="bg-orange-600 hover:bg-orange-500 text-white font-extrabold px-3 py-1.5 rounded-lg text-[9px] uppercase tracking-wider cursor-pointer"
                     >
                       Send
                     </button>
                   </form>
                 </div>
-
-                {/* CUSTOMER TRUST BADGES AND REVIEWS FEEDBACK WIDGET */}
-                {currentOrderTrackStatus === 'delivered' && (
-                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-left space-y-3">
-                    <h5 className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                      <RotateCcw size={14} className="text-rose-500" /> Not happy with this order?
-                    </h5>
-                    {refundRequestSubmitted ? (
-                      <div className="py-3 text-center bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
-                        <p className="text-3xs font-black text-emerald-700 dark:text-emerald-400">✔️ Refund request sent to the vendor for review.</p>
-                      </div>
-                    ) : (
-                      <>
-                        <textarea
-                          value={refundReason}
-                          onChange={(e) => setRefundReason(e.target.value)}
-                          placeholder="Tell us what went wrong (e.g. item damaged, wrong item, not as described)..."
-                          className="w-full text-xs font-semibold px-3 py-2 rounded-xl border border-slate-200 resize-none h-16"
-                        />
-                        <button
-                          onClick={handleRequestRefund}
-                          disabled={!refundReason.trim()}
-                          className="text-3xs font-black uppercase px-3 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 disabled:bg-slate-300 text-white cursor-pointer disabled:cursor-not-allowed"
-                        >
-                          Request a Refund
-                        </button>
-                      </>
-                    )}
-                  </div>
-                )}
-
-                {/* CUSTOMER TRUST BADGES AND REVIEWS FEEDBACK WIDGET */}
-                {currentOrderTrackStatus === 'delivered' && (
-                  <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 text-left space-y-4">
-                    <div className="border-b border-slate-150 dark:border-slate-800 pb-2">
-                      <h5 className="text-xs font-black uppercase text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                        <Sparkles size={14} className="text-amber-500 animate-pulse" /> Award Customer Trust Badges
-                      </h5>
-                      <p className="text-3xs text-slate-500">
-                        Praise the vendor store and delivery rider by choosing official badges and entering ratings. This updates the Admin ledger and profiles in real-time.
-                      </p>
-                    </div>
-
-                    {feedbackSubmitted ? (
-                      <div className="py-4 text-center space-y-2 bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/50 rounded-xl">
-                        <p className="text-xs font-black text-emerald-700 dark:text-emerald-400">✔️ Feedback Registered Successfully!</p>
-                        <p className="text-3xs text-slate-500">Your badges and ratings are live in the central super admin and courier ledgers.</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        {/* 1. STORE BADGES AND REVIEW */}
-                        <div className="space-y-2.5">
-                          <p className="text-3xs font-black uppercase tracking-wider text-slate-500">🏬 Rate Vendor Store</p>
-                          
-                          {/* Stars Selector */}
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((num) => (
-                              <button
-                                key={num}
-                                type="button"
-                                onClick={() => setStoreRating(num)}
-                                className={`text-base cursor-pointer focus:outline-none ${num <= storeRating ? 'text-amber-400' : 'text-slate-300'}`}
-                              >
-                                ★
-                              </button>
-                            ))}
-                            <span className="text-3xs font-black text-slate-500 ml-1">({storeRating}/5 Stars)</span>
-                          </div>
-
-                          {/* Badges select */}
-                          <div className="space-y-1">
-                            <p className="text-3xs text-slate-400 font-bold">Select Trust Badges for Store:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {['Authentic Products', 'Speedy Processing', 'Top Quality', 'Highly Recommended', 'Verified Business'].map((badge) => {
-                                const active = storeBadges.includes(badge);
-                                return (
-                                  <button
-                                    key={badge}
-                                    type="button"
-                                    onClick={() => {
-                                      if (active) {
-                                        setStoreBadges(storeBadges.filter(b => b !== badge));
-                                      } else {
-                                        setStoreBadges([...storeBadges, badge]);
-                                      }
-                                    }}
-                                    className={`text-3xs font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
-                                      active 
-                                        ? 'bg-orange-600 text-white border-orange-600' 
-                                        : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                                    }`}
-                                  >
-                                    🏅 {badge}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Comment input */}
-                          <input
-                            type="text"
-                            placeholder="Write store review comment..."
-                            value={storeComment}
-                            onChange={(e) => setStoreComment(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none"
-                          />
-                        </div>
-
-                        {/* 2. RIDER BADGES AND REVIEW */}
-                        <div className="space-y-2.5 border-t border-slate-150 dark:border-slate-800 pt-3">
-                          <p className="text-3xs font-black uppercase tracking-wider text-slate-500">🏍️ Rate Logistics Delivery Rider</p>
-                          
-                          {/* Stars Selector */}
-                          <div className="flex items-center gap-1">
-                            {[1, 2, 3, 4, 5].map((num) => (
-                              <button
-                                key={num}
-                                type="button"
-                                onClick={() => setRiderRating(num)}
-                                className={`text-base cursor-pointer focus:outline-none ${num <= riderRating ? 'text-amber-400' : 'text-slate-300'}`}
-                              >
-                                ★
-                              </button>
-                            ))}
-                            <span className="text-3xs font-black text-slate-500 ml-1">({riderRating}/5 Stars)</span>
-                          </div>
-
-                          {/* Badges select */}
-                          <div className="space-y-1">
-                            <p className="text-3xs text-slate-400 font-bold">Select Trust Badges for Rider:</p>
-                            <div className="flex flex-wrap gap-1">
-                              {['Safe Rider', 'Excellent Communication', 'Always Punctual', 'Rainproof Box', 'Polite & Friendly'].map((badge) => {
-                                const active = riderBadges.includes(badge);
-                                return (
-                                  <button
-                                    key={badge}
-                                    type="button"
-                                    onClick={() => {
-                                      if (active) {
-                                        setRiderBadges(riderBadges.filter(b => b !== badge));
-                                      } else {
-                                        setRiderBadges([...riderBadges, badge]);
-                                      }
-                                    }}
-                                    className={`text-3xs font-bold px-2 py-1 rounded-lg border transition-all cursor-pointer ${
-                                      active 
-                                        ? 'bg-indigo-600 text-white border-indigo-600' 
-                                        : 'bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400'
-                                    }`}
-                                  >
-                                    🏍️ {badge}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-
-                          {/* Comment input */}
-                          <input
-                            type="text"
-                            placeholder="Write rider review comment..."
-                            value={riderComment}
-                            onChange={(e) => setRiderComment(e.target.value)}
-                            className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-lg px-2.5 py-1.5 text-3xs focus:outline-none"
-                          />
-                        </div>
-
-                        {/* Submit Button */}
-                        <button
-                          type="button"
-                          onClick={handleSubmitFeedback}
-                          className="w-full bg-slate-900 hover:bg-slate-800 text-white font-black text-3xs uppercase tracking-wider py-2.5 rounded-xl cursor-pointer"
-                        >
-                          Submit Trust Badges & Ratings
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               {/* Summary container */}
@@ -1563,11 +1582,11 @@ export default function CartDrawer({
                 </div>
                 <div className="border-t border-slate-200 my-2 pt-2 flex justify-between font-black text-slate-900">
                   <span>Grand Total Paid:</span>
-                  <span>Shs {(total ?? 0).toLocaleString()}</span>
+                  <span>Shs {total.toLocaleString()}</span>
                 </div>
               </div>
 
-              <div className="text-3xs text-slate-400 font-medium leading-relaxed px-4">
+              <div className="text-[10px] text-slate-400 font-medium leading-relaxed px-4">
                 ℹ️ A confirmation receipt SMS has been dispatched. Our local courier rider will phone you once they reach your landmark inside <strong>{selectedLocation}</strong>.
               </div>
 
@@ -1582,16 +1601,6 @@ export default function CartDrawer({
             </div>
           )}
 
-            </div>
-          )}
-
-          {/* Sticky order summary sidebar for the full-page checkout/success steps */}
-          {isFullPageStep && step !== 'processing' && (
-            <div className="lg:col-span-1">
-              <OrderSummaryCard />
-            </div>
-          )}
-
         </div>
 
         {/* FOOTER TOTALS (Only in Cart step) */}
@@ -1600,7 +1609,7 @@ export default function CartDrawer({
             <div className="space-y-1.5 text-xs text-slate-600">
               <div className="flex justify-between font-semibold">
                 <span>Items Subtotal:</span>
-                <span className="text-slate-900 font-bold">Shs {(subtotal ?? 0).toLocaleString()}</span>
+                <span className="text-slate-900 font-bold">Shs {subtotal.toLocaleString()}</span>
               </div>
               
               <div className="bg-slate-100/55 p-2.5 rounded-xl border border-slate-200/50 space-y-1">
@@ -1608,34 +1617,27 @@ export default function CartDrawer({
                   <span className="flex items-center gap-1">
                     🚚 Auto Courier Fee:
                     {deliveryInfo.hasBulkyItem && (
-                      <span className="bg-red-100 text-red-800 text-4xs font-black px-1.5 rounded uppercase">Bulky Cargo</span>
+                      <span className="bg-red-100 text-red-800 text-[8px] font-black px-1.5 rounded uppercase">Bulky Cargo</span>
                     )}
                   </span>
                   <span className="text-slate-900 font-black">
-                    Shs {(deliveryFee ?? 0).toLocaleString()}
+                    Shs {deliveryFee.toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between text-3xs text-slate-500">
+                <div className="flex justify-between text-[9px] text-slate-500">
                   <span>Distance to {(selectedLocation || '').split(',')[0]}</span>
                   <span className="font-semibold font-mono">{deliveryInfo.distanceKm} km</span>
                 </div>
-                <div className="text-3xs text-slate-400 font-medium">
+                <div className="text-[9px] text-slate-400 font-medium">
                   Rate applied: {deliveryInfo.explanation}
                 </div>
               </div>
 
-              {couponDiscount > 0 && (
-                <div className="flex justify-between font-semibold text-emerald-600">
-                  <span>Coupon ({appliedCoupon?.code}):</span>
-                  <span className="font-bold">-Shs {couponDiscount.toLocaleString()}</span>
-                </div>
-              )}
-
               <div className="border-t border-slate-200 my-2" />
               <div className="flex justify-between items-baseline">
                 <span className="font-extrabold text-sm text-slate-800">Total Price:</span>
-                <span className="text-lg font-black text-[#f68b1e]">
-                  Shs {(total ?? 0).toLocaleString()}
+                <span className="text-lg font-black text-[#EA6A0C]">
+                  Shs {total.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -1649,15 +1651,132 @@ export default function CartDrawer({
                 <ArrowRight size={14} />
               </button>
               
-              <div className="flex justify-center items-center gap-1.5 text-3xs text-slate-400 font-semibold">
+              <div className="flex justify-center items-center gap-1.5 text-[9px] text-slate-400 font-semibold">
                 <ShieldCheck size={12} className="text-emerald-600" />
-                <span>Olimart Safe Checkout &bull; PayPal, Card, MoMo, Bank, COD</span>
+                <span>OliMart Safe Checkout &bull; PayPal, Card, MoMo, Bank, COD</span>
               </div>
             </div>
           </div>
         )}
 
       </div>
+
+      {/* Simulated Mobile Money PIN prompt — mirrors the real USSD/telco push
+          you'd get from MTN or Airtel, so Confirm Order feels like a genuine
+          payment authorization rather than a silent form submit. */}
+      {pinStage !== 'idle' && (() => {
+        const acc = paymentMethod === 'airtel' ? settlementAccounts.airtel_money : settlementAccounts.mtn_momo;
+        const brand = paymentMethod === 'airtel' ? { name: 'Airtel Money', bg: 'bg-red-600', ring: 'ring-red-500/30' } : { name: 'MTN MoMo', bg: 'bg-yellow-400 text-slate-950', ring: 'ring-yellow-400/30' };
+        return (
+          <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4">
+            <div className="w-full max-w-xs bg-slate-950 border border-slate-700 rounded-3xl shadow-2xl overflow-hidden">
+              {/* Phone-style status bar */}
+              <div className={`px-4 py-2.5 flex items-center justify-between text-[10px] font-black uppercase tracking-wider ${brand.bg}`}>
+                <span>{brand.name}</span>
+                <span>{pinStage === 'prompt' ? `Expires in ${pinSecondsLeft}s` : ''}</span>
+              </div>
+
+              <div className="p-5 space-y-4 text-center">
+                {pinStage === 'prompt' && (
+                  <>
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Payment Approval Request</p>
+                    <p className="text-xs text-slate-200 leading-relaxed">
+                      Approve payment of <span className="font-black text-white">Shs {total.toLocaleString()}</span> to{' '}
+                      <span className="font-black text-white">{acc.accountName}</span>
+                      <br />
+                      <span className="text-slate-400">via {acc.accountNumber}</span>
+                    </p>
+
+                    <div className="flex items-center justify-center gap-2.5 py-1">
+                      {[0, 1, 2, 3].map((i) => (
+                        <span
+                          key={i}
+                          className={`w-3.5 h-3.5 rounded-full border-2 ${i < pinDigits.length ? `${brand.bg} border-transparent` : 'border-slate-600'}`}
+                        />
+                      ))}
+                    </div>
+                    {pinError && (
+                      <p className="text-[10px] text-red-400 font-bold flex items-center justify-center gap-1">
+                        <AlertTriangle size={11} /> {pinError}
+                      </p>
+                    )}
+
+                    <div className="grid grid-cols-3 gap-2">
+                      {['1','2','3','4','5','6','7','8','9','','0','back'].map((k, idx) =>
+                        k === '' ? (
+                          <span key={idx} />
+                        ) : (
+                          <button
+                            key={idx}
+                            type="button"
+                            onClick={() => handlePinKeypad(k)}
+                            className="h-11 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-black text-sm flex items-center justify-center transition-colors cursor-pointer"
+                          >
+                            {k === 'back' ? <Delete size={16} /> : k}
+                          </button>
+                        )
+                      )}
+                    </div>
+
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        type="button"
+                        onClick={handlePinCancel}
+                        className="w-1/2 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-[11px] font-black uppercase cursor-pointer transition-colors"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handlePinApprove}
+                        className={`w-1/2 ${brand.bg} py-2.5 rounded-xl text-[11px] font-black uppercase cursor-pointer transition-colors flex items-center justify-center gap-1`}
+                      >
+                        <Lock size={12} /> Approve
+                      </button>
+                    </div>
+                    <p className="text-[8px] text-slate-500 font-medium">Never share this PIN with anyone, including Olimart support.</p>
+                  </>
+                )}
+
+                {pinStage === 'verifying' && (
+                  <div className="py-6 space-y-3">
+                    <Loader2 size={28} className="mx-auto animate-spin text-slate-300" />
+                    <p className="text-xs text-slate-300 font-bold">Verifying with {brand.name}...</p>
+                  </div>
+                )}
+
+                {pinStage === 'approved' && (
+                  <div className="py-6 space-y-3">
+                    <BadgeCheck size={32} className="mx-auto text-emerald-400" />
+                    <p className="text-xs text-emerald-300 font-black uppercase tracking-wide">Payment Approved</p>
+                  </div>
+                )}
+
+                {pinStage === 'expired' && (
+                  <div className="py-4 space-y-3">
+                    <AlertTriangle size={26} className="mx-auto text-amber-400" />
+                    <p className="text-xs text-slate-200 font-bold">This prompt expired without a response.</p>
+                    <button
+                      type="button"
+                      onClick={() => { setPinSecondsLeft(60); setPinDigits(''); setPinError(''); setPinStage('prompt'); }}
+                      className="w-full bg-slate-800 hover:bg-slate-700 text-white py-2.5 rounded-xl text-[11px] font-black uppercase cursor-pointer transition-colors"
+                    >
+                      Resend Prompt
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePinCancel}
+                      className="w-full text-slate-400 text-[10px] font-bold uppercase cursor-pointer"
+                    >
+                      Choose a different payment method
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

@@ -89,7 +89,7 @@ export default function Stepper({ currentStatus }: StepperProps) {
               {/* Step Labels */}
               <div className="text-center mt-2.5 max-w-[85px] sm:max-w-[100px]">
                 <p 
-                  className={`text-3xs font-black uppercase tracking-tight transition-colors duration-300 ${
+                  className={`text-[10px] font-black uppercase tracking-tight transition-colors duration-300 ${
                     isActive 
                       ? 'text-orange-600 dark:text-orange-400 font-extrabold' 
                       : isCompleted 
@@ -99,7 +99,7 @@ export default function Stepper({ currentStatus }: StepperProps) {
                 >
                   {step.label}
                 </p>
-                <p className="text-4xs text-slate-400 dark:text-slate-500 mt-0.5 leading-none">
+                <p className="text-[8px] text-slate-400 dark:text-slate-500 mt-0.5 leading-none">
                   {step.desc}
                 </p>
               </div>

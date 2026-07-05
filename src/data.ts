@@ -124,7 +124,7 @@ export const PRODUCTS: Product[] = [
     vendors: [
       { id: 'v3_1', name: 'Samsung Experience Store Kampala', price: 749000, rating: 5.0, reviewsCount: 1520, deliveryTime: '2-4 Hours (Boda Express)', shippingFee: 0, isOfficial: true, location: 'Acacia Mall' },
       { id: 'v3_2', name: 'Kiyembe Wholesale Electronics', price: 729000, rating: 4.3, reviewsCount: 203, deliveryTime: '1 Day', shippingFee: 3000, isOfficial: false, location: 'Kiyembe, Kampala' },
-      { id: 'v3_3', name: 'Global Direct Import Partner', price: 680000, rating: 4.6, reviewsCount: 4200, deliveryTime: '8-14 Days (Import Duties Paid)', shippingFee: 85000, isOfficial: false, location: 'Seattle, USA' }
+      { id: 'v3_3', name: 'Amazon US Direct Delivery', price: 680000, rating: 4.6, reviewsCount: 4200, deliveryTime: '8-14 Days (Import Duties Paid)', shippingFee: 85000, isOfficial: false, location: 'Seattle, USA' }
     ],
     reviews: [
       { name: 'Namubiru Joy', location: 'Entebbe', rating: 5, text: 'The Super AMOLED screen is incredibly bright and colorful. Best purchase of 2026!', date: 'June 25, 2026', likes: 19 },

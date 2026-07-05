@@ -21,8 +21,7 @@ import {
   Smartphone,
   Tv,
   Shirt,
-  Home,
-  Type
+  Home
 } from 'lucide-react';
 import { CATEGORIES, UGANDA_DISTRICTS, PRODUCTS } from '../data';
 import { Product } from '../types';
@@ -51,8 +50,6 @@ interface HeaderProps {
   selectedSpecialTab: 'all' | 'todays-deal' | 'flash-sales' | 'discount';
   setSelectedSpecialTab: (tab: 'all' | 'todays-deal' | 'flash-sales' | 'discount') => void;
   onAccountClick: () => void;
-  fontSize: 'normal' | 'large' | 'xl';
-  setFontSize: (size: 'normal' | 'large' | 'xl') => void;
 }
 
 export default function Header({
@@ -76,16 +73,13 @@ export default function Header({
   formatPrice,
   selectedSpecialTab,
   setSelectedSpecialTab,
-  onAccountClick,
-  fontSize,
-  setFontSize
+  onAccountClick
 }: HeaderProps) {
   const [isLocationOpen, setIsLocationOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isWatchlistOpen, setIsWatchlistOpen] = useState(false);
   const [isCurrencyOpen, setIsCurrencyOpen] = useState(false);
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
-  const [isFontSizeOpen, setIsFontSizeOpen] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const searchRef = useRef<HTMLDivElement>(null);
 
@@ -121,7 +115,7 @@ export default function Header({
   return (
     <header className="w-full bg-white shadow-xs sticky top-0 z-40" id="main-header">
       {/* Top Utility Bar */}
-      <div className="hidden md:block bg-[#1a1a1a] text-slate-300 text-xs py-1.5 px-4 border-b border-zinc-800">
+      <div className="hidden md:block bg-gradient-to-r from-[#10131a] via-[#161a22] to-[#10131a] text-slate-300 text-[11px] py-1.5 px-4 border-b border-white/5">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-2">
           {/* Left Side: Delivery, Sell option & Watchlist */}
           <div className="flex items-center gap-4 flex-wrap justify-center md:justify-start">
@@ -162,6 +156,14 @@ export default function Header({
 
             <span className="opacity-40">|</span>
 
+            {/* Option for selling */}
+            <a href="#sell-section" className="font-bold uppercase hover:underline transition-all flex items-center gap-1">
+              <Sparkles size={11} />
+              <span>Sell on OliMart</span>
+            </a>
+
+            <span className="opacity-40">|</span>
+
             {/* Watchlist Dropdown */}
             <div className="relative">
               <button 
@@ -184,7 +186,7 @@ export default function Header({
                     <button onClick={() => setIsWatchlistOpen(false)} className="text-slate-400 hover:text-slate-600"><X size={12} /></button>
                   </div>
                   {watchlist.length === 0 ? (
-                    <div className="py-4 text-center text-slate-400 text-3xs">
+                    <div className="py-4 text-center text-slate-400 text-[10px]">
                       Your watchlist is empty. Add products to track them!
                     </div>
                   ) : (
@@ -198,7 +200,7 @@ export default function Header({
                           />
                           <div className="flex-1 min-w-0">
                             <p 
-                              className="text-3xs font-bold text-slate-800 truncate hover:text-orange-500 cursor-pointer" 
+                              className="text-[10px] font-bold text-slate-800 truncate hover:text-orange-500 cursor-pointer" 
                               onClick={() => { 
                                 onProductClick(product); 
                                 setIsWatchlistOpen(false); 
@@ -206,7 +208,7 @@ export default function Header({
                             >
                               {product.title}
                             </p>
-                            <p className="text-3xs font-black text-orange-600">{formatPrice(product.price)}</p>
+                            <p className="text-[10px] font-black text-orange-600">{formatPrice(product.price)}</p>
                           </div>
                           <button 
                             onClick={() => onWatchlistToggle(product.id)}
@@ -242,7 +244,7 @@ export default function Header({
               </button>
 
               {isLanguageOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
+                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
                   {[
                     { code: 'EN', name: 'English 🇺🇸' },
                     { code: 'LG', name: 'Luganda 🇺🇬' },
@@ -268,49 +270,6 @@ export default function Header({
 
             <span className="opacity-40">|</span>
 
-            {/* Font Size Selector */}
-            <div className="relative">
-              <button 
-                onClick={() => { 
-                  setIsFontSizeOpen(!isFontSizeOpen);
-                  setIsLanguageOpen(false); 
-                  setIsCurrencyOpen(false); 
-                  setIsWatchlistOpen(false);
-                }}
-                className="flex items-center gap-1 hover:opacity-90 font-bold uppercase transition-colors cursor-pointer text-white"
-                title="Adjust application font sizing for viewer comfort"
-              >
-                <Type size={12} />
-                <span>Text: <strong className="underline">{fontSize === 'normal' ? 'Normal' : fontSize === 'large' ? 'Large' : 'XL'}</strong></span>
-                <ChevronDown size={10} />
-              </button>
-
-              {isFontSizeOpen && (
-                <div className="absolute right-0 mt-2 w-36 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
-                  {[
-                    { code: 'normal', name: 'Aa Normal (100%)' },
-                    { code: 'large', name: 'Aa Large (115%)' },
-                    { code: 'xl', name: 'Aa Extra Large (130%)' }
-                  ].map(item => (
-                    <button
-                      key={item.code}
-                      onClick={() => {
-                        setFontSize(item.code as 'normal' | 'large' | 'xl');
-                        setIsFontSizeOpen(false);
-                      }}
-                      className={`w-full text-left px-3 py-1.5 hover:bg-orange-50 hover:text-orange-600 font-bold transition-colors ${
-                        fontSize === item.code ? 'bg-orange-50 text-orange-600 font-black' : 'text-slate-700'
-                      }`}
-                    >
-                      {item.name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <span className="opacity-40">|</span>
-
             {/* Currency Exchanger */}
             <div className="relative">
               <button 
@@ -327,7 +286,7 @@ export default function Header({
               </button>
 
               {isCurrencyOpen && (
-                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-3xs">
+                <div className="absolute right-0 mt-2 w-32 bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 text-slate-800 text-[10px]">
                   {[
                     { code: 'UGX', label: 'UGX (Shs)' },
                     { code: 'USD', label: 'USD ($)' },
@@ -393,22 +352,22 @@ export default function Header({
               setSearchQuery('');
               setSelectedSpecialTab('all');
             }}>
-              <div className="bg-[#f68b1e] p-1.5 rounded-lg mr-1 flex items-center justify-center shadow-xs">
+              <div className="bg-[#EA6A0C] p-1.5 rounded-lg mr-1 flex items-center justify-center shadow-xs">
                 <ShoppingBag size={15} className="text-white fill-white" />
               </div>
               <span className="text-2xl font-black tracking-tight text-slate-900 dark:text-white select-none">
-                Oli<span className="text-[#f68b1e]">Mart</span>
+                Oli<span className="text-[#EA6A0C]">Mart</span>
               </span>
             </div>
 
             {/* Mobile Cart */}
             <button 
               onClick={onCartClick} 
-              className="md:hidden relative p-2 bg-[#f68b1e] rounded-lg hover:bg-[#e07510] text-white transition-colors animate-pulse"
+              className="md:hidden relative p-2 bg-[#EA6A0C] rounded-lg hover:bg-[#C2560A] text-white transition-colors animate-pulse"
             >
               <ShoppingCart size={18} />
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-bold text-3xs w-5 h-5 rounded-full flex items-center justify-center shadow-md">
+                <span className="absolute -top-1.5 -right-1.5 bg-red-600 text-white font-bold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md">
                   {cartItemsCount}
                 </span>
               )}
@@ -417,7 +376,7 @@ export default function Header({
 
           {/* Search bar */}
           <div ref={searchRef} className="w-full md:flex-1 max-w-2xl flex items-center relative" id="header-search-container">
-            <div className="flex w-full rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-[#f68b1e] relative shadow-xs">
+            <div className="flex w-full rounded-lg overflow-hidden bg-white dark:bg-slate-800 border-2 border-[#EA6A0C] relative shadow-xs">
               {/* Category selector */}
               <div className="hidden lg:block relative border-r border-slate-200 dark:border-slate-700">
                 <select
@@ -452,7 +411,7 @@ export default function Header({
                       setSearchQuery('');
                       setShowSuggestions(false);
                     }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-3xs text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded uppercase font-bold"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 bg-slate-100 dark:bg-slate-700 px-1.5 py-0.5 rounded uppercase font-bold"
                   >
                     Clear
                   </button>
@@ -460,7 +419,7 @@ export default function Header({
               </div>
 
               {/* Search button */}
-              <button className="bg-[#f68b1e] text-white px-7 font-black hover:bg-[#e07510] transition-colors uppercase text-xs tracking-wider flex items-center gap-1.5 cursor-pointer">
+              <button className="bg-[#EA6A0C] text-white px-7 font-black hover:bg-[#C2560A] transition-colors uppercase text-xs tracking-wider flex items-center gap-1.5 cursor-pointer">
                 <Search size={14} strokeWidth={3} />
                 <span className="hidden sm:inline">Search</span>
               </button>
@@ -475,14 +434,14 @@ export default function Header({
                 {suggestedCategories.length === 0 && suggestedProducts.length === 0 ? (
                   <div className="p-4 text-center text-xs text-slate-400 dark:text-slate-500 font-semibold">
                     <p className="font-bold mb-1 text-slate-600 dark:text-slate-400">No direct matches found</p>
-                    <p className="text-3xs">Press Enter or click search to browse all matching items.</p>
+                    <p className="text-[10px]">Press Enter or click search to browse all matching items.</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
                     {/* Category matches */}
                     {suggestedCategories.length > 0 && (
                       <div>
-                        <div className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1">
+                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center gap-1">
                           <span>Matched Categories</span>
                         </div>
                         <div className="space-y-0.5">
@@ -497,7 +456,7 @@ export default function Header({
                               className="w-full text-left px-2 py-2 rounded-lg text-xs font-extrabold hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 flex items-center justify-between group transition-colors"
                             >
                               <span className="flex items-center gap-2">
-                                <span className="text-[#f68b1e] group-hover:scale-110 transition-transform">
+                                <span className="text-[#EA6A0C] group-hover:scale-110 transition-transform">
                                   {cat.id === 'phones' ? <Smartphone size={13} /> :
                                    cat.id === 'electronics' ? <Tv size={13} /> :
                                    cat.id === 'fashion' ? <Shirt size={13} /> :
@@ -507,7 +466,7 @@ export default function Header({
                                 </span>
                                 <span>{cat.name}</span>
                               </span>
-                              <span className="text-3xs bg-orange-50 dark:bg-orange-950/40 text-[#f68b1e] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
+                              <span className="text-[9px] bg-orange-50 dark:bg-orange-950/40 text-[#EA6A0C] px-2 py-0.5 rounded-md uppercase font-black opacity-0 group-hover:opacity-100 transition-all">
                                 Go to Department
                               </span>
                             </button>
@@ -523,9 +482,9 @@ export default function Header({
                     {/* Product matches */}
                     {suggestedProducts.length > 0 && (
                       <div>
-                        <div className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
+                        <div className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2 mb-1.5 flex items-center justify-between">
                           <span>Suggested Products</span>
-                          <span className="text-3xs text-[#f68b1e] lowercase font-bold">matching "{searchQuery}"</span>
+                          <span className="text-[9px] text-[#EA6A0C] lowercase font-bold">matching "{searchQuery}"</span>
                         </div>
                         <div className="space-y-1">
                           {suggestedProducts.map((p) => (
@@ -547,21 +506,21 @@ export default function Header({
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-1.5">
-                                  <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate group-hover:text-[#f68b1e] transition-colors">
+                                  <p className="font-extrabold text-slate-800 dark:text-slate-200 text-xs truncate group-hover:text-[#EA6A0C] transition-colors">
                                     {p.title}
                                   </p>
-                                  <span className="text-3xs text-orange-600 dark:text-orange-400 font-black flex-shrink-0">
+                                  <span className="text-[10px] text-orange-600 dark:text-orange-400 font-black flex-shrink-0">
                                     {formatPrice(p.price)}
                                   </span>
                                 </div>
-                                <p className="text-3xs text-slate-400 font-bold uppercase mt-0.5 flex items-center gap-1">
+                                <p className="text-[9px] text-slate-400 font-bold uppercase mt-0.5 flex items-center gap-1">
                                   <span className="text-slate-500 dark:text-slate-400">{p.brand}</span>
                                   <span>&bull;</span>
                                   <span className="text-yellow-500">★ {p.rating}</span>
                                   {p.isOfficial && (
                                     <>
                                       <span>&bull;</span>
-                                      <span className="text-blue-500 text-4xs font-black uppercase">Official</span>
+                                      <span className="text-blue-500 text-[8px] font-black uppercase">Official</span>
                                     </>
                                   )}
                                 </p>
@@ -583,9 +542,9 @@ export default function Header({
             <div className="relative group/account">
               <button 
                 onClick={onAccountClick} 
-                className="flex items-center gap-1 py-1 px-2.5 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
+                className="flex items-center gap-1 py-1 px-2.5 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer"
               >
-                <User size={18} className="text-slate-600 dark:text-slate-300 group-hover/account:text-[#f68b1e]" />
+                <User size={18} className="text-slate-600 dark:text-slate-300 group-hover/account:text-[#EA6A0C]" />
                 <span className="uppercase tracking-wide">Account</span>
                 <ChevronDown size={11} className="transition-transform group-hover/account:rotate-180" />
               </button>
@@ -594,19 +553,19 @@ export default function Header({
               <div className="absolute right-0 mt-1 w-60 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl py-3 px-3.5 hidden group-hover/account:block z-50 animate-in fade-in slide-in-from-top-2 duration-150">
                 <button 
                   onClick={onAccountClick}
-                  className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider text-center block mb-2.5 shadow-sm transition-all"
+                  className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-2 rounded-lg text-xs font-black uppercase tracking-wider text-center block mb-2.5 shadow-sm transition-all"
                 >
                   Sign In / Register
                 </button>
                 <div className="h-px bg-slate-100 dark:bg-slate-800 my-2" />
-                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
+                <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
                     <User size={13} /> <span>My Profile & Settings</span>
                   </button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
                     <ShoppingBag size={13} /> <span>My Orders & Returns</span>
                   </button>
-                  <button onClick={() => { setSelectedCategory('all'); setSelectedSpecialTab('flash-sales'); }} className="w-full text-left py-1 hover:text-[#f68b1e] flex items-center gap-2">
+                  <button onClick={() => { setSelectedCategory('all'); setSelectedSpecialTab('flash-sales'); }} className="w-full text-left py-1 hover:text-[#EA6A0C] flex items-center gap-2">
                     <Heart size={13} /> <span>Saved Items / Watchlist</span>
                   </button>
                 </div>
@@ -615,7 +574,7 @@ export default function Header({
 
             {/* Help Jumia-Style Hover Dropdown */}
             <div className="relative group/help">
-              <button className="flex items-center gap-1 py-1 px-2.5 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
+              <button className="flex items-center gap-1 py-1 px-2.5 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors font-bold text-xs text-slate-700 dark:text-slate-200 cursor-pointer">
                 <HelpCircle size={18} className="text-slate-600 dark:text-slate-300" />
                 <span className="uppercase tracking-wide">Help</span>
                 <ChevronDown size={11} className="transition-transform group-hover/help:rotate-180" />
@@ -623,11 +582,11 @@ export default function Header({
 
               {/* Help Dropdown Panel */}
               <div className="absolute right-0 mt-1 w-48 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl py-2 px-3 hidden group-hover/help:block z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="space-y-2 text-xs font-bold text-slate-700 dark:text-slate-300">
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Help Center</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Place an order</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Payment options</button>
-                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#f68b1e]">Delivery timelines</button>
+                <div className="space-y-2 text-[11px] font-bold text-slate-700 dark:text-slate-300">
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Help Center</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Place an order</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Payment options</button>
+                  <button onClick={onAccountClick} className="w-full text-left py-1 hover:text-[#EA6A0C]">Delivery timelines</button>
                 </div>
               </div>
             </div>
@@ -638,14 +597,14 @@ export default function Header({
               className="flex flex-col items-center cursor-pointer relative group px-2 py-1"
             >
               {cartItemsCount > 0 && (
-                <span className="absolute -top-1.5 -right-1 bg-red-600 text-white text-3xs font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm animate-pulse">
+                <span className="absolute -top-1.5 -right-1 bg-red-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] h-[18px] flex items-center justify-center shadow-sm animate-pulse">
                   {cartItemsCount}
                 </span>
               )}
-              <div className="text-slate-700 dark:text-slate-300 group-hover:text-[#f68b1e] transition-colors">
+              <div className="text-slate-700 dark:text-slate-300 group-hover:text-[#EA6A0C] transition-colors">
                 <ShoppingCart size={20} />
               </div>
-              <span className="text-3xs font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#f68b1e] mt-0.5 uppercase tracking-wide">Cart</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400 group-hover:text-[#EA6A0C] mt-0.5 uppercase tracking-wide">Cart</span>
             </div>
           </div>
         </div>
@@ -663,7 +622,7 @@ export default function Header({
                 onProductClick({} as Product); // Back to listings
               }}
               className={`py-3 px-4 font-bold text-xs flex items-center gap-2 transition-colors cursor-pointer ${
-                selectedCategory === 'all' && selectedSpecialTab === 'all' ? 'text-[#f68b1e] bg-[#f68b1e]/5' : 'text-slate-800 dark:text-slate-200 hover:text-[#f68b1e]'
+                selectedCategory === 'all' && selectedSpecialTab === 'all' ? 'text-[#EA6A0C] bg-[#EA6A0C]/5' : 'text-slate-800 dark:text-slate-200 hover:text-[#EA6A0C]'
               }`}
             >
               <Menu size={14} />
@@ -694,11 +653,11 @@ export default function Header({
               }}
               className={`py-3 px-5 text-xs font-extrabold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                 selectedSpecialTab === 'flash-sales'
-                  ? 'text-[#f68b1e] border-b-2 border-[#f68b1e] bg-[#f68b1e]/5 font-black' 
-                  : 'text-slate-700 dark:text-slate-300 hover:text-[#f68b1e] hover:bg-slate-50 dark:hover:bg-slate-800 font-bold'
+                  ? 'text-[#EA6A0C] border-b-2 border-[#EA6A0C] bg-[#EA6A0C]/5 font-black' 
+                  : 'text-slate-700 dark:text-slate-300 hover:text-[#EA6A0C] hover:bg-slate-50 dark:hover:bg-slate-800 font-bold'
               }`}
             >
-              <Zap size={13} className="text-[#f68b1e]" />
+              <Zap size={13} className="text-[#EA6A0C]" />
               <span>Flash Sales</span>
             </button>
 
@@ -728,7 +687,7 @@ export default function Header({
               onClick={onAccountClick}
               className="hover:text-slate-800 dark:hover:text-white hover:underline transition-all cursor-pointer"
             >
-              Sell on Olimart
+              Sell on OliMart
             </button>
             <button 
               onClick={onAccountClick}
@@ -752,7 +711,7 @@ export default function Header({
           {/* Left slide drawer panel */}
           <div className="relative flex flex-col w-[295px] max-w-[85vw] h-full bg-white dark:bg-slate-950 shadow-2xl z-10 animate-slide-right overflow-y-auto text-slate-800 dark:text-slate-100 flex-shrink-0">
             {/* Drawer Header (Jumia VIP Banner Theme) */}
-            <div className="bg-gradient-to-r from-[#f68b1e] to-orange-600 text-white p-5 space-y-3.5">
+            <div className="bg-gradient-to-r from-[#EA6A0C] to-orange-600 text-white p-5 space-y-3.5">
               <div className="flex justify-between items-center">
                 <span className="text-lg font-black tracking-tight select-none">
                   Oli<span className="text-yellow-300">Mart</span>
@@ -765,7 +724,7 @@ export default function Header({
                 </button>
               </div>
               <div>
-                <p className="text-3xs font-bold text-orange-100 uppercase tracking-wide">Welcome to Uganda's Marketplace</p>
+                <p className="text-[10px] font-bold text-orange-100 uppercase tracking-wide">Welcome to Uganda's Marketplace</p>
                 <button 
                   onClick={() => {
                     onAccountClick();
@@ -783,7 +742,7 @@ export default function Header({
             <div className="p-4 space-y-4 flex-1">
               {/* Special Deals Quick Links */}
               <div className="space-y-1.5">
-                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Marketplace Hotspots</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Marketplace Hotspots</p>
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -799,7 +758,7 @@ export default function Header({
                       <Sparkles size={14} className="text-red-500" />
                       <span>Today's Deal</span>
                     </span>
-                    <span className="bg-red-600 text-white font-black text-4xs px-1.5 rounded uppercase">NEW</span>
+                    <span className="bg-red-600 text-white font-black text-[8px] px-1.5 rounded uppercase">NEW</span>
                   </button>
 
                   <button
@@ -809,14 +768,14 @@ export default function Header({
                       setIsMobileMenuOpen(false);
                     }}
                     className={`w-full text-left px-3 py-2 rounded-xl text-xs font-bold flex items-center justify-between ${
-                      selectedSpecialTab === 'flash-sales' ? 'bg-orange-50 text-[#f68b1e]' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/40'
+                      selectedSpecialTab === 'flash-sales' ? 'bg-orange-50 text-[#EA6A0C]' : 'text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-900/40'
                     }`}
                   >
                     <span className="flex items-center gap-2">
-                      <Zap size={14} className="text-[#f68b1e]" />
+                      <Zap size={14} className="text-[#EA6A0C]" />
                       <span>Flash Sales</span>
                     </span>
-                    <span className="bg-orange-600 text-white font-black text-4xs px-1.5 rounded uppercase animate-pulse">LIVE</span>
+                    <span className="bg-orange-600 text-white font-black text-[8px] px-1.5 rounded uppercase animate-pulse">LIVELY</span>
                   </button>
 
                   <button
@@ -833,7 +792,7 @@ export default function Header({
                       <Percent size={14} className="text-emerald-500" />
                       <span>Super Savings</span>
                     </span>
-                    <span className="text-3xs text-emerald-500 font-extrabold">-50%</span>
+                    <span className="text-[10px] text-emerald-500 font-extrabold">-50%</span>
                   </button>
                 </div>
               </div>
@@ -842,7 +801,7 @@ export default function Header({
 
               {/* Browse Category Departments list */}
               <div className="space-y-1.5">
-                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Our Departments</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Our Departments</p>
                 <div className="space-y-1">
                   <button
                     onClick={() => {
@@ -887,7 +846,7 @@ export default function Header({
 
               {/* Kampala services / hotline */}
               <div className="space-y-2">
-                <p className="text-3xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Support & Settings</p>
+                <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest px-2">Support & Settings</p>
                 <button 
                   onClick={() => {
                     setIsLocationOpen(true);
@@ -895,7 +854,7 @@ export default function Header({
                   }}
                   className="w-full text-left px-3 py-2 text-slate-700 dark:text-slate-300 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-50"
                 >
-                  <MapPin size={14} className="text-[#f68b1e]" />
+                  <MapPin size={14} className="text-[#EA6A0C]" />
                   <span>Deliver to: {selectedLocation}</span>
                 </button>
 
@@ -910,15 +869,15 @@ export default function Header({
 
                 {/* Currency Quick-change */}
                 <div className="px-3 py-1 text-xs">
-                  <p className="text-3xs font-bold text-slate-400 mb-1">Select Currency:</p>
+                  <p className="text-[10px] font-bold text-slate-400 mb-1">Select Currency:</p>
                   <div className="flex gap-1.5 flex-wrap">
                     {['UGX', 'USD', 'EUR', 'KES'].map(curr => (
                       <button
                         key={curr}
                         onClick={() => setCurrency(curr)}
-                        className={`px-2 py-1 rounded text-3xs font-black ${
+                        className={`px-2 py-1 rounded text-[10px] font-black ${
                           currency === curr 
-                            ? 'bg-[#f68b1e] text-white' 
+                            ? 'bg-[#EA6A0C] text-white' 
                             : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
                         }`}
                       >
@@ -930,7 +889,7 @@ export default function Header({
 
                 {/* Language Quick-change */}
                 <div className="px-3 py-1 text-xs">
-                  <p className="text-3xs font-bold text-slate-400 mb-1">Select Language:</p>
+                  <p className="text-[10px] font-bold text-slate-400 mb-1">Select Language:</p>
                   <div className="flex gap-1.5 flex-wrap">
                     {[
                       { code: 'EN', name: 'EN 🇺🇸' },
@@ -941,7 +900,7 @@ export default function Header({
                       <button
                         key={lang.code}
                         onClick={() => setLanguage(lang.code)}
-                        className={`px-2 py-1 rounded text-3xs font-black ${
+                        className={`px-2 py-1 rounded text-[10px] font-black ${
                           language === lang.code 
                             ? 'bg-orange-600 text-white' 
                             : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300'
@@ -965,8 +924,8 @@ export default function Header({
 
             {/* Drawer Footer info */}
             <div className="p-4 bg-slate-50 dark:bg-slate-900/60 border-t border-slate-100 dark:border-slate-800 text-center space-y-1">
-              <p className="text-3xs font-black text-slate-400">OLIMART UGANDA MARKETPLACE</p>
-              <p className="text-3xs text-slate-400">MoMo Cash On Delivery Secured</p>
+              <p className="text-[10px] font-black text-slate-400">OLIMART UGANDA MARKETPLACE</p>
+              <p className="text-[9px] text-slate-400">MoMo Cash On Delivery Secured</p>
             </div>
           </div>
         </div>

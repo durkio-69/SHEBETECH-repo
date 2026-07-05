@@ -13,11 +13,7 @@ import {
   TrendingUp, 
   Truck, 
   AlertCircle,
-  PhoneCall,
-  Laptop,
-  Briefcase,
-  MapPin,
-  Key
+  PhoneCall
 } from 'lucide-react';
 import { PRODUCTS } from '../data';
 import { Product } from '../types';
@@ -28,19 +24,9 @@ interface AccountModalProps {
   onShowToast: (msg: string) => void;
   currency: string;
   onAddToCart: (p: Product, q?: number) => void;
-  activeApp?: 'customer' | 'vendor' | 'delivery' | 'admin';
-  setActiveApp?: (val: 'customer' | 'vendor' | 'delivery' | 'admin') => void;
 }
 
-export default function AccountModal({ 
-  isOpen, 
-  onClose, 
-  onShowToast, 
-  currency, 
-  onAddToCart,
-  activeApp = 'customer',
-  setActiveApp
-}: AccountModalProps) {
+export default function AccountModal({ isOpen, onClose, onShowToast, currency, onAddToCart }: AccountModalProps) {
   // Authentication tab
   const [activeTab, setActiveTab] = useState<'login' | 'register' | 'orders' | 'wallet'>('login');
   
@@ -107,20 +93,19 @@ export default function AccountModal({
     setPassword('');
     setName('');
     setPhone('');
-    onShowToast("Logged out of your Olimart account.");
+    onShowToast("Logged out of your OliMart account.");
     setActiveTab('login');
   };
 
-  const formatPrice = (priceInUgx: number | undefined | null) => {
-    const val = typeof priceInUgx === 'number' && !isNaN(priceInUgx) ? priceInUgx : 0;
+  const formatPrice = (priceInUgx: number) => {
     if (currency === 'USD') {
-      return `$${(val / 3700).toFixed(2)}`;
+      return `$${(priceInUgx / 3700).toFixed(2)}`;
     } else if (currency === 'EUR') {
-      return `€${(val / 4000).toFixed(2)}`;
+      return `€${(priceInUgx / 4000).toFixed(2)}`;
     } else if (currency === 'KES') {
-      return `KSh ${Math.round(val / 28).toLocaleString()}`;
+      return `KSh ${Math.round(priceInUgx / 28).toLocaleString()}`;
     } else {
-      return `Shs ${val.toLocaleString()}`;
+      return `Shs ${priceInUgx.toLocaleString()}`;
     }
   };
 
@@ -176,11 +161,11 @@ export default function AccountModal({
       <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl border border-slate-100 dark:border-slate-800 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         
         {/* Banner Top accent */}
-        <div className="bg-gradient-to-r from-[#f68b1e] to-red-600 px-6 py-4 flex items-center justify-between text-white">
+        <div className="bg-gradient-to-r from-[#EA6A0C] to-red-600 px-6 py-4 flex items-center justify-between text-white">
           <div className="flex items-center gap-2">
             <User size={18} className="text-white fill-white" />
             <span className="font-black uppercase tracking-wider text-xs">
-              {isLoggedIn ? `Olimart VIP Profile` : `Olimart Uganda Secure Gateway`}
+              {isLoggedIn ? `OliMart VIP Profile` : `OliMart Uganda Secure Gateway`}
             </span>
           </div>
           <button 
@@ -201,16 +186,16 @@ export default function AccountModal({
               {/* Profile Card Header */}
               <div className="bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-4 flex items-center justify-between border border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-amber-100 dark:bg-amber-950 text-trust-price font-black text-lg rounded-full flex items-center justify-center border border-amber-200 shadow-inner">
+                  <div className="w-12 h-12 bg-orange-100 text-[#EA6A0C] font-black text-lg rounded-full flex items-center justify-center border border-orange-200 shadow-inner">
                     {currentUser.name.charAt(0)}
                   </div>
                   <div>
-                    <h3 className="font-extrabold text-sm text-trust-text-primary dark:text-slate-100 flex items-center gap-1.5">
+                    <h3 className="font-extrabold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
                       {currentUser.name}
-                      <span className="bg-trust-cta text-trust-text-primary text-4xs font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
+                      <span className="bg-[#EA6A0C]/10 text-[#EA6A0C] text-[8px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-widest">VIP Member</span>
                     </h3>
-                    <p className="text-xs text-trust-text-secondary font-medium">{currentUser.email}</p>
-                    <p className="text-3xs text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
+                    <p className="text-xs text-slate-400 font-medium">{currentUser.email}</p>
+                    <p className="text-[10px] text-slate-500 font-bold">{currentUser.phone} | {currentUser.district}</p>
                   </div>
                 </div>
                 <button
@@ -220,58 +205,6 @@ export default function AccountModal({
                 >
                   <LogOut size={16} />
                 </button>
-              </div>
-
-              {/* Active Workspace / Role Switcher Inside Account Modal (as requested by user) */}
-              <div className="bg-slate-50 dark:bg-slate-950/20 border border-slate-100 dark:border-slate-800/80 rounded-2xl p-4 space-y-3">
-                <div className="flex items-center justify-between">
-                  <h4 className="text-xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
-                    Switch Active Workspace Portal
-                  </h4>
-                  <span className="text-3xs bg-emerald-100 dark:bg-emerald-950/30 text-emerald-800 dark:text-emerald-300 font-extrabold px-1.5 py-0.5 rounded-full uppercase tracking-widest animate-pulse">
-                    Secure Switch
-                  </span>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    { id: 'customer', label: 'Customer App', desc: 'Kampala Storefront', icon: <Laptop size={14} className="text-trust-link" /> },
-                    { id: 'vendor', label: 'Vendor Portal', desc: 'Seller Dashboard', icon: <Briefcase size={14} className="text-orange-500" /> },
-                    { id: 'delivery', label: 'Boda Dispatch', desc: 'Rider & Courier', icon: <MapPin size={14} className="text-zinc-600" /> },
-                    { id: 'admin', label: 'Super Admin', desc: 'Console Moderation', icon: <Key size={14} className="text-red-500" /> },
-                  ].map((role) => {
-                    const isSelected = activeApp === role.id;
-                    return (
-                      <button
-                        key={role.id}
-                        type="button"
-                        onClick={() => {
-                          if (setActiveApp) {
-                            setActiveApp(role.id as any);
-                            onShowToast(`Workspace switched to ${role.label}!`);
-                          }
-                        }}
-                        className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex items-start gap-2 ${
-                          isSelected
-                            ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 shadow-xs ring-1 ring-amber-300'
-                            : 'bg-white dark:bg-slate-900 border-slate-150 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50'
-                        }`}
-                      >
-                        <div className="mt-0.5">{role.icon}</div>
-                        <div>
-                          <p className={`text-xs font-black uppercase tracking-wide ${
-                            isSelected ? 'text-trust-text-primary dark:text-white font-extrabold' : 'text-slate-700 dark:text-slate-300'
-                          }`}>
-                            {role.label}
-                          </p>
-                          <p className="text-3xs text-trust-text-secondary dark:text-slate-500 font-medium">
-                            {role.desc}
-                          </p>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
               {/* Navigation Tabs for Account View */}
@@ -285,7 +218,7 @@ export default function AccountModal({
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                       activeTab === tab.id
-                        ? 'border-[#f68b1e] text-[#f68b1e]'
+                        ? 'border-[#EA6A0C] text-[#EA6A0C]'
                         : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                     }`}
                   >
@@ -302,15 +235,15 @@ export default function AccountModal({
                     <div className="text-center py-8 bg-slate-50 dark:bg-slate-950/20 rounded-2xl">
                       <Package size={32} className="mx-auto text-slate-300 mb-2" />
                       <p className="text-xs font-bold text-slate-700 dark:text-slate-300">No recent orders yet</p>
-                      <p className="text-3xs text-slate-400 mt-0.5">Start exploring our incredible products!</p>
+                      <p className="text-[10px] text-slate-400 mt-0.5">Start exploring our incredible products!</p>
                     </div>
                   ) : (
                     currentUser.orders.map((ord) => (
                       <div 
                         key={ord.id}
-                        className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-[#f68b1e]/30 transition-all bg-slate-50/50 dark:bg-slate-950/10 space-y-2.5"
+                        className="p-3 border border-slate-100 dark:border-slate-800 rounded-xl hover:border-[#EA6A0C]/30 transition-all bg-slate-50/50 dark:bg-slate-950/10 space-y-2.5"
                       >
-                        <div className="flex justify-between items-center text-xs font-bold">
+                        <div className="flex justify-between items-center text-[11px] font-bold">
                           <span className="text-slate-400">Order ID: <strong className="text-slate-800 dark:text-slate-100 font-extrabold">{ord.id}</strong></span>
                           <span className="text-slate-400">{ord.date}</span>
                         </div>
@@ -319,7 +252,7 @@ export default function AccountModal({
                             <p className="text-xs font-black text-slate-800 dark:text-slate-200 line-clamp-1">{ord.item}</p>
                             <p className="text-xs font-black text-red-600">{formatPrice(ord.total)}</p>
                           </div>
-                          <span className={`text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                          <span className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                             ord.status === 'Delivered' 
                               ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' 
                               : 'bg-yellow-50 text-yellow-600 border border-yellow-200 animate-pulse'
@@ -330,7 +263,7 @@ export default function AccountModal({
 
                         {/* Elegant Visual Progress Tracker Timeline Component */}
                         <div className="py-2.5 px-1 bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-100 dark:border-slate-800/80">
-                          <div className="text-3xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 mb-2">
+                          <div className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest px-1 mb-2">
                             Order Journey Timeline
                           </div>
                           <div className="flex items-center justify-between relative px-2">
@@ -339,7 +272,7 @@ export default function AccountModal({
                             
                             {/* Active Line track */}
                             <div 
-                              className="absolute left-[30px] top-[14px] h-[3px] bg-[#f68b1e] transition-all duration-500 -z-0" 
+                              className="absolute left-[30px] top-[14px] h-[3px] bg-[#EA6A0C] transition-all duration-500 -z-0" 
                               style={{ 
                                 width: `${(getStatusStep(ord.status) / 3) * 82}%` 
                               }} 
@@ -356,16 +289,16 @@ export default function AccountModal({
                                   <div 
                                     className={`w-7 h-7 rounded-full flex items-center justify-center transition-all ${
                                       isCompleted 
-                                        ? 'bg-[#f68b1e] text-white shadow-xs' 
+                                        ? 'bg-[#EA6A0C] text-white shadow-xs' 
                                         : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'
                                     } ${isCurrent ? 'ring-4 ring-orange-100 dark:ring-orange-950/40 scale-105' : ''}`}
                                     title={stage.fullLabel}
                                   >
                                     <Icon size={12} className={isCurrent ? 'animate-pulse' : ''} />
                                   </div>
-                                  <span className={`text-4xs font-black tracking-tight mt-1.5 transition-colors ${
+                                  <span className={`text-[8px] font-black tracking-tight mt-1.5 transition-colors ${
                                     isCurrent 
-                                      ? 'text-[#f68b1e]' 
+                                      ? 'text-[#EA6A0C]' 
                                       : isCompleted 
                                         ? 'text-slate-800 dark:text-slate-200' 
                                         : 'text-slate-400 dark:text-slate-500'
@@ -379,14 +312,14 @@ export default function AccountModal({
                         </div>
                         
                         {ord.status === 'In Transit' && (
-                          <div className="flex items-center gap-1.5 bg-[#f68b1e]/10 p-2 rounded-lg border border-[#f68b1e]/20 text-3xs text-slate-700 dark:text-slate-300 font-medium">
-                            <Truck size={12} className="text-[#f68b1e]" />
-                            <span>Dispatch Note: Cleared through Kampala, arriving in your district shortly.</span>
+                          <div className="flex items-center gap-1.5 bg-[#EA6A0C]/10 p-2 rounded-lg border border-[#EA6A0C]/20 text-[10px] text-slate-700 dark:text-slate-300 font-medium">
+                            <Truck size={12} className="text-[#EA6A0C]" />
+                            <span>Dispatch Note: Currently cleared Kampala, arriving district shortly.</span>
                           </div>
                         )}
 
                         <div className="flex justify-between items-center pt-2.5 border-t border-slate-100 dark:border-slate-800/80">
-                          <span className="text-3xs font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 flex items-center gap-1">
                             <CheckCircle size={11} className="text-emerald-500" />
                             Ready to ship
                           </span>
@@ -395,7 +328,7 @@ export default function AccountModal({
                               handleReorder(ord.item, ord.total);
                               onClose();
                             }}
-                            className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
+                            className="bg-[#EA6A0C] hover:bg-[#C2560A] text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg shadow-xs transition-all active:scale-95 cursor-pointer"
                           >
                             Re-order Item
                           </button>
@@ -411,10 +344,10 @@ export default function AccountModal({
                 <div className="space-y-4">
                   <div className="p-4 rounded-2xl bg-yellow-400/10 border border-yellow-400 text-slate-900 dark:text-slate-100 flex items-center justify-between">
                     <div>
-                      <span className="text-3xs font-black text-amber-700 uppercase tracking-wider block">Olimart wallet balance</span>
-                      <span className="text-xl font-black text-[#f68b1e]">{formatPrice(currentUser.balance)}</span>
+                      <span className="text-[10px] font-black text-amber-700 uppercase tracking-wider block">OliMart wallet balance</span>
+                      <span className="text-xl font-black text-[#EA6A0C]">{formatPrice(currentUser.balance)}</span>
                     </div>
-                    <div className="bg-yellow-400 text-slate-950 text-3xs font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
+                    <div className="bg-yellow-400 text-slate-950 text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider">
                       MTN MoMo Active
                     </div>
                   </div>
@@ -425,7 +358,7 @@ export default function AccountModal({
                       <Gift size={24} className="text-red-500 flex-shrink-0" />
                       <div className="text-xs">
                         <p className="font-extrabold text-red-700 dark:text-red-400">Coupon Code: <span className="font-mono bg-white dark:bg-slate-800 px-1.5 py-0.5 rounded border border-red-100 text-slate-800 font-black">KAMPALAMOMO</span></p>
-                        <p className="text-3xs text-slate-500 font-semibold mt-0.5">Applies Shs 15,000 instant saving when you complete payment via MTN Mobile Money!</p>
+                        <p className="text-[10px] text-slate-500 font-semibold mt-0.5">Applies Shs 15,000 instant saving when you complete payment via MTN Mobile Money!</p>
                       </div>
                     </div>
                   </div>
@@ -433,20 +366,21 @@ export default function AccountModal({
               )}
 
               {/* Prompt Help */}
-              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-xs text-slate-500 font-semibold">
-                <AlertCircle size={14} className="text-[#f68b1e]" />
+              <div className="flex items-center gap-2 bg-slate-50 dark:bg-slate-950/20 p-3 rounded-2xl border border-slate-100 dark:border-slate-800/80 text-[11px] text-slate-500 font-semibold">
+                <AlertCircle size={14} className="text-[#EA6A0C]" />
                 <span>Need assistance? Call toll-free <strong>0200 804 020</strong> to chat with Kampala customer care.</span>
               </div>
             </div>
           ) : (
-                        /* ANONYMOUS GUEST VIEW (LOGIN & REGISTER TABS) */
+            
+            /* ANONYMOUS GUEST VIEW (LOGIN & REGISTER TABS) */
             <div className="space-y-4">
               <div className="flex border-b border-slate-100 dark:border-slate-800 pb-1">
                 <button
                   onClick={() => setActiveTab('login')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'login'
-                      ? 'border-trust-cta text-trust-text-primary dark:text-amber-400'
+                      ? 'border-[#EA6A0C] text-[#EA6A0C]'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -456,7 +390,7 @@ export default function AccountModal({
                   onClick={() => setActiveTab('register')}
                   className={`flex-1 py-2 font-black text-xs uppercase tracking-wider border-b-2 text-center cursor-pointer transition-colors ${
                     activeTab === 'register'
-                      ? 'border-trust-cta text-trust-text-primary dark:text-amber-400'
+                      ? 'border-[#EA6A0C] text-[#EA6A0C]'
                       : 'border-transparent text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
                   }`}
                 >
@@ -468,7 +402,7 @@ export default function AccountModal({
               {activeTab === 'login' && (
                 <form onSubmit={handleLogin} className="space-y-4 pt-2">
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Email Address</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -476,14 +410,14 @@ export default function AccountModal({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Password</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -491,58 +425,21 @@ export default function AccountModal({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="••••••••"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
-                  {/* PORTAL ACCESS SELECTION ON LOGIN (As requested by user) */}
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
-                      Choose Your Destination Workspace Portal
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'customer', label: 'Customer', desc: 'Shop & Checkout', icon: <Laptop size={12} className="text-trust-link" /> },
-                        { id: 'vendor', label: 'Vendor Store', desc: 'Seller Dashboard', icon: <Briefcase size={12} className="text-orange-500" /> },
-                        { id: 'delivery', label: 'Boda Dispatch', desc: 'Courier Rider', icon: <MapPin size={12} className="text-zinc-600" /> },
-                        { id: 'admin', label: 'Super Admin', desc: 'Control Panel', icon: <Key size={12} className="text-red-500" /> },
-                      ].map((role) => {
-                        const isSelected = activeApp === role.id;
-                        return (
-                          <button
-                            key={role.id}
-                            type="button"
-                            onClick={() => {
-                              if (setActiveApp) setActiveApp(role.id as any);
-                            }}
-                            className={`p-2 rounded-xl border text-left transition-all flex items-start gap-1.5 cursor-pointer ${
-                              isSelected
-                                ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 text-[#111111] dark:text-white font-extrabold ring-1 ring-amber-300'
-                                : 'bg-slate-50/50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            <div className="mt-0.5">{role.icon}</div>
-                            <div>
-                              <p className="text-3xs font-black uppercase tracking-wider">{role.label}</p>
-                              <p className="text-4xs text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center text-3xs font-bold text-slate-500">
+                  <div className="flex justify-between items-center text-[10px] font-bold text-slate-500">
                     <label className="flex items-center gap-1 cursor-pointer">
-                      <input type="checkbox" className="rounded text-amber-500 focus:ring-0" defaultChecked />
+                      <input type="checkbox" className="rounded text-[#EA6A0C] focus:ring-0" defaultChecked />
                       <span>Remember Me</span>
                     </label>
                     <button 
                       type="button" 
                       onClick={() => onShowToast("Reset password instruction sent to email!")}
-                      className="hover:text-trust-link hover:underline text-3xs"
+                      className="hover:text-[#EA6A0C] hover:underline"
                     >
                       Forgot Password?
                     </button>
@@ -550,7 +447,7 @@ export default function AccountModal({
 
                   <button
                     type="submit"
-                    className="w-full bg-trust-cta hover:bg-trust-cta-hover text-trust-text-primary py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <CheckCircle size={14} />
                     <span>Sign In Securely</span>
@@ -562,7 +459,7 @@ export default function AccountModal({
               {activeTab === 'register' && (
                 <form onSubmit={handleRegister} className="space-y-3.5 pt-2">
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Full Name</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Full Name</label>
                     <div className="relative">
                       <User className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -570,14 +467,14 @@ export default function AccountModal({
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="Ivan Okello"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Email Address</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Email Address</label>
                     <div className="relative">
                       <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -585,14 +482,14 @@ export default function AccountModal({
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="ivan.okello@gmail.com"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">WhatsApp / Phone Number</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">WhatsApp / Phone Number</label>
                     <div className="relative">
                       <PhoneCall className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -600,14 +497,14 @@ export default function AccountModal({
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         placeholder="+256 772 123456"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-slate-400">Password</label>
+                    <label className="text-[10px] font-black uppercase tracking-wider text-slate-400">Password</label>
                     <div className="relative">
                       <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
                       <input 
@@ -615,52 +512,15 @@ export default function AccountModal({
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         placeholder="Create strong password"
-                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-amber-500"
+                        className="w-full pl-10 pr-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-[#EA6A0C]"
                         required
                       />
                     </div>
                   </div>
 
-                  {/* PORTAL ACCESS SELECTION ON SIGN UP (As requested by user) */}
-                  <div className="space-y-1.5 pt-1">
-                    <label className="text-3xs font-black uppercase tracking-wider text-trust-text-secondary dark:text-slate-400">
-                      Choose Your Destination Workspace Portal
-                    </label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {[
-                        { id: 'customer', label: 'Customer', desc: 'Shop & Checkout', icon: <Laptop size={12} className="text-trust-link" /> },
-                        { id: 'vendor', label: 'Vendor Store', desc: 'Seller Dashboard', icon: <Briefcase size={12} className="text-orange-500" /> },
-                        { id: 'delivery', label: 'Boda Dispatch', desc: 'Courier Rider', icon: <MapPin size={12} className="text-zinc-600" /> },
-                        { id: 'admin', label: 'Super Admin', desc: 'Control Panel', icon: <Key size={12} className="text-red-500" /> },
-                      ].map((role) => {
-                        const isSelected = activeApp === role.id;
-                        return (
-                          <button
-                            key={role.id}
-                            type="button"
-                            onClick={() => {
-                              if (setActiveApp) setActiveApp(role.id as any);
-                            }}
-                            className={`p-2 rounded-xl border text-left transition-all flex items-start gap-1.5 cursor-pointer ${
-                              isSelected
-                                ? 'bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-900/40 text-[#111111] dark:text-white font-extrabold ring-1 ring-amber-300'
-                                : 'bg-slate-50/50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800'
-                            }`}
-                          >
-                            <div className="mt-0.5">{role.icon}</div>
-                            <div>
-                              <p className="text-3xs font-black uppercase tracking-wider">{role.label}</p>
-                              <p className="text-4xs text-slate-400 dark:text-slate-500 font-medium leading-tight">{role.desc}</p>
-                            </div>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
                   <button
                     type="submit"
-                    className="w-full bg-trust-cta hover:bg-trust-cta-hover text-trust-text-primary py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                    className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-3 rounded-xl font-black text-xs transition-all uppercase tracking-wider shadow-md hover:scale-101 active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Sparkles size={14} />
                     <span>Register New Account</span>
@@ -669,8 +529,8 @@ export default function AccountModal({
               )}
 
               {/* Trust disclaimer */}
-              <div className="text-3xs text-slate-400 text-center font-semibold border-t border-slate-100 dark:border-slate-800 pt-3">
-                🔒 Protected by Olimart SafePay & End-to-End SSL encryption.
+              <div className="text-[9px] text-slate-400 text-center font-semibold border-t border-slate-100 dark:border-slate-800 pt-3">
+                🔒 Protected by Jumia SafePay & End-to-End SSL encryption.
               </div>
             </div>
           )}

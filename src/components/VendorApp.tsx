@@ -11,19 +11,7 @@ import {
   saveDokanRiders,
   DokanVendor, 
   WithdrawalRequest,
-  DokanOrder,
-  DokanRider,
-  getAdminSettings,
-  isItemBulky,
-  getDokanCoupons,
-  saveDokanCoupons,
-  DokanCoupon,
-  getDokanShippingZones,
-  saveDokanShippingZones,
-  DokanShippingZone,
-  getDokanRefunds,
-  saveDokanRefunds,
-  DokanRefundRequest
+  DokanOrder
 } from '../lib/dokanStore';
 import { emitEventDrivenNotifications } from '../lib/notificationStore';
 import { 
@@ -48,10 +36,7 @@ import {
   PackageCheck,
   Tag,
   Store,
-  ArrowUpRight,
-  Ticket,
-  Truck,
-  RotateCcw
+  ArrowUpRight
 } from 'lucide-react';
 import { Product } from '../types';
 
@@ -62,39 +47,12 @@ interface VendorAppProps {
 }
 
 export default function VendorApp({ products, setProducts, formatPrice }: VendorAppProps) {
-  const activeAdminSettings = getAdminSettings();
   // Current session vendor (we simulate vendor logs)
   const [currentVendor, setCurrentVendor] = useState<DokanVendor | null>(null);
   const [allVendors, setAllVendors] = useState<DokanVendor[]>([]);
   const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
   const [orders, setOrders] = useState<DokanOrder[]>([]);
-  const [riders, setRiders] = useState<DokanRider[]>([]);
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet' | 'coupons' | 'shipping' | 'refunds'>('dashboard');
-  const [assigningRiderOrderId, setAssigningRiderOrderId] = useState<string | null>(null);
-
-  // Dokan Pro feature state: coupons, shipping zones, refund requests
-  const [coupons, setCoupons] = useState<DokanCoupon[]>([]);
-  const [shippingZones, setShippingZones] = useState<DokanShippingZone[]>([]);
-  const [refunds, setRefunds] = useState<DokanRefundRequest[]>([]);
-
-  // New coupon form state
-  const [couponCode, setCouponCode] = useState('');
-  const [couponType, setCouponType] = useState<'percentage' | 'fixed'>('percentage');
-  const [couponValue, setCouponValue] = useState('');
-  const [couponMinOrder, setCouponMinOrder] = useState('0');
-  const [couponMaxDiscount, setCouponMaxDiscount] = useState('');
-  const [couponUsageLimit, setCouponUsageLimit] = useState('0');
-  const [couponExpiry, setCouponExpiry] = useState('');
-
-  // New shipping zone form state
-  const [zoneName, setZoneName] = useState('');
-  const [zoneDistricts, setZoneDistricts] = useState('');
-  const [zoneRateType, setZoneRateType] = useState<'flat' | 'per_km'>('flat');
-  const [zoneFlatFee, setZoneFlatFee] = useState('');
-  const [zonePerKmRate, setZonePerKmRate] = useState('');
-  const [zoneMinFee, setZoneMinFee] = useState('');
-  const [zoneFreeThreshold, setZoneFreeThreshold] = useState('');
-  const [zoneEstimatedDays, setZoneEstimatedDays] = useState('1');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'orders' | 'wallet'>('dashboard');
 
   // Registration states
   const [ownerName, setOwnerName] = useState('');
@@ -111,10 +69,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   // Rider/Courier registration states
   const [riderName, setRiderName] = useState('');
   const [riderPhone, setRiderPhone] = useState('');
-  const [riderEmail, setRiderEmail] = useState('');
-  const [riderIdCard, setRiderIdCard] = useState('');
-  const [riderDrivingPermit, setRiderDrivingPermit] = useState('');
-  const [riderPictureUrl, setRiderPictureUrl] = useState('');
   const [riderLocation, setRiderLocation] = useState('Kampala Central');
   const [transportMeans, setTransportMeans] = useState<'boda' | 'bicycle' | 'van' | 'truck'>('boda');
   const [vehiclePlate, setVehiclePlate] = useState('');
@@ -134,24 +88,16 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   const [prodCategory, setProdCategory] = useState('');
   const [prodBrand, setProdBrand] = useState('Tecno');
   const [prodImage, setProdImage] = useState('');
-  const [prodTags, setProdTags] = useState('Best Seller, Verified');
-  const [prodType, setProdType] = useState<'light' | 'bulky'>('light');
+  const [prodTags, setProdTags] = useState('Dokan Pro, Verified');
 
   // Withdrawal form states
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState<'paypal' | 'stripe' | 'mastercard' | 'bank' | 'momo'>('momo');
   const [withdrawDetails, setWithdrawDetails] = useState('');
 
-  // Update product price and stock state
+  // Update product price state
   const [editingProdId, setEditingProdId] = useState<string | null>(null);
   const [editingPrice, setEditingPrice] = useState('');
-  const [editingStock, setEditingStock] = useState('');
-  const [editingDemand, setEditingDemand] = useState<boolean>(true);
-  const [stockFilter, setStockFilter] = useState<'all' | 'low'>('all');
-
-  // New product stock states
-  const [prodStockCount, setProdStockCount] = useState('15');
-  const [prodIsTrending, setProdIsTrending] = useState<boolean>(true);
 
   // Hydrate Dokan States
   useEffect(() => {
@@ -159,10 +105,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setAllVendors(vList);
     setWithdrawals(getDokanWithdrawals());
     setOrders(getDokanOrders());
-    setRiders(getDokanRiders());
-    setCoupons(getDokanCoupons());
-    setShippingZones(getDokanShippingZones());
-    setRefunds(getDokanRefunds());
 
     // Try auto logging-in as the first approved vendor "Tecno Official Outlet Kampala"
     const autoLog = vList.find(v => v.id === 'v2');
@@ -178,10 +120,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       setAllVendors(vList);
       setWithdrawals(getDokanWithdrawals());
       setOrders(getDokanOrders());
-      setRiders(getDokanRiders());
-      setCoupons(getDokanCoupons());
-      setShippingZones(getDokanShippingZones());
-      setRefunds(getDokanRefunds());
       
       if (currentVendor) {
         const refreshed = vList.find(v => v.id === currentVendor.id);
@@ -221,71 +159,35 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       saveDokanVendors(updated);
       setAllVendors(updated);
       setCurrentVendor(newVendor);
-
-      // Notify the new vendor AND alert the Super Admin that a store is pending approval
-      emitEventDrivenNotifications('vendor_registration', {
-        storeName: storeNameWithId,
-        email,
-        phone,
-        uniqueId: uniqueSystemId,
-        accessLink: 'https://olimart.ug/vendor/dashboard'
-      });
-
-      alert(`🎉 Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
+      alert(`🎉 Dokan Pro Registration Successful!\nYour store was registered with Unique System ID: ${uniqueSystemId}\nStore Name: ${storeNameWithId}\nAwaiting admin onboarding approval.`);
     } 
     else if (regRole === 'delivery') {
-      if (!riderName || !riderPhone || !riderIdCard) {
-        alert("Please fill in your Full Name, Phone Number, and National ID Card — these fields are required.");
-        return;
-      }
+      if (!riderName || !riderPhone) return;
       const uniqueRdrId = `DKN-RDR-${Math.floor(100 + Math.random() * 900)}`;
       const fullRiderName = `${riderName} [${uniqueRdrId}]`;
       
-      const newRider: DokanRider = {
+      const newRider = {
         id: `r-${Date.now()}`,
         name: fullRiderName,
         phone: riderPhone,
-        email: riderEmail || `${riderName.toLowerCase().replace(/\s+/g, '')}@olimart-courier.ug`,
-        idCard: riderIdCard,
-        drivingPermit: riderDrivingPermit || 'PERMIT-PENDING',
-        pictureUrl: riderPictureUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=120&auto=format&fit=crop&q=60',
-        motorcyclePlate: vehiclePlate || 'UPB 221X',
+        motorcyclePlate: vehiclePlate || 'BICYCLE-NA',
         location: riderLocation,
         completedDeliveries: 0,
         earnings: 0,
         transportMeans,
-        helmetOrHub: helmetOrHub || 'HELMET-PENDING',
+        helmetOrHub: helmetOrHub || undefined,
         cargoVolume: cargoVolume || undefined,
-        licenseTonnage: licenseTonnage || undefined,
-        status: 'pending' // Gated waiting for admin approval
+        licenseTonnage: licenseTonnage || undefined
       };
 
       const currentRiders = getDokanRiders();
       const updated = [...currentRiders, newRider];
       saveDokanRiders(updated);
       
-      // Emit simulated email, SMS, and WhatsApp dispatch notifications
-      emitEventDrivenNotifications('rider_registration', {
-        riderName: fullRiderName,
-        phone: riderPhone,
-        email: newRider.email,
-        idCard: riderIdCard,
-        motorcyclePlate: newRider.motorcyclePlate,
-        accessLink: `https://olimart-courier.ug/dashboard/${newRider.id}`
-      });
-
-      alert(`🏍️ Delivery Partner Registered Successfully!\n\n` +
-            `• System Auto-Generated Rider ID: ${uniqueRdrId}\n` +
-            `• Onboarding Status: AWAITING ADMIN APPROVAL\n\n` +
-            `💬 Simulated Notification Dispatched: An SMS, WhatsApp message, and Email have been simulated with a secure link to access your Courier Dashboard once the Super Admin approves your application.`);
-      
+      alert(`🏍️ Dokan Delivery Partner Registered!\nName: ${fullRiderName}\nMeans of Transport: ${transportMeans.toUpperCase()}\nRelated category information was saved to the platform securely.\nYou can now login with this profile in the Courier Portal!`);
       // Reset rider registration form
       setRiderName('');
       setRiderPhone('');
-      setRiderEmail('');
-      setRiderIdCard('');
-      setRiderDrivingPermit('');
-      setRiderPictureUrl('');
       setVehiclePlate('');
       setHelmetOrHub('');
       setCargoVolume('');
@@ -341,10 +243,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       freeDelivery: true,
       payOnDelivery: true,
       inStock: true,
-      stockCount: parseInt(prodStockCount) || 15,
-      isTrendingHigh: prodIsTrending,
       tags: (prodTags || '').split(',').map(t => t.trim()),
-      productType: prodType,
       vendors: [
         {
           id: currentVendor.id,
@@ -368,10 +267,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setProdTitle('');
     setProdPrice('');
     setProdImage('');
-    setProdStockCount('15');
-    setProdIsTrending(true);
-    setProdType('light');
-    alert(`Success: "${prodTitle}" added to main catalog with ${newProd.stockCount} units in stock.`);
+    alert(`Success: "${prodTitle}" added to main catalog. Awaiting customers orders.`);
   };
 
   // Submit withdrawal request
@@ -433,14 +329,10 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
   };
 
   // Vendor order dispatcher status change (accept/cancel)
-  const handleUpdateOrderStatus = (orderId: string, newStatus: 'dispatched' | 'placed', riderName?: string) => {
+  const handleUpdateOrderStatus = (orderId: string, newStatus: 'dispatched' | 'placed') => {
     const updated = orders.map(o => {
       if (o.id === orderId) {
-        return { 
-          ...o, 
-          status: newStatus, 
-          assignedRider: riderName || o.assignedRider 
-        };
+        return { ...o, status: newStatus };
       }
       return o;
     });
@@ -449,41 +341,9 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     window.dispatchEvent(new Event('storage'));
   };
 
-  // Vendor approves or rejects the order
-  const handleVendorDecision = (orderId: string, decision: 'approved' | 'rejected') => {
-    const updated = orders.map(o => {
-      if (o.id === orderId) {
-        return {
-          ...o,
-          vendorStatus: decision,
-          vendorApprovedAt: decision === 'approved' ? new Date().toISOString() : undefined,
-          // if approved, also mark status as placed so it stays active
-          status: decision === 'approved' ? 'placed' as const : 'placed' as const
-        };
-      }
-      return o;
-    });
-    saveDokanOrders(updated);
-    setOrders(updated);
-    window.dispatchEvent(new Event('storage'));
-
-    const targetOrder = updated.find(o => o.id === orderId);
-    if (targetOrder) {
-      emitEventDrivenNotifications(decision === 'approved' ? 'vendor_approved' : 'vendor_rejected', {
-        orderId: orderId,
-        vendorName: currentVendor.name,
-        customerName: targetOrder.customerName,
-        customerPhone: targetOrder.customerPhone
-      });
-    }
-
-    alert(`Order ${orderId} has been successfully ${decision.toUpperCase()}! notifications dispatched to Admin and Customer.`);
-  };
-
-  // Quick edit product price and stock details
+  // Quick edit product price
   const handleUpdateProductPrice = (prodId: string) => {
     const parsedPrice = parseInt(editingPrice);
-    const parsedStock = parseInt(editingStock);
     if (isNaN(parsedPrice)) return;
 
     const updated = products.map(p => {
@@ -491,9 +351,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
         return {
           ...p,
           price: parsedPrice,
-          stockCount: isNaN(parsedStock) ? p.stockCount : parsedStock,
-          inStock: isNaN(parsedStock) ? p.inStock : parsedStock > 0,
-          isTrendingHigh: editingDemand,
           vendors: p.vendors ? p.vendors.map(v => {
             if (v.id === currentVendor?.id) {
               return { ...v, price: parsedPrice };
@@ -508,7 +365,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     setProducts(updated);
     setEditingProdId(null);
     setEditingPrice('');
-    setEditingStock('');
   };
 
   const dynamicCategories = getDokanCategories();
@@ -522,11 +378,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           {/* Quick Info */}
           <div className="md:col-span-5 space-y-6">
             <div className="space-y-2">
-              <span className="bg-orange-100 text-orange-800 text-3xs font-black uppercase tracking-wider px-2 py-0.5 rounded">
-                Olimart Seller Program
+              <span className="bg-orange-100 text-orange-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded">
+                WordPress WooCommerce Integration
               </span>
               <h2 className="font-sans text-xl font-black text-slate-900 tracking-tight">
-                Multi-Vendor Seller Portal
+                Dokan Pro Multi-Vendor Portal
               </h2>
               <p className="text-xs text-slate-500 leading-relaxed">
                 Launch your digital store on Uganda's fastest Boda Boda commerce network. Keep <strong>85%</strong> of every sale, with zero listing fees.
@@ -534,7 +390,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             </div>
 
             <div className="space-y-3 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 p-4 rounded-2xl">
-              <h4 className="text-3xs font-black uppercase text-slate-400 tracking-wider">Seller Guarantees</h4>
+              <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Dokan Core Guarantees</h4>
               <ul className="space-y-2.5 text-xs font-semibold text-slate-600 dark:text-slate-300">
                 <li className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-500" />
@@ -553,7 +409,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
 
             {/* Quick Login Switcher */}
             <div className="space-y-2 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl">
-              <p className="text-3xs font-black uppercase text-slate-500 tracking-wider">Or Switch Active Vendor Profiles:</p>
+              <p className="text-[10px] font-black uppercase text-slate-500 tracking-wider">Or Switch Active Vendor Profiles:</p>
               <div className="grid grid-cols-1 gap-1.5">
                 {allVendors.map(v => (
                   <button
@@ -563,7 +419,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   >
                     <div>
                       <p className="text-slate-800 dark:text-slate-100">{v.name}</p>
-                      <p className="text-3xs text-slate-400">Status: {v.status.toUpperCase()}</p>
+                      <p className="text-[9px] text-slate-400">Status: {v.status.toUpperCase()}</p>
                     </div>
                     <ArrowUpRight size={14} className="text-slate-400" />
                   </button>
@@ -581,7 +437,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('vendor')}
-                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'vendor'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -592,7 +448,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('delivery')}
-                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'delivery'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -603,7 +459,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <button
                 type="button"
                 onClick={() => setRegRole('customer')}
-                className={`flex-1 py-2 text-3xs font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
+                className={`flex-1 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg cursor-pointer transition-all ${
                   regRole === 'customer'
                     ? 'bg-orange-600 text-white shadow-sm font-black'
                     : 'bg-slate-50 dark:bg-slate-800 text-slate-500 hover:text-slate-700'
@@ -617,8 +473,8 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'vendor' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
-                    Olimart Seller Account
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase">
+                    WooCommerce Dokan Seller Account
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -715,7 +571,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   type="submit"
                   className="w-full bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-black uppercase py-3.5 rounded-xl cursor-pointer transition-transform duration-250 active:scale-98 text-xs shadow-md mt-2"
                 >
-                  Register Store & Generate Seller ID
+                  Register Store & Generate Dokan Unique ID
                 </button>
               </form>
             )}
@@ -724,8 +580,8 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'delivery' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
-                    Olimart Express Courier Registration
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                    Dokan Express Courier Registration
                   </span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -741,7 +597,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-slate-500">Contact Telephone (WhatsApp Number)</label>
+                    <label className="text-slate-500">Contact Telephone Number</label>
                     <input
                       type="tel"
                       required
@@ -750,68 +606,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       placeholder="e.g. 0772 123456"
                       className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
                     />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-slate-500">Email Address</label>
-                    <input
-                      type="email"
-                      required
-                      value={riderEmail}
-                      onChange={(e) => setRiderEmail(e.target.value)}
-                      placeholder="e.g. robert@olimart-courier.ug"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-500 font-extrabold text-[#f68b1e]">National ID Card No (Compulsory) ⚠️</label>
-                    <input
-                      type="text"
-                      required
-                      value={riderIdCard}
-                      onChange={(e) => setRiderIdCard(e.target.value)}
-                      placeholder="e.g. CM84010110XP1B (Uganda ID)"
-                      className="w-full bg-amber-50 dark:bg-slate-950 border border-[#f68b1e] text-slate-800 dark:text-amber-100 rounded-lg px-3 py-2 focus:outline-none"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-slate-500">Driving Permit / License Details</label>
-                    <input
-                      type="text"
-                      required
-                      value={riderDrivingPermit}
-                      onChange={(e) => setRiderDrivingPermit(e.target.value)}
-                      placeholder="e.g. DL-948194-KLA"
-                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-slate-500">Profile Picture / Headshot</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setRiderPictureUrl(reader.result as string);
-                            };
-                            reader.readAsDataURL(file);
-                          }
-                        }}
-                        className="text-xs text-slate-500 block w-full file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-150"
-                      />
-                      {riderPictureUrl && (
-                        <img src={riderPictureUrl} alt="Preview" className="w-8 h-8 rounded-full object-cover border border-orange-500" />
-                      )}
-                    </div>
                   </div>
                 </div>
 
@@ -966,7 +760,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             {regRole === 'customer' && (
               <form onSubmit={handleRegister} className="space-y-4 text-xs font-semibold">
                 <div className="space-y-1">
-                  <span className="text-3xs bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
+                  <span className="text-[10px] bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 font-extrabold px-2 py-0.5 rounded uppercase font-mono">
                     Customer Account Creation
                   </span>
                 </div>
@@ -1052,20 +846,20 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
               </span>
-              <p className="text-3xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
-                SELLER ID: #{currentVendor.id}
+              <p className="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400 font-mono">
+                DOKAN REGISTRATION ID: #{currentVendor.id}
               </p>
             </div>
             <h2 className="font-sans text-lg font-black text-slate-900 dark:text-slate-100">
-              Welcome to Olimart, <span className="text-orange-600">{currentVendor.name}</span>!
+              Welcome to Dokan, <span className="text-orange-600">{currentVendor.name}</span>!
             </h2>
             <p className="text-xs text-slate-500 leading-relaxed max-w-xl">
-              Your store onboarding information has been saved. The Olimart Super Admin is currently evaluating your credentials, landmark, and tax compliance.
+              Your store onboarding information has been saved into our local WooCommerce cache. The Olimart Super Admin is currently evaluating your credentials, landmark, and tax compliance.
             </p>
           </div>
 
           <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center space-y-1.5 shadow-sm w-full md:w-auto">
-            <p className="text-3xs font-black uppercase text-slate-400">Evaluate Sandbox Approval</p>
+            <p className="text-[10px] font-black uppercase text-slate-400">Evaluate Sandbox Approval</p>
             <div className="flex gap-2">
               <button
                 onClick={() => {
@@ -1080,7 +874,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   setCurrentVendor({ ...currentVendor, status: 'approved' });
                   alert("Sandbox Mode: Approved instantly! Welcome to the seller command center!");
                 }}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
               >
                 Instant Self-Approve
               </button>
@@ -1088,7 +882,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 onClick={() => {
                   setCurrentVendor(null);
                 }}
-                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-3xs font-bold px-3 py-1.5 rounded-lg cursor-pointer"
+                className="bg-slate-200 hover:bg-slate-300 text-slate-700 text-[10px] font-bold px-3 py-1.5 rounded-lg cursor-pointer"
               >
                 Change Store
               </button>
@@ -1112,7 +906,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-black text-slate-800 dark:text-slate-100">Profile Saved</p>
-                <p className="text-3xs text-slate-400">Onboarding successful</p>
+                <p className="text-[10px] text-slate-400">Onboarding successful</p>
               </div>
             </div>
 
@@ -1123,7 +917,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-black text-orange-600">Pending Review</p>
-                <p className="text-3xs text-slate-400">Verification in progress</p>
+                <p className="text-[10px] text-slate-400">Verification in progress</p>
               </div>
             </div>
 
@@ -1134,7 +928,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-500">Super Admin Handshake</p>
-                <p className="text-3xs text-slate-400">Tax & landmark validation</p>
+                <p className="text-[10px] text-slate-400">Tax & landmark validation</p>
               </div>
             </div>
 
@@ -1145,7 +939,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
               <div>
                 <p className="text-xs font-bold text-slate-500">Store Live</p>
-                <p className="text-3xs text-slate-400">Sell on Olimart Uganda</p>
+                <p className="text-[10px] text-slate-400">Sell on Olimart Uganda</p>
               </div>
             </div>
           </div>
@@ -1170,15 +964,15 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-400">Store Analytics</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-3xs font-bold text-slate-400">TOTAL SALES</p>
+                <p className="text-[10px] font-bold text-slate-400">TOTAL SALES</p>
                 <p className="text-lg font-black text-slate-800">Shs 4,250,000</p>
               </div>
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-3xs font-bold text-slate-400">NET EARNINGS (85%)</p>
+                <p className="text-[10px] font-bold text-slate-400">NET EARNINGS (85%)</p>
                 <p className="text-lg font-black text-slate-800">Shs 3,612,500</p>
               </div>
               <div className="border border-slate-100 p-4 rounded-2xl bg-slate-50">
-                <p className="text-3xs font-bold text-slate-400">COMMISSION CHARGED (15%)</p>
+                <p className="text-[10px] font-bold text-slate-400">COMMISSION CHARGED (15%)</p>
                 <p className="text-lg font-black text-slate-800">Shs 637,500</p>
               </div>
             </div>
@@ -1204,114 +998,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
     p.vendors && p.vendors.some(v => v.id === currentVendor.id)
   );
 
-  // Dokan Pro marketing tools scoped to this vendor
-  const myCoupons = coupons.filter(c => c.vendorId === currentVendor.id);
-  const myShippingZones = shippingZones.filter(z => z.vendorId === currentVendor.id);
-  const myRefunds = refunds.filter(r => r.vendorName === currentVendor.name);
-
-  const handleCreateCoupon = () => {
-    if (!couponCode.trim() || !couponValue || Number(couponValue) <= 0) {
-      alert('Enter a coupon code and a value greater than 0.');
-      return;
-    }
-    const newCoupon: DokanCoupon = {
-      id: `cpn-${Date.now()}`,
-      vendorId: currentVendor.id,
-      vendorName: currentVendor.name,
-      code: couponCode.trim().toUpperCase(),
-      type: couponType,
-      value: Number(couponValue),
-      minOrderAmount: Number(couponMinOrder) || 0,
-      maxDiscount: couponMaxDiscount ? Number(couponMaxDiscount) : undefined,
-      usageLimit: Number(couponUsageLimit) || 0,
-      usedCount: 0,
-      status: 'active',
-      expiryDate: couponExpiry || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      createdAt: new Date().toISOString()
-    };
-    const list = [newCoupon, ...getDokanCoupons()];
-    saveDokanCoupons(list);
-    setCoupons(list);
-    setCouponCode(''); setCouponValue(''); setCouponMinOrder('0'); setCouponMaxDiscount(''); setCouponUsageLimit('0'); setCouponExpiry('');
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const handleToggleMyCoupon = (id: string) => {
-    const list = getDokanCoupons();
-    const idx = list.findIndex(c => c.id === id);
-    if (idx === -1) return;
-    list[idx].status = list[idx].status === 'disabled' ? 'active' : 'disabled';
-    saveDokanCoupons(list);
-    setCoupons(list);
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const handleCreateShippingZone = () => {
-    if (!zoneName.trim() || !zoneDistricts.trim()) {
-      alert('Give the zone a name and at least one district.');
-      return;
-    }
-    const newZone: DokanShippingZone = {
-      id: `zone-${Date.now()}`,
-      vendorId: currentVendor.id,
-      vendorName: currentVendor.name,
-      zoneName: zoneName.trim(),
-      districts: zoneDistricts.split(',').map(d => d.trim()).filter(Boolean),
-      rateType: zoneRateType,
-      flatFee: zoneRateType === 'flat' ? Number(zoneFlatFee) || 0 : undefined,
-      perKmRate: zoneRateType === 'per_km' ? Number(zonePerKmRate) || 0 : undefined,
-      minFee: zoneMinFee ? Number(zoneMinFee) : undefined,
-      freeShippingThreshold: zoneFreeThreshold ? Number(zoneFreeThreshold) : undefined,
-      estimatedDays: Number(zoneEstimatedDays) || 1,
-      active: true,
-      createdAt: new Date().toISOString()
-    };
-    const list = [newZone, ...getDokanShippingZones()];
-    saveDokanShippingZones(list);
-    setShippingZones(list);
-    setZoneName(''); setZoneDistricts(''); setZoneFlatFee(''); setZonePerKmRate(''); setZoneMinFee(''); setZoneFreeThreshold(''); setZoneEstimatedDays('1');
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const handleToggleZone = (id: string) => {
-    const list = getDokanShippingZones();
-    const idx = list.findIndex(z => z.id === id);
-    if (idx === -1) return;
-    list[idx].active = !list[idx].active;
-    saveDokanShippingZones(list);
-    setShippingZones(list);
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  // Vendor reviews a refund request first; final clearance happens with admin.
-  const handleVendorDecideRefund = (id: string, decision: 'vendor_approved' | 'vendor_rejected', note: string) => {
-    const list = getDokanRefunds();
-    const idx = list.findIndex(r => r.id === id);
-    if (idx === -1) return;
-    list[idx].status = decision;
-    list[idx].vendorNote = note;
-    saveDokanRefunds(list);
-    setRefunds(list);
-    emitEventDrivenNotifications('refund_vendor_decision', {
-      orderId: list[idx].orderId,
-      customerName: list[idx].customerName,
-      customerPhone: list[idx].customerPhone,
-      vendorName: list[idx].vendorName,
-      decision,
-      amount: list[idx].amount
-    });
-    window.dispatchEvent(new Event('storage'));
-  };
-
-  const filteredProducts = myProducts.filter(p => {
-    if (stockFilter === 'low') {
-      const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
-      const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
-      return isTrending && stock <= 12;
-    }
-    return true;
-  });
-
   // commission metrics
   const totalMySales = currentVendor.totalSales;
   const netEarnings = Math.round(totalMySales * 0.85);
@@ -1322,56 +1008,17 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       
       {/* Header Panel */}
       <div className="bg-gradient-to-r from-orange-600 to-amber-600 text-white rounded-3xl p-6 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="relative">
-            {currentVendor.logo ? (
-              <img
-                src={currentVendor.logo}
-                alt="Store Logo"
-                className="w-16 h-16 rounded-full object-cover border-2 border-white/80 shadow-md bg-white"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-orange-800 text-white flex items-center justify-center font-black text-xl border-2 border-white/80 shadow-md uppercase">
-                {currentVendor.name.charAt(0)}
-              </div>
-            )}
-            <label className="absolute -bottom-1 -right-1 bg-slate-900/80 hover:bg-slate-900 text-white text-4xs font-black uppercase px-1.5 py-0.5 rounded-full cursor-pointer transition-colors shadow-xs border border-white">
-              LOGO
-              <input
-                type="file"
-                accept="image/*"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) {
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                      const base64 = reader.result as string;
-                      const updatedVendor = { ...currentVendor, logo: base64 };
-                      setCurrentVendor(updatedVendor);
-                      const updatedAll = allVendors.map(v => v.id === currentVendor.id ? updatedVendor : v);
-                      setAllVendors(updatedAll);
-                      saveDokanVendors(updatedAll);
-                    };
-                    reader.readAsDataURL(file);
-                  }
-                }}
-                className="hidden"
-              />
-            </label>
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="bg-orange-800 text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
+              <CheckCircle size={10} /> Dokan Pro Partner
+            </span>
+            <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
           </div>
-          
-          <div className="space-y-1 text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <span className="bg-orange-800 text-3xs font-black px-2 py-0.5 rounded uppercase tracking-wider flex items-center gap-1">
-                <CheckCircle size={10} /> Verified Partner
-              </span>
-              <span className="text-slate-200 text-xs font-mono">Store ID: {currentVendor.id}</span>
-            </div>
-            <h2 className="text-xl font-black">{currentVendor.name}</h2>
-            <p className="text-xs text-orange-100 flex items-center justify-center sm:justify-start gap-1.5">
-              📍 Base: {currentVendor.location} &bull; owner: {currentVendor.ownerName}
-            </p>
-          </div>
+          <h2 className="text-xl font-black">{currentVendor.name}</h2>
+          <p className="text-xs text-orange-100 flex items-center gap-1.5">
+            📍 Base: {currentVendor.location} &bull; owner: {currentVendor.ownerName}
+          </p>
         </div>
 
         {/* Change account switcher on the fly */}
@@ -1429,31 +1076,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             activeTab === 'wallet' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
           }`}
         >
-          Wallet & Withdrawals
-        </button>
-        <button
-          onClick={() => setActiveTab('coupons')}
-          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
-            activeTab === 'coupons' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <span className="flex items-center gap-1"><Ticket size={13} /> Coupons ({myCoupons.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('shipping')}
-          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
-            activeTab === 'shipping' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <span className="flex items-center gap-1"><Truck size={13} /> Shipping Zones ({myShippingZones.length})</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('refunds')}
-          className={`px-4 py-2 text-xs font-black uppercase tracking-wider border-b-2 cursor-pointer transition-colors shrink-0 ${
-            activeTab === 'refunds' ? 'border-orange-600 text-orange-600' : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <span className="flex items-center gap-1"><RotateCcw size={13} /> Refunds ({myRefunds.filter(r => r.status === 'pending').length})</span>
+          Dokan Wallet & Withdrawals
         </button>
       </div>
 
@@ -1464,7 +1087,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
             
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Total Sales (Gross)</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Total Sales (Gross)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-slate-900 dark:text-slate-100">
                   {formatPrice(totalMySales)}
@@ -1473,11 +1096,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <TrendingUp size={16} />
                 </div>
               </div>
-              <p className="text-3xs text-slate-400">100% of orders booked online</p>
+              <p className="text-[9px] text-slate-400">100% of orders booked online</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Net Earnings (85%)</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Net Earnings (85%)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-emerald-600">
                   {formatPrice(netEarnings)}
@@ -1486,11 +1109,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <DollarSign size={16} />
                 </div>
               </div>
-              <p className="text-3xs text-slate-400">After Olimart platform fees</p>
+              <p className="text-[9px] text-slate-400">After Dokan platform fees</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Commission Charged (15%)</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Commission Charged (15%)</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-rose-600">
                   {formatPrice(totalCommissionPaid)}
@@ -1499,11 +1122,11 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <Tag size={16} />
                 </div>
               </div>
-              <p className="text-3xs text-slate-400">Flat commission tier applied</p>
+              <p className="text-[9px] text-slate-400">Flat commission tier applied</p>
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl space-y-2 text-left">
-              <p className="text-3xs font-black uppercase tracking-wider text-slate-400">Withdrawable Balance</p>
+              <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">Withdrawable Balance</p>
               <div className="flex items-center justify-between">
                 <p className="text-lg font-black text-orange-600">
                   {formatPrice(currentVendor.balance)}
@@ -1512,7 +1135,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <Store size={16} />
                 </div>
               </div>
-              <p className="text-3xs text-slate-400">Withdrawn: {formatPrice(netEarnings - currentVendor.balance)}</p>
+              <p className="text-[9px] text-slate-400">Withdrawn: {formatPrice(netEarnings - currentVendor.balance)}</p>
             </div>
 
           </div>
@@ -1520,7 +1143,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
           {/* Sales Analysis Chart simulation */}
           <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 text-left">
             <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 mb-4">
-              Weekly Sales Performance Analysis
+              Weekly Dokan Pro Sales Performance Analysis
             </h3>
             
             {/* Visual Bar representation */}
@@ -1607,31 +1230,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div className="space-y-1">
-                  <label className="text-slate-500">Initial Stock</label>
-                  <input
-                    type="number"
-                    required
-                    value={prodStockCount}
-                    onChange={(e) => setProdStockCount(e.target.value)}
-                    placeholder="e.g. 15"
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-slate-500">Demand level</label>
-                  <select
-                    value={prodIsTrending ? 'trending' : 'standard'}
-                    onChange={(e) => setProdIsTrending(e.target.value === 'trending')}
-                    className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold text-orange-600"
-                  >
-                    <option value="trending">🔥 Trending High</option>
-                    <option value="standard">📊 Standard</option>
-                  </select>
-                </div>
-              </div>
-
               <div className="space-y-1">
                 <label className="text-slate-500">Product Category</label>
                 <select
@@ -1647,59 +1245,14 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               </div>
 
               <div className="space-y-1">
-                <label className="text-slate-500 font-bold">Weight / Shipping Class</label>
-                <select
-                  value={prodType}
-                  onChange={(e) => setProdType(e.target.value as 'bulky' | 'light')}
-                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none font-bold text-orange-600"
-                >
-                  <option value="light">🪶 Light (Comm: {activeAdminSettings.lightCommission}%, Boda: {activeAdminSettings.lightTransportRate} Shs/km)</option>
-                  <option value="bulky">📦 Bulky (Comm: {activeAdminSettings.bulkyCommission}%, Boda: {activeAdminSettings.bulkyTransportRate} Shs/km)</option>
-                </select>
-                <p className="text-3xs text-slate-400">Controls checkout boda shipping tariffs & seller commissions.</p>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-slate-500 font-bold block">Product Image</label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={prodImage}
-                    onChange={(e) => setProdImage(e.target.value)}
-                    placeholder="Paste URL or upload locally..."
-                    className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none text-xs"
-                  />
-                  <label className="bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold cursor-pointer flex items-center justify-center gap-1">
-                    <span>Upload</span>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setProdImage(reader.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-                {prodImage && (
-                  <div className="mt-1.5 relative w-16 h-16 border rounded-lg overflow-hidden bg-slate-50">
-                    <img src={prodImage} alt="Preview" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => setProdImage('')}
-                      className="absolute top-0 right-0 bg-red-500 text-white rounded-bl p-0.5 text-4xs"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                )}
+                <label className="text-slate-500">Product Image URL</label>
+                <input
+                  type="text"
+                  value={prodImage}
+                  onChange={(e) => setProdImage(e.target.value)}
+                  placeholder="Paste https:// unsplash.com/ image..."
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 focus:outline-none"
+                />
               </div>
 
               <div className="space-y-1">
@@ -1724,169 +1277,48 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
 
           {/* List of my products */}
           <div className="md:col-span-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-                <ShoppingBag size={16} className="text-orange-600" /> Currently Posted Catalog ({myProducts.length})
-              </h3>
-              
-              {/* Stock Filter Sub-Tabs */}
-              <div className="flex gap-2 text-xs">
-                <button
-                  type="button"
-                  onClick={() => setStockFilter('all')}
-                  className={`px-3 py-1.5 rounded-xl text-3xs font-black uppercase tracking-wider transition-all border cursor-pointer ${
-                    stockFilter === 'all'
-                      ? 'bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900'
-                      : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400'
-                  }`}
-                >
-                  All Items ({myProducts.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStockFilter('low')}
-                  className={`px-3 py-1.5 rounded-xl text-3xs font-black uppercase tracking-wider transition-all border flex items-center gap-1 cursor-pointer ${
-                    stockFilter === 'low'
-                      ? 'bg-amber-600 text-white border-amber-600 dark:bg-amber-500 dark:text-slate-950'
-                      : 'bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/20 dark:hover:bg-amber-950/40 border-amber-200 dark:border-amber-900/50 text-amber-700 dark:text-amber-400'
-                  }`}
-                >
-                  <span>⚠️ Low Stock Alerts</span>
-                  <span className="bg-amber-700 dark:bg-amber-600 text-white text-3xs font-bold px-1.5 py-0.2 rounded-full">
-                    {myProducts.filter(p => {
-                      const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
-                      const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
-                      return isTrending && stock <= 12;
-                    }).length}
-                  </span>
-                </button>
-              </div>
-            </div>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+              <ShoppingBag size={16} className="text-orange-600" /> Currently Posted Catalog ({myProducts.length})
+            </h3>
 
-            {filteredProducts.length === 0 ? (
+            {myProducts.length === 0 ? (
               <div className="py-12 text-center text-slate-400 text-xs">
-                {stockFilter === 'low' 
-                  ? 'Awesome! No high-demand products are currently running low in stock!' 
-                  : 'No products posted by your store yet. Use the form to upload.'}
+                No products posted by your store yet. Use the form to upload.
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {filteredProducts.map(p => {
-                  const stock = p.stockCount !== undefined ? p.stockCount : ((p.reviewsCount || 0) % 15) + 3;
-                  const isTrending = p.isTrendingHigh !== undefined ? p.isTrendingHigh : ((p.rating || 0) >= 4.4 || p.isFlashSale);
-                  const isLowStock = stock <= 12;
-                  const isCriticalStock = stock <= 5;
-                  const isOut = stock === 0;
-
-                  return (
-                    <div key={p.id} className="border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex flex-col justify-between gap-3 bg-slate-50/50 dark:bg-slate-900/50">
-                      <div className="flex gap-3">
-                        <img
-                          src={p.image}
-                          alt={p.title}
-                          className="w-14 h-14 object-contain bg-white dark:bg-slate-800 rounded-lg p-1 border border-slate-100 dark:border-slate-800"
-                        />
-                        <div className="flex-1 space-y-1">
-                          <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <span className="text-3xs text-slate-400 capitalize">Category: {p.category}</span>
-                            <span className="text-slate-300 dark:text-slate-700">|</span>
-                            <span className={`text-3xs font-black uppercase px-1.5 py-0.2 rounded border ${
-                              isItemBulky(p)
-                                ? 'bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-950/25 dark:text-amber-300 dark:border-amber-900/40'
-                                : 'bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/25 dark:text-indigo-300 dark:border-indigo-900/40'
-                            }`}>
-                              {isItemBulky(p) ? '📦 Bulky' : '🪶 Light'} ({isItemBulky(p) ? activeAdminSettings.bulkyCommission : activeAdminSettings.lightCommission}% Comm)
-                            </span>
-                          </div>
-                          
-                          {/* Low stock badge with yellow/red color coding depending on intensity */}
-                          {isTrending && isLowStock && (
-                            <div>
-                              {isOut ? (
-                                <span className="inline-flex bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                  ❌ TRENDING & OUT OF STOCK
-                                </span>
-                              ) : isCriticalStock ? (
-                                <span className="inline-flex bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse">
-                                  🔥 CRITICAL STOCK: {stock} left! (High Demand)
-                                </span>
-                              ) : (
-                                <span className="inline-flex bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/50 text-3xs font-black px-1.5 py-0.5 rounded flex items-center gap-1">
-                                  📈 LOW STOCK: {stock} left (High Demand)
-                                </span>
-                              )}
-                            </div>
-                          )}
-                          {!isTrending && (
-                            <div className="text-3xs font-bold text-slate-500 flex items-center gap-1">
-                              <span>Stock: {stock} units</span>
-                              <span className="text-slate-400 font-normal">(Standard Demand)</span>
-                            </div>
-                          )}
-                          {isTrending && !isLowStock && (
-                            <div className="text-3xs font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                              <span>🔥 Trending High</span>
-                              <span className="text-slate-300 dark:text-slate-700 font-normal">|</span>
-                              <span>Stock: {stock} (Healthy)</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Editing and detail controls */}
-                      <div className="border-t border-slate-100 dark:border-slate-800 pt-2 flex items-center justify-between gap-2">
+                {myProducts.map(p => (
+                  <div key={p.id} className="border border-slate-100 dark:border-slate-800 p-3 rounded-xl flex gap-3">
+                    <img
+                      src={p.image}
+                      alt={p.title}
+                      className="w-14 h-14 object-contain bg-slate-50 rounded"
+                    />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-xs font-black text-slate-800 dark:text-slate-100 line-clamp-1">{p.title}</p>
+                      <p className="text-[10px] text-slate-400 capitalize">Category: {p.category}</p>
+                      <div className="flex items-center gap-2">
                         {editingProdId === p.id ? (
-                          <div className="space-y-2 p-2 bg-slate-100 dark:bg-slate-800 rounded-lg w-full text-3xs">
-                            <div className="grid grid-cols-2 gap-2">
-                              <div className="space-y-0.5">
-                                <label className="text-slate-500 block">Price (Shs)</label>
-                                <input
-                                  type="number"
-                                  value={editingPrice}
-                                  onChange={(e) => setEditingPrice(e.target.value)}
-                                  placeholder={p.price.toString()}
-                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
-                                />
-                              </div>
-                              <div className="space-y-0.5">
-                                <label className="text-slate-500 block">Stock Units</label>
-                                <input
-                                  type="number"
-                                  value={editingStock}
-                                  onChange={(e) => setEditingStock(e.target.value)}
-                                  placeholder={stock.toString()}
-                                  className="w-full border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white"
-                                />
-                              </div>
-                            </div>
-                            <div className="space-y-0.5">
-                              <label className="text-slate-500 block">Demand Index</label>
-                              <select
-                                value={editingDemand ? 'trending' : 'standard'}
-                                onChange={(e) => setEditingDemand(e.target.value === 'trending')}
-                                className="w-full border border-slate-200 dark:border-slate-700 rounded px-1 py-1 text-xs focus:outline-none bg-white dark:bg-slate-900 dark:text-white font-bold"
-                              >
-                                <option value="trending">🔥 Trending High</option>
-                                <option value="standard">📊 Standard</option>
-                              </select>
-                            </div>
-                            <div className="flex gap-1.5 justify-end pt-1">
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateProductPrice(p.id)}
-                                className="bg-emerald-600 text-white font-black text-3xs px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-emerald-500 cursor-pointer"
-                              >
-                                <Check size={10} /> Save
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingProdId(null)}
-                                className="bg-slate-300 text-slate-800 font-black text-3xs px-2.5 py-1 rounded-md flex items-center gap-1 hover:bg-slate-400 cursor-pointer"
-                              >
-                                <X size={10} /> Cancel
-                              </button>
-                            </div>
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="number"
+                              value={editingPrice}
+                              onChange={(e) => setEditingPrice(e.target.value)}
+                              placeholder={p.price.toString()}
+                              className="w-20 border border-orange-500 rounded px-1 text-[11px] focus:outline-none bg-slate-50 dark:bg-slate-800 dark:text-white"
+                            />
+                            <button
+                              onClick={() => handleUpdateProductPrice(p.id)}
+                              className="bg-emerald-600 text-white p-1 rounded hover:bg-emerald-500"
+                            >
+                              <Check size={10} />
+                            </button>
+                            <button
+                              onClick={() => setEditingProdId(null)}
+                              className="bg-slate-200 text-slate-700 p-1 rounded hover:bg-slate-300"
+                            >
+                              <X size={10} />
+                            </button>
                           </div>
                         ) : (
                           <>
@@ -1894,23 +1326,20 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                               {formatPrice(p.price)}
                             </span>
                             <button
-                              type="button"
                               onClick={() => {
                                 setEditingProdId(p.id);
                                 setEditingPrice(p.price.toString());
-                                setEditingStock(stock.toString());
-                                setEditingDemand(isTrending);
                               }}
-                              className="text-3xs bg-orange-50 dark:bg-orange-950/20 text-orange-600 dark:text-orange-400 font-black border border-orange-200/50 dark:border-orange-900/50 px-2 py-1 rounded-lg hover:bg-orange-100/50 dark:hover:bg-orange-900/40 cursor-pointer flex items-center gap-1"
+                              className="text-[9px] text-orange-600 hover:underline cursor-pointer"
                             >
-                              Edit Stock & Price
+                              Edit Price
                             </button>
                           </>
                         )}
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -1922,7 +1351,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
       {activeTab === 'orders' && (
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-4 text-left">
           <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-            <ListOrdered size={16} className="text-orange-600" /> Store Order Queue ({myOrders.length})
+            <ListOrdered size={16} className="text-orange-600" /> Dokan Multi-Vendor Order Queue ({myOrders.length})
           </h3>
 
           {myOrders.length === 0 ? (
@@ -1936,7 +1365,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                   <div className="space-y-1.5 flex-1">
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-black text-slate-900 dark:text-slate-100">{o.id}</span>
-                      <span className={`text-3xs font-black uppercase px-2 py-0.5 rounded ${
+                      <span className={`text-[9px] font-black uppercase px-2 py-0.5 rounded ${
                         o.status === 'placed' 
                           ? 'bg-blue-100 text-blue-800' 
                           : o.status === 'dispatched' 
@@ -1949,7 +1378,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       </span>
                     </div>
 
-                    <div className="text-xs font-bold text-slate-600 dark:text-slate-400 space-y-1">
+                    <div className="text-[11px] font-bold text-slate-600 dark:text-slate-400 space-y-1">
                       <p>📍 Deliver to: <span className="text-slate-850 dark:text-slate-200">{o.customerName} - {o.customerAddress} ({o.customerLocation})</span></p>
                       <p>📞 Phone: <span className="font-mono text-slate-850 dark:text-slate-200">{o.customerPhone}</span></p>
                     </div>
@@ -1957,198 +1386,54 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                     {/* Items from this seller */}
                     <div className="pl-3 border-l-2 border-orange-500 space-y-1 mt-2">
                       {o.items.map((it, idx) => (
-                        <div key={idx} className="text-xs text-slate-700 dark:text-slate-300 font-bold flex gap-2">
+                        <div key={idx} className="text-[11px] text-slate-700 dark:text-slate-300 font-bold flex gap-2">
                           <span className="text-orange-600">[{it.quantity}x]</span>
                           <span>{it.product.title}</span>
                         </div>
                       ))}
                     </div>
-
-                    {o.assignedRider && (
-                      <div className="mt-2 p-2 bg-indigo-50/55 dark:bg-indigo-950/25 border border-indigo-100 dark:border-indigo-900/50 rounded-xl text-3xs text-indigo-700 dark:text-indigo-400 font-black flex items-center gap-1">
-                        <span>🏍️ Dispatch Logistics Rider:</span>
-                        <span className="bg-indigo-600 text-white px-2 py-0.5 rounded text-3xs font-mono">
-                          {o.assignedRider}
-                        </span>
-                      </div>
-                    )}
-
-                    {/* RIDER SELECTION DRAWER */}
-                    {assigningRiderOrderId === o.id && (
-                      <div className="mt-4 p-4 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50 rounded-2xl space-y-4">
-                        <div className="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-2">
-                          <div>
-                            <p className="text-xs font-black uppercase text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                              <span>🏍️ Assign Nearest Delivery Agent</span>
-                            </p>
-                            <p className="text-3xs text-slate-500">
-                              Displaying verified couriers. Nearest options highlighted based on customer coordinates ({o.customerLocation}).
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => setAssigningRiderOrderId(null)}
-                            className="text-xs font-black text-rose-600 hover:text-rose-500 cursor-pointer"
-                          >
-                            Close
-                          </button>
-                        </div>
-
-                        <div className="space-y-3 max-h-72 overflow-y-auto pr-1">
-                          {riders.map((rider) => {
-                            const isNear = rider.location.toLowerCase() === o.customerLocation.toLowerCase() || 
-                                           rider.location.toLowerCase().includes('kampala') && o.customerLocation.toLowerCase().includes('kampala');
-                            const avgRating = rider.reviews && rider.reviews.length > 0 
-                              ? (rider.reviews.reduce((acc, curr) => acc + curr.rating, 0) / rider.reviews.length).toFixed(1)
-                              : "5.0";
-
-                            return (
-                              <div 
-                                key={rider.id} 
-                                className={`p-3 border rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-3 bg-white dark:bg-slate-900 transition-all ${
-                                  isNear 
-                                    ? 'border-emerald-500 shadow-sm bg-emerald-50/10 dark:bg-emerald-950/5' 
-                                    : 'border-slate-100 dark:border-slate-800 hover:border-slate-200'
-                                }`}
-                              >
-                                <div className="space-y-1">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-xs font-black text-slate-800 dark:text-slate-100">{rider.name}</span>
-                                    <span className="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 font-mono text-3xs px-1.5 py-0.5 rounded uppercase">
-                                      {rider.transportMeans} • {rider.motorcyclePlate}
-                                    </span>
-                                    {isNear && (
-                                      <span className="bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 text-3xs font-black px-2 py-0.5 rounded-full flex items-center gap-0.5 animate-pulse">
-                                        📍 Nearest (Within Area)
-                                      </span>
-                                    )}
-                                  </div>
-
-                                  <p className="text-3xs text-slate-500 flex items-center gap-1">
-                                    <span>Primary Location:</span> 
-                                    <span className="font-bold text-slate-700 dark:text-slate-300">{rider.location}</span>
-                                    <span>• Ph:</span>
-                                    <span className="font-mono text-slate-700 dark:text-slate-300">{rider.phone}</span>
-                                  </p>
-
-                                  {/* Trust Badges */}
-                                  <div className="flex gap-1 flex-wrap pt-0.5">
-                                    {(rider.trustBadges || ['Safe Driver', 'Punctual']).map((badge) => (
-                                      <span 
-                                        key={badge} 
-                                        className="bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200/50 dark:border-amber-900/50 text-4xs font-black px-1.5 py-0.5 rounded-md"
-                                      >
-                                        ⭐ {badge}
-                                      </span>
-                                    ))}
-                                  </div>
-
-                                  {/* Reviews Expander */}
-                                  {rider.reviews && rider.reviews.length > 0 && (
-                                    <div className="mt-1 pt-1.5 border-t border-slate-100 dark:border-slate-800 space-y-1">
-                                      <p className="text-3xs uppercase font-black tracking-wider text-indigo-500">Customer Feedback ({avgRating} ⭐):</p>
-                                      {rider.reviews.map(rev => (
-                                        <div key={rev.id} className="text-3xs text-slate-500 dark:text-slate-400 italic">
-                                          "{rev.comment}" — <span className="font-bold">{rev.customerName}</span>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  )}
-                                </div>
-
-                                <button
-                                  onClick={() => {
-                                    handleUpdateOrderStatus(o.id, 'dispatched', rider.name);
-                                    setAssigningRiderOrderId(null);
-                                    alert(`Order Assigned! 🏍️ Dispatch notice sent to courier driver "${rider.name}".`);
-                                  }}
-                                  className="w-full md:w-auto bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase tracking-wider px-3.5 py-2 rounded-xl shrink-0 cursor-pointer text-center"
-                                >
-                                  Assign & Dispatch
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex flex-col items-end gap-2 shrink-0">
                     <p className="text-xs text-slate-400">My Net Earnings (85%):</p>
                     <p className="text-sm font-black text-emerald-600">{formatPrice(o.vendorEarnings)}</p>
 
-                    <div className="flex flex-col items-end gap-1.5 mt-1">
-                      {/* Vendor Decision Panel */}
-                      {(!o.vendorStatus || o.vendorStatus === 'pending') ? (
-                        <div className="flex gap-2">
+                    <div className="flex gap-2 mt-1">
+                      {o.status === 'placed' && (
+                        <>
                           <button
-                            onClick={() => handleVendorDecision(o.id, 'approved')}
-                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
+                            onClick={() => handleUpdateOrderStatus(o.id, 'dispatched')}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1.5 cursor-pointer"
                           >
-                            ✔️ Approve Order
+                            <PackageCheck size={12} /> Accept Dispatch
                           </button>
                           <button
                             onClick={() => {
-                              if (confirm("Reject this order? This will notify the customer and admin.")) {
-                                handleVendorDecision(o.id, 'rejected');
+                              if (confirm("Cancel this order?")) {
+                                handleUpdateOrderStatus(o.id, 'placed');
                               }
                             }}
-                            className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer shadow-sm transition-all"
+                            className="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] font-black uppercase px-3 py-1.5 rounded-lg cursor-pointer"
                           >
-                            ❌ Reject
+                            Cancel
                           </button>
-                        </div>
-                      ) : (
-                        <div className="text-right space-y-1.5">
-                          <span className={`inline-block text-3xs font-black uppercase px-2.5 py-1 rounded-md ${
-                            o.vendorStatus === 'approved' 
-                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
-                              : 'bg-rose-100 text-rose-800 border border-rose-300'
-                          }`}>
-                            My Decision: {o.vendorStatus.toUpperCase()}
-                          </span>
-
-                          {o.vendorStatus === 'approved' && (
-                            <div className="text-3xs font-bold text-slate-500">
-                              {o.status === 'placed' && (
-                                <span className="text-orange-600 animate-pulse block">
-                                  ⌛ Awaiting Super Admin Rider Assignment...
-                                </span>
-                              )}
-                              {o.status === 'dispatched' && (
-                                <span className="text-indigo-600 animate-pulse block">
-                                  📦 Rider Assigned. Awaiting Rider acceptance...
-                                </span>
-                              )}
-                              {o.status === 'transit' && (
-                                <span className="text-purple-600 font-extrabold flex items-center justify-end gap-1 block">
-                                  🏍️ Rider en-route to pick up products
-                                </span>
-                              )}
-                              {o.status === 'delivered' && (
-                                <span className="text-emerald-600 font-black flex items-center justify-end gap-1 block">
-                                  ✅ Cargo Drop Completed & Cleared!
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
+                        </>
                       )}
                       
                       {o.status === 'dispatched' && (
-                        <span className="text-3xs text-amber-600 font-extrabold flex items-center gap-1 animate-pulse">
+                        <span className="text-[10px] text-amber-600 font-extrabold flex items-center gap-1 animate-pulse">
                           ⌛ Handed over to Courier dispatch
                         </span>
                       )}
 
                       {o.status === 'transit' && (
-                        <span className="text-3xs text-purple-600 font-extrabold flex items-center gap-1">
+                        <span className="text-[10px] text-purple-600 font-extrabold flex items-center gap-1">
                           🏍️ Rider In Transit
                         </span>
                       )}
 
                       {o.status === 'delivered' && (
-                        <span className="text-3xs text-emerald-600 font-extrabold flex items-center gap-1">
+                        <span className="text-[10px] text-emerald-600 font-extrabold flex items-center gap-1">
                           ✅ Delivered and Cleared
                         </span>
                       )}
@@ -2171,7 +1456,7 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
               <Send size={16} className="text-orange-600" /> Request Withdrawal
             </h3>
 
-            <div className="bg-orange-50 dark:bg-slate-900/60 p-3 rounded-xl border border-orange-200/50 text-xs font-bold text-orange-800 dark:text-orange-400">
+            <div className="bg-orange-50 dark:bg-slate-900/60 p-3 rounded-xl border border-orange-200/50 text-[11px] font-bold text-orange-800 dark:text-orange-400">
               ⚡ Available withrawable funds are automatically held securely in Olimart central platforms accounts escrow. Once approved, funds are wired immediately.
             </div>
 
@@ -2247,13 +1532,13 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
                       <p className="text-xs font-black text-slate-900 dark:text-slate-100">
                         {formatPrice(w.amount)}
                       </p>
-                      <p className="text-3xs text-slate-400 font-mono">
+                      <p className="text-[10px] text-slate-400 font-mono">
                         via {w.method.toUpperCase()} &bull; {w.details}
                       </p>
-                      <p className="text-3xs text-slate-400">Requested: {new Date(w.createdAt).toLocaleDateString()}</p>
+                      <p className="text-[9px] text-slate-400">Requested: {new Date(w.createdAt).toLocaleDateString()}</p>
                     </div>
 
-                    <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${
+                    <span className={`text-[10px] font-black uppercase px-2 py-1 rounded ${
                       w.status === 'approved' 
                         ? 'bg-emerald-100 text-emerald-800' 
                         : w.status === 'pending'
@@ -2268,157 +1553,6 @@ export default function VendorApp({ products, setProducts, formatPrice }: Vendor
             )}
           </div>
 
-        </div>
-      )}
-
-      {/* TAB: COUPONS (Dokan Pro) */}
-      {activeTab === 'coupons' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
-          <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-              <Ticket size={16} className="text-orange-600" /> Create Discount Coupon
-            </h3>
-            <input type="text" value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())} placeholder="Coupon code e.g. WELCOME10" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200 uppercase" />
-            <div className="flex gap-2">
-              <select value={couponType} onChange={e => setCouponType(e.target.value as 'percentage' | 'fixed')} className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200">
-                <option value="percentage">% Percentage</option>
-                <option value="fixed">Fixed Shs amount</option>
-              </select>
-              <input type="number" value={couponValue} onChange={e => setCouponValue(e.target.value)} placeholder="Value" className="w-28 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            </div>
-            <div className="flex gap-2">
-              <input type="number" value={couponMinOrder} onChange={e => setCouponMinOrder(e.target.value)} placeholder="Min order (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-              <input type="number" value={couponMaxDiscount} onChange={e => setCouponMaxDiscount(e.target.value)} placeholder="Max discount (Shs, optional)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            </div>
-            <div className="flex gap-2">
-              <input type="number" value={couponUsageLimit} onChange={e => setCouponUsageLimit(e.target.value)} placeholder="Usage limit (0 = unlimited)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-              <input type="date" value={couponExpiry ? couponExpiry.substring(0, 10) : ''} onChange={e => setCouponExpiry(new Date(e.target.value).toISOString())} className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            </div>
-            <button onClick={handleCreateCoupon} className="w-full bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase py-2.5 rounded-xl cursor-pointer">
-              Create Coupon
-            </button>
-          </div>
-
-          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">My Coupons</h3>
-            {myCoupons.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 text-xs">No coupons yet. Create one to attract buyers.</div>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {myCoupons.map(c => (
-                  <div key={c.id} className="py-3 flex justify-between items-center gap-3">
-                    <div>
-                      <p className="text-xs font-black font-mono text-orange-600">{c.code}</p>
-                      <p className="text-3xs text-slate-500 font-semibold">
-                        {c.type === 'percentage' ? `${c.value}% off` : `Shs ${c.value.toLocaleString()} off`} &bull; used {c.usedCount}{c.usageLimit > 0 ? `/${c.usageLimit}` : ''}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${c.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{c.status}</span>
-                      <button onClick={() => handleToggleMyCoupon(c.id)} className="text-3xs font-black uppercase px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer">
-                        {c.status === 'disabled' ? 'Enable' : 'Disable'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB: SHIPPING ZONES (Dokan Pro) */}
-      {activeTab === 'shipping' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-start text-left">
-          <div className="md:col-span-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-              <Truck size={16} className="text-orange-600" /> Create Shipping Zone
-            </h3>
-            <input type="text" value={zoneName} onChange={e => setZoneName(e.target.value)} placeholder="Zone name e.g. Kampala Metro" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            <input type="text" value={zoneDistricts} onChange={e => setZoneDistricts(e.target.value)} placeholder="Districts, comma separated" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            <select value={zoneRateType} onChange={e => setZoneRateType(e.target.value as 'flat' | 'per_km')} className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200">
-              <option value="flat">Flat fee</option>
-              <option value="per_km">Per kilometer</option>
-            </select>
-            {zoneRateType === 'flat' ? (
-              <input type="number" value={zoneFlatFee} onChange={e => setZoneFlatFee(e.target.value)} placeholder="Flat fee (Shs)" className="w-full text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            ) : (
-              <div className="flex gap-2">
-                <input type="number" value={zonePerKmRate} onChange={e => setZonePerKmRate(e.target.value)} placeholder="Rate per km (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-                <input type="number" value={zoneMinFee} onChange={e => setZoneMinFee(e.target.value)} placeholder="Min fee (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-              </div>
-            )}
-            <div className="flex gap-2">
-              <input type="number" value={zoneFreeThreshold} onChange={e => setZoneFreeThreshold(e.target.value)} placeholder="Free delivery above (Shs)" className="flex-1 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-              <input type="number" value={zoneEstimatedDays} onChange={e => setZoneEstimatedDays(e.target.value)} placeholder="Est. days" className="w-24 text-xs font-bold px-3 py-2 rounded-xl border border-slate-200" />
-            </div>
-            <button onClick={handleCreateShippingZone} className="w-full bg-orange-600 hover:bg-orange-500 text-white text-xs font-black uppercase py-2.5 rounded-xl cursor-pointer">
-              Create Zone
-            </button>
-          </div>
-
-          <div className="md:col-span-7 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3">
-            <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100">My Shipping Zones</h3>
-            {myShippingZones.length === 0 ? (
-              <div className="py-10 text-center text-slate-400 text-xs">No custom zones yet — the platform default rate applies everywhere.</div>
-            ) : (
-              <div className="divide-y divide-slate-100 dark:divide-slate-800">
-                {myShippingZones.map(z => (
-                  <div key={z.id} className="py-3 flex justify-between items-center gap-3">
-                    <div>
-                      <p className="text-xs font-black text-slate-900 dark:text-slate-100">{z.zoneName}</p>
-                      <p className="text-3xs text-slate-500 font-semibold">
-                        {z.districts.join(', ')} &bull; {z.rateType === 'flat' ? `Shs ${z.flatFee?.toLocaleString()} flat` : `Shs ${z.perKmRate?.toLocaleString()}/km`}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-3xs font-black uppercase px-2 py-1 rounded ${z.active ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>{z.active ? 'active' : 'off'}</span>
-                      <button onClick={() => handleToggleZone(z.id)} className="text-3xs font-black uppercase px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white cursor-pointer">
-                        {z.active ? 'Turn off' : 'Turn on'}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* TAB: REFUND REQUESTS (Dokan Pro) */}
-      {activeTab === 'refunds' && (
-        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-2xl space-y-3 text-left">
-          <h3 className="text-xs font-black uppercase tracking-wider text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
-            <RotateCcw size={16} className="text-orange-600" /> Customer Refund Requests
-          </h3>
-          {myRefunds.length === 0 ? (
-            <div className="py-10 text-center text-slate-400 text-xs">No refund requests for your store.</div>
-          ) : (
-            <div className="divide-y divide-slate-100 dark:divide-slate-800">
-              {myRefunds.map(r => (
-                <div key={r.id} className="py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                  <div className="space-y-1">
-                    <p className="text-xs font-black text-slate-900 dark:text-slate-100">
-                      Order <span className="text-orange-600">{r.orderId}</span> &bull; {r.customerName}
-                    </p>
-                    <p className="text-sm font-black text-rose-600 font-mono">{formatPrice(r.amount)}</p>
-                    <p className="text-3xs text-slate-500 italic">Reason: {r.reason}</p>
-                    <span className="text-3xs font-black uppercase px-2 py-0.5 rounded bg-slate-200 text-slate-600">{r.status}</span>
-                  </div>
-                  {r.status === 'pending' && (
-                    <div className="flex gap-2 shrink-0">
-                      <button onClick={() => handleVendorDecideRefund(r.id, 'vendor_approved', 'Approved by vendor')} className="bg-emerald-600 hover:bg-emerald-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer">
-                        <Check size={12} /> Approve
-                      </button>
-                      <button onClick={() => handleVendorDecideRefund(r.id, 'vendor_rejected', 'Rejected by vendor')} className="bg-rose-600 hover:bg-rose-500 text-white text-3xs font-black uppercase px-3 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer">
-                        <X size={12} /> Reject
-                      </button>
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
         </div>
       )}
 

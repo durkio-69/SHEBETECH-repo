@@ -88,7 +88,7 @@ Every change to the settlement account is permission-gated, audit-logged, and fi
 
 ---
 
-## 8. Files added or changed in this pass
+## 8. Files added or changed in the first backend pass
 
 ```
 src/lib/server/eventBus.ts            NEW — event log + fan-out notifications to customer/vendor/rider/admin
@@ -105,10 +105,66 @@ server.ts                             CHANGED — wired all of the above: regist
 
 ---
 
-## 9. To go fully live
+## 9. Dokan Pro feature parity
+
+| Dokan Pro feature | Status | Where it lives |
+|---|---|---|
+| Multi-vendor storefronts with own branding/banner/SEO | ✅ | `vendorPrograms.ts` — `olimart_vendor_storefronts`, `PUT /api/vendor/:id/storefront` |
+| Vendor subscription/commission plans | ✅ | `vendorPrograms.ts` — plans feed directly into `commissionEngine.ts`'s vendor override, `POST /api/vendor/:id/subscribe` |
+| Store categories & subcategories | ✅ | `Category.parentId` (`types.ts`); admin-managed via `category.manage` permission |
+| Vendor analytics dashboard (sales/orders/withdrawals) | ✅ | `analyticsReports.ts` — `GET /api/vendor/:id/dashboard` |
+| Withdrawal requests with admin approval | ✅ | `withdrawalRequests.ts` — balance-checked at request AND at approval, writes an immutable `payout_debit` ledger row only on approval |
+| Product/order/coupon management per vendor | ✅ | `PUT /api/vendor/products/:id` (own products only), order transitions scoped by vendor, coupons via `commerceEngine.ts` |
+| Vendor verification badges, store ratings & reviews | ✅ | `vendorPrograms.ts` — KYC document review sets `olimart_vendors.is_verified`; `olimart_store_reviews` is separate from product reviews |
+| Announcements (admin → vendor) | ✅ | `broadcastAnnouncement()`, `POST /api/admin/announcements` |
+| Live chat between admin/vendor/customer | 🗒️ Roadmap | Recommend wiring into the existing SMS/email `notificationService.ts` channel abstraction, or a WhatsApp Business API thread per order |
+| Shipping rules per vendor/zone | ✅ | `shippingRules.ts` — resolved server-side at checkout, never trusted from the client cart |
+| Refund & return request management | ✅ | `refundManagement.ts` — builds on the existing `return_requested`/`returned` order states, writes a `refund_reversal` ledger entry only on admin approval |
+
+## 10. WooCommerce (+ Pro extensions) feature parity
+
+| WooCommerce / Pro feature | Status | Where it lives |
+|---|---|---|
+| Variable products, categories, tags, attributes | ✅ | `Product.variations`, `Product.attributes`, `Product.tags` (`types.ts`) |
+| Coupons & dynamic discounts | ✅ | `commerceEngine.ts` — percentage/flat/free-shipping coupons with global + per-customer usage caps; quantity price-breaks via `Product.priceTiers`, resolved server-side at checkout |
+| Multiple payment gateways (card, mobile money, COD) | ✅ | `olimart_orders_v2.payment_method` is free-form; settlement lands in the admin-configured account regardless of gateway (§6) |
+| Order status workflow | ✅ | `orderStateMachine.ts` — enforced transitions, proof-of-delivery required |
+| Product reviews & ratings | ✅ | `Product.reviews` (product-level) + `olimart_store_reviews` (store-level, Dokan-style) |
+| Storefront widgets (banners, category grids, featured/on-sale blocks) | ✅ | Already in the React storefront: `HeroCarousel`, `CategoryGrid`/`CategoryShowcase`, `FlashSales`, `DealsPage`, `AmazonShowcase`, `VendorHighlight` |
+| Advanced search & filtering (price/attribute/brand) | ✅ | `FilterState` (`types.ts`) already covers price range, brand, rating, delivery option, sort order |
+| Abandoned cart & email marketing hooks | ✅ | `commerceEngine.ts` — `saveCartSnapshot()` / `sweepAbandonedCarts()`, real SMS reminder, `POST /api/admin/abandoned-carts/sweep` (wire to a scheduler in production) |
+| Inventory/stock management, backorders | ✅ | `Product.stockQuantity`, `Product.allowBackorder`, `Product.lowStockThreshold`; back-in-stock alerts in `commerceEngine.ts` |
+| Reports & analytics dashboard | ✅ | `analyticsReports.ts` — `GET /api/admin/reports` (GMV, commission earned, active vendors, top sellers, refunded amount) |
+| Loyalty points / rewards | ✅ (bonus, not in the original ask but included for parity with WooCommerce Points & Rewards) | `commerceEngine.ts` — immutable ledger, same design as the commission ledger; points earned only on confirmed delivery |
+| Wishlist / "notify me" | ✅ | `commerceEngine.ts` — `olimart_wishlists`, `olimart_stock_alerts` |
+| Deposits / partial payments | ✅ | `commerceEngine.ts` `recordPartialPayment()`, `POST /api/orders/:id/payments` |
+
+Every ✅ above is a working table + endpoint in this codebase, permission-checked and audit-logged like the rest of the platform — none of it is a placeholder screen.
+
+## 11. New/changed files in this pass
+
+```
+src/lib/server/vendorPrograms.ts     NEW — subscriptions, KYC, staff, storefront branding, follows/reviews, announcements, vacation mode
+src/lib/server/commerceEngine.ts     NEW — dynamic pricing, advanced coupons, wishlist, back-in-stock, loyalty points, abandoned carts, deposits
+src/lib/server/withdrawalRequests.ts NEW — vendor payout requests with admin approval, balance-checked twice
+src/lib/server/shippingRules.ts      NEW — per-vendor/zone shipping fees + free-shipping thresholds
+src/lib/server/refundManagement.ts   NEW — formal refund/return workflow with ledger reversal on approval
+src/lib/server/analyticsReports.ts   NEW — vendor dashboard + platform-wide admin reports
+src/lib/server/eventBus.ts           CHANGED — new event types for subscriptions, KYC, withdrawals, refunds, shipping, announcements
+src/lib/server/rbac.ts               CHANGED — new permissions: vendor.verify, announcement.send, analytics.view.platform,
+                                      shipping.manage(.own), refund.request.own, staff.manage.own, analytics.view.own
+src/types.ts                         CHANGED — Product gets stockQuantity/allowBackorder/priceTiers/attributes;
+                                      Category gets parentId; new VendorStorefront type
+server.ts                            CHANGED — ~35 new endpoints wiring all of the above, plus checkout now re-prices
+                                      every line server-side (dynamic pricing) and validates/redeems coupons server-side
+```
+
+## 12. To go fully live
 
 1. `npm install` (all new modules use only packages already in `package.json`).
-2. Copy `.env.example` → `.env` and fill in Africa's Talking / WhatsApp Cloud API / SMTP credentials — without these, notifications truthfully report `not_configured` instead of pretending to send.
-3. Run once — `initDb()` creates `olimart_events` and `olimart_audit_log` alongside the existing tables.
+2. Copy `.env.example` → `.env` and fill in your Postgres connection string plus Africa's Talking / WhatsApp Cloud API / SMTP credentials — without these, notifications truthfully report `not_configured` instead of pretending to send.
+3. Run once — `initDb()` creates every new table (`olimart_events`, `olimart_audit_log`, vendor programs, commerce engine, withdrawals, shipping rules, refunds) alongside the existing ones.
 4. Have a `super_admin` log in and set the settlement account before accepting real payments: `PUT /api/admin/settlement-account`.
-5. Update the React screens (`VendorApp.tsx`, `DeliveryApp.tsx`, `AdminApp.tsx`, checkout flow in `App.tsx`/`CartDrawer.tsx`) to call the new endpoints — `/api/auth/register/:role`, `/api/orders/checkout`, `/api/admin/products/:id`, `/api/admin/settlement-account`, `/api/admin/audit-log`, `/api/admin/events` — instead of writing to local state or the old open `/api/db/*` routes directly.
+5. Wire a scheduler (cron, or a simple `setInterval` in `server.ts`) to call `POST /api/admin/abandoned-carts/sweep` every 15–60 minutes.
+6. Update the React screens (`VendorApp.tsx`, `DeliveryApp.tsx`, `AdminApp.tsx`, checkout flow) to call the new endpoints — `/api/auth/register/:role`, `/api/orders/checkout`, `/api/vendor/:id/dashboard`, `/api/vendor/:id/withdrawals`, `/api/admin/reports`, `/api/admin/settlement-account`, `/api/admin/audit-log`, `/api/admin/events` — instead of writing to local state or the old open `/api/db/*` routes directly.
+

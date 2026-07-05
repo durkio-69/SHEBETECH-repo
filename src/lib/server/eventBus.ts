@@ -22,11 +22,15 @@ import { dispatch } from "./notificationService";
 
 export type OlimartEventType =
   | "order.placed"
+  | "order.admin_approved"
+  | "order.admin_rejected"
   | "order.vendor_confirmed"
   | "order.packed"
   | "order.rider_assigned"
+  | "order.rider_accepted"
   | "order.picked_up"
   | "order.out_for_delivery"
+  | "order.arrived"
   | "order.delivered"
   | "order.cancelled"
   | "order.return_requested"
@@ -42,7 +46,18 @@ export type OlimartEventType =
   | "rider.registered"
   | "rider.approved"
   | "customer.registered"
-  | "settlement_account.updated";
+  | "settlement_account.updated"
+  | "vendor.subscription_changed"
+  | "vendor.verified"
+  | "vendor.storefront_updated"
+  | "withdrawal.requested"
+  | "withdrawal.approved"
+  | "withdrawal.rejected"
+  | "refund.requested"
+  | "refund.approved"
+  | "refund.rejected"
+  | "shipping_rule.updated"
+  | "announcement.sent";
 
 export interface OlimartEvent {
   type: OlimartEventType;
@@ -90,6 +105,16 @@ function buildRecipientMessages(evt: OlimartEvent): Array<{ to: string; channel:
       if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: We've received ${orderRef} and notified the seller. You'll get an SMS at every stage.` });
       if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: New order for ${orderRef}. Please confirm or reject within 24 hours from your Seller Center.` });
       break;
+    case "order.admin_approved":
+      if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: ${orderRef} has been approved and is being prepared by the seller.` });
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: ${orderRef} was approved by our team. Please confirm and prepare it for dispatch from your Seller Center.` });
+      break;
+    case "order.admin_rejected": {
+      const reason = (evt.payload?.reason as string) || "a policy or verification issue";
+      if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: ${orderRef} could not be approved (${reason}). Any payment made will be refunded. Contact support for details.` });
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: ${orderRef} was rejected by our team (${reason}) and will not be fulfilled.` });
+      break;
+    }
     case "order.vendor_confirmed":
       if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: The seller confirmed ${orderRef} and is preparing it for dispatch.` });
       break;
@@ -119,6 +144,22 @@ function buildRecipientMessages(evt: OlimartEvent): Array<{ to: string; channel:
       break;
     case "rider.approved":
       if (evt.riderPhone) out.push({ to: evt.riderPhone, channel: "sms", message: `Olimart: Your rider application has been approved. You can now accept deliveries.` });
+      break;
+    case "vendor.verified":
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: Your store is now Verified! The verified badge is live on your storefront.` });
+      break;
+    case "withdrawal.approved":
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: Your withdrawal request has been approved and paid out.` });
+      break;
+    case "withdrawal.rejected":
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: Your withdrawal request was not approved. Check your Seller Center for details.` });
+      break;
+    case "refund.approved":
+      if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: Your refund has been approved and processed.` });
+      if (evt.vendorPhone) out.push({ to: evt.vendorPhone, channel: "sms", message: `Olimart: A refund was approved on one of your orders and has been deducted from your balance.` });
+      break;
+    case "refund.rejected":
+      if (evt.customerPhone) out.push({ to: evt.customerPhone, channel: "sms", message: `Olimart: Your refund request was reviewed and not approved. Check your account for details.` });
       break;
   }
   return out;
@@ -186,6 +227,8 @@ export async function emitEvent(pool: pg.Pool | null, evt: OlimartEvent): Promis
 function describeEvent(evt: OlimartEvent): string {
   switch (evt.type) {
     case "order.placed": return `Customer placed order ${evt.orderId}.`;
+    case "order.admin_approved": return `Admin ${evt.actorId} approved order item ${evt.orderItemId}.`;
+    case "order.admin_rejected": return `Admin ${evt.actorId} rejected order item ${evt.orderItemId} (${(evt.payload?.reason as string) || "no reason given"}).`;
     case "order.vendor_confirmed": return `Vendor ${evt.vendorId} confirmed order item ${evt.orderItemId}.`;
     case "order.rider_assigned": return `Rider ${evt.riderId} assigned to order item ${evt.orderItemId}.`;
     case "order.picked_up": return `Rider ${evt.riderId} picked up order item ${evt.orderItemId}.`;

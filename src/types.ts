@@ -26,6 +26,11 @@ export interface ProductReview {
   likes: number;
 }
 
+export interface PriceTier {
+  minQty: number;
+  discountPercent: number; // WooCommerce Dynamic Pricing-style bulk discount
+}
+
 export interface Product {
   id: string;
   title: string;
@@ -42,24 +47,32 @@ export interface Product {
   freeDelivery: boolean;
   payOnDelivery: boolean;
   inStock: boolean;
-  stockCount?: number;
-  isTrendingHigh?: boolean;
   variations?: ProductVariation[];
   vendors?: ProductVendor[];
   reviews?: ProductReview[];
   tags?: string[];
-  productType?: 'bulky' | 'light';
+
+  // --- Inventory (WooCommerce-style stock management) ---
+  stockQuantity?: number;
+  allowBackorder?: boolean;   // sellable while stockQuantity is 0, fulfilled once restocked
+  lowStockThreshold?: number;
+
+  // --- Attributes, beyond the free-text `brand` field ---
+  attributes?: Record<string, string[]>; // e.g. { "Color": ["Black","Blue"], "Material": ["Cotton"] }
+
+  // --- Dynamic pricing (WooCommerce Dynamic Pricing) ---
+  priceTiers?: PriceTier[];
 
   // --- Description of record ---
   // The vendor who lists the product must always provide it; the admin can
-  // add or override a moderated description (e.g. correcting misleading
-  // claims) without erasing what the vendor originally wrote — both are
-  // kept, and both are visible to every stakeholder that touches the order.
+  // add or override a moderated description without erasing what the
+  // vendor originally wrote — both are kept and visible to every
+  // stakeholder that touches the order.
   vendorId?: string;
-  vendorDescription?: string;          // required at listing time, written by the vendor
-  adminDescription?: string;           // optional moderation note/override, written by an admin
-  descriptionUpdatedBy?: string;       // user id of whoever last touched either field
-  descriptionUpdatedAt?: string;       // ISO timestamp
+  vendorDescription?: string;
+  adminDescription?: string;
+  descriptionUpdatedBy?: string;
+  descriptionUpdatedAt?: string;
 }
 
 export interface CartItem {
@@ -75,6 +88,19 @@ export interface Category {
   name: string;
   icon: string; // lucide icon name
   imageUrl: string; // fallback image
+  parentId?: string; // set for subcategories (Dokan Pro category tree)
+}
+
+// --- Vendor storefront branding + SEO (Dokan Pro "Store Customizer") ---
+export interface VendorStorefront {
+  vendorId: string;
+  bannerUrl?: string;
+  logoUrl?: string;
+  storeSlug: string;          // e.g. olimart.ug/store/{storeSlug}
+  seoTitle?: string;
+  seoDescription?: string;
+  aboutText?: string;
+  socialLinks?: Record<string, string>;
 }
 
 export interface PromoBanner {

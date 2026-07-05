@@ -13,7 +13,8 @@ import {
   Eye,
   Sparkles,
   Percent,
-  Zap
+  Zap,
+  Store
 } from 'lucide-react';
 import { PRODUCTS, POPULAR_BRANDS, CATEGORIES } from '../data';
 import { Product, FilterState } from '../types';
@@ -161,7 +162,7 @@ export default function ProductSection({
             </h3>
             <button 
               onClick={handleResetFilters}
-              className="text-3xs font-bold text-slate-400 hover:text-orange-600 uppercase tracking-wider cursor-pointer"
+              className="text-[10px] font-bold text-slate-400 hover:text-orange-600 uppercase tracking-wider cursor-pointer"
             >
               Reset All
             </button>
@@ -180,7 +181,7 @@ export default function ProductSection({
                 }`}
               >
                 <span>All Categories</span>
-                <span className="text-3xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">
+                <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">
                   {PRODUCTS.length}
                 </span>
               </button>
@@ -197,7 +198,7 @@ export default function ProductSection({
                     }`}
                   >
                     <span>{cat.name}</span>
-                    <span className="text-3xs bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">
+                    <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded-full font-bold">
                       {count}
                     </span>
                   </button>
@@ -221,7 +222,7 @@ export default function ProductSection({
               onChange={(e) => setMaxPrice(Number(e.target.value))}
               className="w-full accent-orange-600 h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer"
             />
-            <div className="flex justify-between text-3xs font-bold text-slate-400">
+            <div className="flex justify-between text-[10px] font-bold text-slate-400">
               <span>Shs 10,000</span>
               <span>Shs 6M</span>
             </div>
@@ -363,10 +364,10 @@ export default function ProductSection({
           {/* ACTIVE FILTER CAPSULES */}
           {(selectedCategory !== 'all' || selectedBrands.length > 0 || minRating > 0 || deliveryFilter !== 'all' || searchQuery || selectedSpecialTab !== 'all') && (
             <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-3xs font-bold text-slate-400 uppercase tracking-wider">Active:</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Active:</span>
               
               {selectedSpecialTab !== 'all' && (
-                <span className="bg-red-50 text-red-600 border border-red-100 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1 uppercase tracking-wider">
+                <span className="bg-red-50 text-red-600 border border-red-100 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1 uppercase tracking-wider">
                   <Sparkles size={10} className="text-red-500 animate-pulse" />
                   {selectedSpecialTab === 'todays-deal' ? "Today's Deal" : selectedSpecialTab === 'flash-sales' ? "Flash Sale" : "Discounted"}
                   <button onClick={() => setSelectedSpecialTab('all')} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
@@ -374,35 +375,35 @@ export default function ProductSection({
               )}
 
               {selectedCategory !== 'all' && (
-                <span className="bg-orange-50 text-orange-600 border border-orange-100 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1">
+                <span className="bg-orange-50 text-orange-600 border border-orange-100 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
                   Cat: {CATEGORIES.find(c => c.id === selectedCategory)?.name}
                   <button onClick={() => setSelectedCategory('all')} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
                 </span>
               )}
 
               {searchQuery && (
-                <span className="bg-slate-100 text-slate-700 border border-slate-200 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1">
+                <span className="bg-slate-100 text-slate-700 border border-slate-200 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
                   Query: {searchQuery}
                   <button onClick={() => setSearchQuery('')} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
                 </span>
               )}
 
               {selectedBrands.map(brand => (
-                <span key={brand} className="bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1">
+                <span key={brand} className="bg-blue-50 text-blue-600 border border-blue-100 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
                   {brand}
                   <button onClick={() => handleBrandToggle(brand)} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
                 </span>
               ))}
 
               {minRating > 0 && (
-                <span className="bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1">
+                <span className="bg-yellow-50 text-yellow-700 border border-yellow-100 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
                   {minRating}★ & Up
                   <button onClick={() => setMinRating(0)} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
                 </span>
               )}
 
               {deliveryFilter !== 'all' && (
-                <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full px-2.5 py-0.5 text-3xs font-bold flex items-center gap-1">
+                <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full px-2.5 py-0.5 text-[10px] font-bold flex items-center gap-1">
                   {deliveryFilter === 'free' ? 'Free Delivery' : 'Pay on Delivery'}
                   <button onClick={() => setDeliveryFilter('all')} className="hover:text-red-600 cursor-pointer"><X size={10} /></button>
                 </span>
@@ -410,7 +411,7 @@ export default function ProductSection({
 
               <button 
                 onClick={handleResetFilters}
-                className="text-3xs text-red-500 hover:underline font-bold cursor-pointer"
+                className="text-[10px] text-red-500 hover:underline font-bold cursor-pointer"
               >
                 Clear all filters
               </button>
@@ -424,12 +425,12 @@ export default function ProductSection({
               <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                 <div className="space-y-1">
                   <h2 className="text-sm font-black text-slate-900 dark:text-slate-50 uppercase tracking-wide flex items-center gap-2">
-                    <Sparkles size={16} className="text-[#f68b1e] animate-pulse" />
+                    <Sparkles size={16} className="text-[#EA6A0C] animate-pulse" />
                     <span>Shop {CATEGORIES.find(c => c.id === selectedCategory)?.name || selectedCategory} by Brand & Variation</span>
                   </h2>
-                  <p className="text-3xs text-slate-400 font-bold">Discover direct manufacturer imports & verified local merchant variations</p>
+                  <p className="text-[10px] text-slate-400 font-bold">Discover direct manufacturer imports & verified local merchant variations</p>
                 </div>
-                <span className="text-3xs bg-[#f68b1e]/10 text-[#f68b1e] px-2 py-1 rounded-md font-black uppercase">
+                <span className="text-[10px] bg-[#EA6A0C]/10 text-[#EA6A0C] px-2 py-1 rounded-md font-black uppercase">
                   {PRODUCTS.filter(p => p.category === selectedCategory).length} Items found
                 </span>
               </div>
@@ -437,7 +438,7 @@ export default function ProductSection({
               {/* Dynamic Related Brands Row */}
               {Array.from(new Set(PRODUCTS.filter(p => p.category === selectedCategory).map(p => p.brand))).length > 0 && (
                 <div className="space-y-2">
-                  <p className="text-3xs font-black text-slate-400 uppercase tracking-wider">Official Brands</p>
+                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Official Brands</p>
                   <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
                     {Array.from(new Set(PRODUCTS.filter(p => p.category === selectedCategory).map(p => p.brand))).map(brand => {
                       const isSelected = selectedBrands.includes(brand);
@@ -447,7 +448,7 @@ export default function ProductSection({
                           onClick={() => handleBrandToggle(brand)}
                           className={`px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap border cursor-pointer transition-all ${
                             isSelected 
-                              ? 'bg-[#f68b1e] text-white border-[#f68b1e] shadow-sm' 
+                              ? 'bg-[#EA6A0C] text-white border-[#EA6A0C] shadow-sm' 
                               : 'bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-slate-100'
                           }`}
                         >
@@ -461,17 +462,17 @@ export default function ProductSection({
 
               {/* Horizontal Jumia-style Row of Related Products */}
               <div className="space-y-2">
-                <p className="text-3xs font-black text-slate-400 uppercase tracking-wider">Related Products & Variations (Scroll & Swipe)</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Related Products & Variations (Scroll & Swipe)</p>
                 <div className="flex gap-4 overflow-x-auto pb-3 pt-1 scrollbar-none snap-x">
                   {PRODUCTS.filter(p => p.category === selectedCategory).map((p) => (
                     <div
                       key={p.id}
                       onClick={() => onProductClick(p)}
-                      className="w-56 flex-shrink-0 bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/60 p-3 rounded-xl hover:border-[#f68b1e] transition-all cursor-pointer space-y-3 snap-start relative group"
+                      className="w-56 flex-shrink-0 bg-slate-50/50 dark:bg-slate-950/30 border border-slate-100 dark:border-slate-800/60 p-3 rounded-xl hover:border-[#EA6A0C] transition-all cursor-pointer space-y-3 snap-start relative group"
                     >
                       {/* Badge if discount */}
                       {p.discountBadge && (
-                        <span className="absolute top-2 left-2 bg-red-600 text-white font-black text-4xs px-1.5 py-0.5 rounded-sm z-10">
+                        <span className="absolute top-2 left-2 bg-red-600 text-white font-black text-[8px] px-1.5 py-0.5 rounded-sm z-10">
                           {p.discountBadge}
                         </span>
                       )}
@@ -486,15 +487,15 @@ export default function ProductSection({
                       </div>
 
                       <div className="space-y-1">
-                        <p className="text-3xs font-bold text-slate-400 uppercase tracking-wide">{p.brand}</p>
-                        <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-[#f68b1e] transition-colors">
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wide">{p.brand}</p>
+                        <h3 className="font-bold text-xs text-slate-800 dark:text-slate-100 line-clamp-1 group-hover:text-[#EA6A0C] transition-colors">
                           {p.title}
                         </h3>
                         
                         <div className="flex items-center gap-1.5">
                           <span className="text-xs font-black text-slate-950 dark:text-slate-50">{formatPrice(p.price)}</span>
                           {p.originalPrice && (
-                            <span className="text-3xs line-through text-slate-400 font-medium">{formatPrice(p.originalPrice)}</span>
+                            <span className="text-[10px] line-through text-slate-400 font-medium">{formatPrice(p.originalPrice)}</span>
                           )}
                         </div>
 
@@ -502,20 +503,20 @@ export default function ProductSection({
                         {p.variations && p.variations.length > 0 ? (
                           <div className="flex flex-wrap gap-1 pt-1.5">
                             {p.variations.map(v => (
-                              <span key={v.name} className="text-4xs font-black bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded uppercase">
+                              <span key={v.name} className="text-[8px] font-black bg-blue-50 dark:bg-blue-950/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded uppercase">
                                 {v.name}: {v.options.join('/')}
                               </span>
                             ))}
                           </div>
                         ) : (
                           <div className="pt-1.5">
-                            <span className="text-4xs font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">Standard pack</span>
+                            <span className="text-[8px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded">Standard pack</span>
                           </div>
                         )}
 
                         {/* Vendor count badge (Requirement 3) */}
                         {p.vendors && p.vendors.length > 0 && (
-                          <p className="text-4xs font-extrabold text-[#f68b1e] dark:text-[#f68b1e] pt-1">
+                          <p className="text-[8px] font-extrabold text-[#EA6A0C] dark:text-[#EA6A0C] pt-1">
                             &bull; {p.vendors.length + 1} Merchant Sellers Available
                           </p>
                         )}
@@ -527,15 +528,9 @@ export default function ProductSection({
             </div>
           )}
 
-          {/* PRODUCTS GRID
-              Column progression tuned per device class the way Amazon's
-              grid does: phones stay at 2-up (cards need room for image +
-              price + CTA to stay legible), a small-tablet/landscape-phone
-              tier is added at `sm` instead of jumping straight to 3-up at
-              `md`, and a `2xl` tier is added so ultra-wide monitors don't
-              stretch cards into oversized empty-looking tiles. */}
+          {/* PRODUCTS GRID */}
           {sortedProducts.length > 0 ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
               {sortedProducts.map((product) => (
                 <ProductCard
                   key={product.id}
@@ -780,15 +775,15 @@ function ProductCard({
     >
       <div>
         {/* Image Container with high quality presentation */}
-        <div className="relative bg-slate-50 dark:bg-slate-950/20 rounded-2xl p-4 overflow-hidden mb-3.5 flex items-center justify-center h-52 sm:h-72 md:h-80 group/image">
+        <div className="relative bg-slate-50 dark:bg-slate-950/20 rounded-lg p-2 overflow-hidden mb-2.5 flex items-center justify-center h-32 sm:h-44 group/image">
           {product.discountBadge && (
-            <span className="absolute top-1.5 left-1.5 bg-red-600 text-white font-black text-4xs sm:text-3xs px-1.5 py-0.5 rounded-sm shadow-xs z-10 uppercase tracking-wide">
+            <span className="absolute top-1.5 left-1.5 bg-red-600 text-white font-black text-[8px] sm:text-[9px] px-1.5 py-0.5 rounded-sm shadow-xs z-10 uppercase tracking-wide">
               {product.discountBadge}
             </span>
           )}
 
           {product.isOfficial && (
-            <span className="absolute top-1.5 right-1.5 bg-blue-600 text-white font-bold text-4xs sm:text-4xs uppercase tracking-wider px-1.5 py-0.5 rounded-sm flex items-center gap-0.5 shadow-xs z-10">
+            <span className="absolute top-1.5 right-1.5 bg-blue-600 text-white font-bold text-[7px] sm:text-[8px] uppercase tracking-wider px-1.5 py-0.5 rounded-sm flex items-center gap-0.5 shadow-xs z-10">
               <CheckCircle size={7} fill="white" className="text-blue-600" /> Verified
             </span>
           )}
@@ -810,7 +805,7 @@ function ProductCard({
                 e.preventDefault();
                 onQuickView(product);
               }}
-              className="bg-[#f68b1e] hover:bg-[#e07510] text-white text-3xs sm:text-xs font-black uppercase tracking-wider px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-1.5 border border-[#ffb84d]/30"
+              className="bg-[#EA6A0C] hover:bg-[#C2560A] text-white text-[10px] sm:text-xs font-black uppercase tracking-wider px-3 py-1.5 sm:px-4 sm:py-2.5 rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer flex items-center gap-1.5 border border-[#ffb84d]/30"
             >
               <Eye size={12} />
               <span>Quick View</span>
@@ -852,7 +847,7 @@ function ProductCard({
               e.stopPropagation();
               onProductClick(product);
             }}
-            className="absolute bottom-1.5 left-1.5 p-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] hover:bg-white shadow-xs transition-all z-20 cursor-pointer"
+            className="absolute bottom-1.5 left-1.5 p-1.5 rounded-full bg-white/95 dark:bg-slate-900/95 border border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] hover:bg-white shadow-xs transition-all z-20 cursor-pointer"
             title="View specifications detail modal"
           >
             <Eye size={12} />
@@ -861,8 +856,11 @@ function ProductCard({
 
         {/* Product Details Section */}
         <div className="space-y-1">
-          <div className="flex justify-between items-center text-3xs sm:text-xs font-bold text-slate-400 uppercase tracking-wide">
-            <span>{product.brand}</span>
+          <div className="flex justify-between items-center text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wide">
+            <span className="flex items-center gap-1">
+              <Store size={9} className="text-[#EA6A0C]" />
+              Sold by {product.brand}
+            </span>
             {product.freeDelivery && (
               <span className="text-emerald-600 dark:text-emerald-400 flex items-center gap-0.5">
                 <Truck size={9} /> Free Delivery
@@ -872,7 +870,7 @@ function ProductCard({
 
           <h3 
             onClick={() => onProductClick(product)}
-            className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#f68b1e] dark:hover:text-[#f68b1e] transition-colors h-9 sm:h-10 cursor-pointer leading-tight"
+            className="font-bold text-xs sm:text-sm text-slate-800 dark:text-slate-200 line-clamp-2 hover:text-[#EA6A0C] dark:hover:text-[#EA6A0C] transition-colors h-9 sm:h-10 cursor-pointer leading-tight"
           >
             {product.title}
           </h3>
@@ -889,8 +887,8 @@ function ProductCard({
                 />
               ))}
             </div>
-            <span className="text-3xs sm:text-xs font-black text-slate-700 dark:text-slate-300">{product.rating}</span>
-            <span className="text-3xs sm:text-xs text-slate-400">({product.reviewsCount})</span>
+            <span className="text-[9px] sm:text-[10px] font-black text-slate-700 dark:text-slate-300">{product.rating}</span>
+            <span className="text-[9px] sm:text-[10px] text-slate-400">({product.reviewsCount})</span>
           </div>
         </div>
       </div>
@@ -902,17 +900,17 @@ function ProductCard({
             {formatPrice(product.price)}
           </span>
           {product.originalPrice && (
-            <span className="text-3xs sm:text-xs line-through text-slate-400 font-medium mt-0.5">
+            <span className="text-[10px] sm:text-xs line-through text-slate-400 font-medium mt-0.5">
               {formatPrice(product.originalPrice)}
             </span>
           )}
         </div>
 
         {/* Free or Pay on Delivery indicators */}
-        <div className="flex flex-col gap-0.5 text-3xs sm:text-xs text-slate-500 dark:text-slate-400 font-medium">
+        <div className="flex flex-col gap-0.5 text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 font-medium">
           {product.payOnDelivery && (
             <span className="flex items-center gap-0.5 text-slate-600 dark:text-slate-300">
-              <Coins size={10} className="text-[#f68b1e]" /> Pay on Delivery Available
+              <Coins size={10} className="text-[#EA6A0C]" /> Pay on Delivery Available
             </span>
           )}
           <span className="text-slate-400">⚡ Delivered within 24-48 hours</span>
@@ -920,7 +918,7 @@ function ProductCard({
 
         <button
           onClick={() => onAddToCart(product)}
-          className="w-full bg-[#f68b1e] hover:bg-[#e07510] text-white py-2 sm:py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-200 shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
+          className="w-full bg-[#EA6A0C] hover:bg-[#C2560A] text-white py-2 sm:py-2.5 rounded-lg text-xs font-black flex items-center justify-center gap-1.5 transition-all duration-200 shadow-xs hover:scale-[1.02] active:scale-95 cursor-pointer uppercase tracking-wider"
         >
           <ShoppingCart size={12} />
           <span>Add to Cart</span>

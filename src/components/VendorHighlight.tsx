@@ -29,11 +29,11 @@ export default function VendorHighlight() {
         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
           {/* Text Content */}
           <div className="max-w-2xl space-y-4">
-            <span className="bg-yellow-400 text-slate-900 font-black text-3xs uppercase tracking-widest px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
+            <span className="bg-yellow-400 text-slate-900 font-black text-[10px] uppercase tracking-widest px-3 py-1 rounded-full inline-flex items-center gap-1.5 shadow-sm">
               <Store size={10} /> Partner with us
             </span>
             <h2 className="text-2xl sm:text-4xl font-black tracking-tight leading-none text-white">
-              Grow Your Business — Sell on Olimart Uganda!
+              Grow Your Business — Sell on OliMart Uganda!
             </h2>
             <p className="text-sm sm:text-base text-orange-50/90 font-medium max-w-lg leading-relaxed">
               Reach over 500,000+ active buyers across Kampala, Entebbe, Wakiso, Jinja, and beyond. Register your shop today and start selling in under 5 minutes.
@@ -98,7 +98,7 @@ export default function VendorHighlight() {
                     <Store size={24} />
                   </div>
                   <h3 className="font-black text-slate-900 text-lg">Seller Registration</h3>
-                  <p className="text-xs text-slate-400">Submit details to set up your shop on Olimart</p>
+                  <p className="text-xs text-slate-400">Submit details to setup your shop on OliMart</p>
                 </div>
 
                 <div className="space-y-1">
@@ -149,7 +149,7 @@ export default function VendorHighlight() {
                   </button>
                 </div>
 
-                <p className="text-3xs text-center text-slate-400 leading-normal font-medium">
+                <p className="text-[10px] text-center text-slate-400 leading-normal font-medium">
                   By registering, you agree to our Vendor Terms & Conditions. Our vendor team will call your number within 24 hours.
                 </p>
               </form>
@@ -162,7 +162,7 @@ export default function VendorHighlight() {
                   <h3 className="font-black text-slate-900 text-lg">Congratulations!</h3>
                   <p className="text-xs text-slate-600 font-bold">Your store <span className="text-orange-600">"{formData.storeName}"</span> is pre-registered!</p>
                   <p className="text-xs text-slate-400 font-medium px-4 leading-normal">
-                    We have sent a confirmation packet to <strong className="text-slate-800">{formData.phone}</strong>. A dedicated Olimart agent will call you to complete catalog upload.
+                    We have sent a confirmation packet to <strong className="text-slate-800">{formData.phone}</strong>. A dedicated OliMart agent will call you to complete catalog upload.
                   </p>
                 </div>
                 <div className="pt-2">
